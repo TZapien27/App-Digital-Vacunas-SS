@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Censo Vacunación CENSIA - V14.4 OFFLINE</title>
-
+    <title>Censo Vacunación CENSIA - V14.5 FINAL</title>
+    
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0056b3">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Censo SS">
-    
+
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
@@ -27,7 +27,7 @@
         h2 { color: #2c3e50; font-size: 1.1rem; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-top: 0; margin-bottom: 15px; text-transform: uppercase; }
         .form-group { margin-bottom: 12px; }
         label { display: block; font-weight: 600; margin-bottom: 4px; font-size: 0.85rem; color: #555; }
-        input[type="date"], input[type="text"], input[type="number"], select { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 5px; box-sizing: border-box; font-size: 1rem; background-color: #fff; }
+        input[type="text"], input[type="number"], select { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 5px; box-sizing: border-box; font-size: 1rem; background-color: #fff; }
         input[readonly], select:disabled { background-color: #f1f5f9; color: #64748b; cursor: not-allowed; border-color: #e2e8f0; font-weight: bold; opacity: 1;}
         
         .btn { width: 100%; padding: 12px; font-size: 1rem; font-weight: bold; border: none; border-radius: 5px; cursor: pointer; margin-bottom: 10px; display: block; }
@@ -64,7 +64,7 @@
 <div class="contenedor" id="formulario_maestro">
     <div class="tarjeta">
         <h2>1. Datos Generales de la Jornada</h2>
-        <div class="form-group"><label>Fecha de la Actividad *</label><input type="date" id="fecha_actividad" class="guardar-cache" required></div>
+        <div class="form-group"><label>Fecha de la Actividad *</label><input type="text" id="fecha_actividad" class="guardar-cache" placeholder="DD/MM/AAAA" maxlength="10" oninput="aplicarMascaraFecha(event)" required></div>
         
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
             <div class="form-group"><label>Vacunador 1 *</label><input type="text" id="nombre_vacunador" class="guardar-cache" required></div>
@@ -123,8 +123,8 @@
             <input type="text" id="bloqueo_tipo_otro" class="oculto" placeholder="Especifique el tipo de bloqueo" style="margin-bottom:12px;">
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <div class="form-group"><label>Fecha Notificación *</label><input type="date" id="bloqueo_fecha_notificacion"></div>
-                <div class="form-group"><label>Fecha Inicio Act. *</label><input type="date" id="bloqueo_fecha_inicio"></div>
+                <div class="form-group"><label>Fecha Notificación *</label><input type="text" id="bloqueo_fecha_notificacion" placeholder="DD/MM/AAAA" maxlength="10" oninput="aplicarMascaraFecha(event)"></div>
+                <div class="form-group"><label>Fecha Inicio Act. *</label><input type="text" id="bloqueo_fecha_inicio" placeholder="DD/MM/AAAA" maxlength="10" oninput="aplicarMascaraFecha(event)"></div>
             </div>
         </div>
     </div>
@@ -158,15 +158,15 @@
 
         <div class="form-group oculto" id="grupo_situacion_domicilio">
             <label>Situación del Domicilio / Familia *</label>
-                <select id="situacion_domicilio" onchange="evaluarFlujoLogico()">
-                    <option value="">-- Seleccione --</option>
-                    <option value="CN">Con niños, se registran (CN)</option>
-                    <option value="CN_NR">Con niños, no se registran (CN_NR)</option>
-                    <option value="SN_REG">Sin niños, se registra otra persona (SN)</option>
-                    <option value="SN_NO">Sin niños, no se registra ninguna persona (SN)</option>
-                    <option value="A">Familia ausente (A)</option>
-                    <option value="R">Familia renuente (R)</option>
-                </select>
+            <select id="situacion_domicilio" onchange="evaluarFlujoLogico()">
+                <option value="">-- Seleccione --</option>
+                <option value="CN">Con niños, se registran (CN)</option>
+                <option value="CN_NR">Con niños, no se registran (CN_NR)</option>
+                <option value="SN_REG">Sin niños, se registra otra persona (SN)</option>
+                <option value="SN_NO">Sin niños, no se registra ninguna persona (SN)</option>
+                <option value="A">Familia ausente (A)</option>
+                <option value="R">Familia renuente (R)</option>
+            </select>
         </div>
 
         <div class="form-group oculto" id="grupo_situacion_negocio">
@@ -216,7 +216,7 @@
         </div>
         <div id="campos_cierre_final" class="oculto" style="border-top: 1px solid #cbd5e1; padding-top: 10px;">
             <div class="form-group"><label>Total de Manzanas Recorridas *</label><input type="number" id="manzanas_recorridas"></div>
-            <div class="form-group"><label>Fecha de Envío / Cierre *</label><input type="date" id="fecha_envio_bloqueo"></div>
+            <div class="form-group"><label>Fecha de Envío / Cierre *</label><input type="text" id="fecha_envio_bloqueo" placeholder="DD/MM/AAAA" maxlength="10" oninput="aplicarMascaraFecha(event)"></div>
         </div>
     </div>
 
@@ -259,11 +259,34 @@
         inicializarMapaDefecto();
         evaluarFlujoLogico(); 
         
-        // MOTOR OFFLINE - COMPROBACIÓN INICIAL
         actualizarBotonSincronizacion();
         window.addEventListener('online', sincronizarPendientes);
     };
 
+    /* ==========================================
+       NUEVO MOTOR DE FECHAS (Máscaras y Parseo)
+       ========================================== */
+    function aplicarMascaraFecha(e) {
+        let v = e.target.value.replace(/\D/g, ''); // Deja solo números
+        if (v.length >= 2 && v.length < 4) {
+            v = v.substring(0,2) + '/' + v.substring(2);
+        } else if (v.length >= 4) {
+            v = v.substring(0,2) + '/' + v.substring(2,4) + '/' + v.substring(4,8);
+        }
+        e.target.value = v;
+    }
+
+    function parsearFechaDDMMYYYY(str) {
+        if(!str || str.length !== 10) return null;
+        let p = str.split('/');
+        if(p.length !== 3) return null;
+        // Validación matemática simple de fecha
+        let d = parseInt(p[0], 10), m = parseInt(p[1], 10), y = parseInt(p[2], 10);
+        if(m < 1 || m > 12 || d < 1 || d > 31 || y < 1900 || y > 2100) return null;
+        return new Date(y, m - 1, d);
+    }
+
+    // Funciones estándar
     function poblarCatalogosGenerales() {
         const llenar = (id, arr) => {
             const el = document.getElementById(id);
@@ -286,7 +309,14 @@
                 else document.getElementById(id).value = guardado;
             }
         });
-        if (!document.getElementById('fecha_actividad').value) document.getElementById('fecha_actividad').valueAsDate = new Date();
+        
+        if (!document.getElementById('fecha_actividad').value) {
+            let hoy = new Date();
+            let dd = String(hoy.getDate()).padStart(2, '0');
+            let mm = String(hoy.getMonth() + 1).padStart(2, '0');
+            let yyyy = hoy.getFullYear();
+            document.getElementById('fecha_actividad').value = `${dd}/${mm}/${yyyy}`;
+        }
         verificarOtroAgeb();
     }
 
@@ -356,32 +386,28 @@
     }
 
     function evaluarFlujoLogico() {
-        const scrollY = window.scrollY; // Captura de posición para evitar brincos
+        const scrollY = window.scrollY;
 
-        // Al inicio de evaluarFlujoLogico()
         const listaPendientes = JSON.parse(localStorage.getItem('censia_bloqueos_pendientes') || '[]');
         const selectEstado = document.getElementById('estado_bloqueo');
-
-        // Bloqueamos la opción si no hay datos
         if (selectEstado) {
             const optPendiente = selectEstado.querySelector('option[value="pendiente"]');
             if (listaPendientes.length === 0) {
-                optPendiente.disabled = true;
+                if(optPendiente) optPendiente.disabled = true;
+                if(selectEstado.value === 'pendiente') selectEstado.value = '';
             } else {
-                optPendiente.disabled = false;
+                if(optPendiente) optPendiente.disabled = false;
             }
         }
+
         const tAct = document.getElementById('tipo_actividad').value; 
         const dom = document.getElementById('domicilio_visitado').value;
         const sDom = document.getElementById('situacion_domicilio').value; 
         const sNeg = document.getElementById('situacion_negocio').value;
 
-        // Limpieza ESTRICTA POR ID: Apaga todo antes de recalcular
         const ids = ['bloque_domicilio', 'bloque_censo', 'bloque_mapa', 'seccion_bloqueo', 'metadatos_bloqueo', 'selector_bloqueos_pendientes', 'grupo_pregunta_estado_bloqueo', 'grupo_lugar_fijo', 'grupo_domicilio_visitado', 'grupo_situacion_domicilio', 'grupo_situacion_negocio', 'grupo_caso_domicilio', 'nodo_cierre_bloqueo', 'campos_cierre_final'];
         ids.forEach(id => { const el = document.getElementById(id); if (el) el.classList.add('oculto'); });
         
-        document.getElementById('fecha_actividad').max = new Date().toISOString().split('T')[0];
-
         const maestro = document.getElementById('formulario_maestro');
         const bCenso = document.getElementById('bloque_censo');
         const bDom = document.getElementById('bloque_domicilio');
@@ -433,18 +459,15 @@
             }
         }
 
-        // Ahora la condición es explícita y no admite ambigüedades
         let censo = (sDom === 'CN' || sDom === 'SN_REG' || sNeg === 'N_CON');
-
         if (censo) {
             document.getElementById('bloque_censo').classList.remove('oculto');
             if (document.querySelectorAll('.tarjeta-persona').length === 0) agregarPersona();
         } else {
             document.getElementById('bloque_censo').classList.add('oculto');
-            document.getElementById('contenedor_personas').innerHTML = ''; 
-            personaId = 0;
+            document.getElementById('contenedor_personas').innerHTML = ''; personaId = 0;
         }
-        
+
         if (tAct === 'bloqueo' && dom !== "") document.getElementById('nodo_cierre_bloqueo').classList.remove('oculto');
         
         window.scrollTo({ top: scrollY, behavior: 'instant' });
@@ -453,7 +476,11 @@
     function evaluarCierreBloqueo() {
         const resp = document.getElementById('ultimo_registro_bloqueo').value;
         const divCierre = document.getElementById('campos_cierre_final');
-        if(resp === 'si') { divCierre.classList.remove('oculto'); document.getElementById('fecha_envio_bloqueo').valueAsDate = new Date(); }
+        if(resp === 'si') { 
+            divCierre.classList.remove('oculto'); 
+            let hoy = new Date();
+            document.getElementById('fecha_envio_bloqueo').value = `${String(hoy.getDate()).padStart(2, '0')}/${String(hoy.getMonth()+1).padStart(2, '0')}/${hoy.getFullYear()}`; 
+        }
         else divCierre.classList.add('oculto');
     }
 
@@ -471,7 +498,7 @@
                     <div class="form-group"><label>Sexo *</label><select id="sexo_${pId}" onchange="calcularCurpSugerida(${pId})"><option value="">-- Seleccione --</option><option value="H">Masculino</option><option value="M">Femenino</option></select></div>
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <div class="form-group"><label>Nacimiento *</label><input type="date" id="fecha_nacimiento_${pId}" max="${new Date().toISOString().split('T')[0]}" onchange="procesarEdadP(${pId}); calcularCurpSugerida(${pId});"></div>
+                    <div class="form-group"><label>Nacimiento *</label><input type="text" id="fecha_nacimiento_${pId}" placeholder="DD/MM/AAAA" maxlength="10" oninput="aplicarMascaraFecha(event); procesarEdadP(${pId}); calcularCurpSugerida(${pId});"></div>
                     <div class="form-group"><label>Estado Nacimiento *</label><select id="estado_nac_${pId}" onchange="calcularCurpSugerida(${pId})"><option value="">-- Seleccione --</option></select></div>
                 </div>
                 <div class="form-group"><label>CURP Sugerida</label><input type="text" id="curp_${pId}" style="text-transform: uppercase; font-weight:bold;" maxlength="18"></div>
@@ -496,7 +523,7 @@
                             <input type="text" id="tutor_tipo_otro_${pId}" class="oculto" placeholder="Especifique parentesco" style="margin-top:5px;">
                         </div>
                     </div>
-                    <div class="form-group"><label>Fecha de Nacimiento</label><input type="date" id="tutor_fecha_nac_${pId}" max="${new Date().toISOString().split('T')[0]}"></div>
+                    <div class="form-group"><label>Fecha de Nacimiento</label><input type="text" id="tutor_fecha_nac_${pId}" placeholder="DD/MM/AAAA" maxlength="10" oninput="aplicarMascaraFecha(event)"></div>
                 </div>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
@@ -534,7 +561,7 @@
         const sx = document.getElementById(`sexo_${pId}`).value;
         const estNum = document.getElementById(`estado_nac_${pId}`).value;
         
-        if(!pat || !fn || !sx || !estNum || pat.length < 2) return;
+        if(!pat || fn.length < 10 || !sx || !estNum || pat.length < 2) return;
 
         const mapaEntidadesRenapo = { "01":"AS", "02":"BC", "03":"BS", "04":"CC", "05":"CL", "06":"CM", "07":"CS", "08":"CH", "09":"DF", "10":"DG", "11":"GT", "12":"GR", "13":"HG", "14":"JC", "15":"MC", "16":"MN", "17":"MS", "18":"NT", "19":"NL", "20":"OC", "21":"PL", "22":"QT", "23":"QR", "24":"SP", "25":"SL", "26":"SR", "27":"TC", "28":"TS", "29":"TL", "30":"VZ", "31":"YN", "32":"ZS" };
         const estLetras = mapaEntidadesRenapo[estNum] || "NE";
@@ -543,8 +570,8 @@
         const getCons = (str) => { const m = str.substring(1).match(/[BCDFGHJKLMNPQRSTVWXYZ]/); return m ? m[0] : 'X'; };
 
         let curp = pat.charAt(0) + getVocal(pat) + (mat ? mat.charAt(0) : 'X') + (nom ? nom.charAt(0) : 'X');
-        const [yyyy, mm, dd] = fn.split('-');
-        curp += (yyyy ? yyyy.substring(2, 4) : '00') + (mm || '00') + (dd || '00');
+        const [dd, mm, yyyy] = fn.split('/');
+        curp += yyyy.substring(2, 4) + mm + dd;
         curp += sx + estLetras;
         curp += getCons(pat) + (mat ? getCons(mat) : 'X') + (nom ? getCons(nom) : 'X');
         curp += "0A"; 
@@ -553,12 +580,20 @@
     }
 
     function procesarEdadP(pId) {
-        const fA = document.getElementById('fecha_actividad').value; 
-        const fN = document.getElementById(`fecha_nacimiento_${pId}`).value;
-        if (!fA || !fN || fN.length < 10) return;
-        let d1 = new Date(fA), d2 = new Date(fN);
-        let anios = d1.getFullYear() - d2.getFullYear(); let meses = d1.getMonth() - d2.getMonth(); 
-        if (meses < 0) { anios--; meses += 12; }
+        const fA_str = document.getElementById('fecha_actividad').value; 
+        const fN_str = document.getElementById(`fecha_nacimiento_${pId}`).value;
+        
+        if (fA_str.length < 10 || fN_str.length < 10) return;
+        
+        const d1 = parsearFechaDDMMYYYY(fA_str);
+        const d2 = parsearFechaDDMMYYYY(fN_str);
+        
+        if(!d1 || !d2 || d2 > d1) { document.getElementById(`edad_calculada_${pId}`).value = 'Fecha inválida'; return; }
+
+        let anios = d1.getFullYear() - d2.getFullYear(); 
+        let meses = d1.getMonth() - d2.getMonth(); 
+        if (meses < 0 || (meses === 0 && d1.getDate() < d2.getDate())) { anios--; meses += 12; }
+        
         if (anios < 0 || anios > 120) { document.getElementById(`edad_calculada_${pId}`).value = 'Fecha inválida'; return; }
 
         document.getElementById(`edad_calculada_${pId}`).value = `${anios} años, ${meses} meses`;
@@ -576,7 +611,6 @@
 
     function agregarVacunaAPersona(pId) {
         vacunaId++; const vId = vacunaId; const fBase = document.getElementById('fecha_actividad').value;
-        const limiteHoy = new Date().toISOString().split('T')[0]; 
         const html = `<div class="bloque-vacuna" id="bloque_vacuna_${vId}">
             <div class="vacuna-header">
                 <select id="select_vacuna_${vId}" class="vacuna-de-p${pId}" onchange="actualizarFiltroExcluyente(${pId}); if(this.value==='Otra vacuna'){document.getElementById('otra_vacuna_txt_${vId}').classList.remove('oculto')}else{document.getElementById('otra_vacuna_txt_${vId}').classList.add('oculto')}">
@@ -585,7 +619,7 @@
                 <button type="button" class="btn-eliminar-vacuna" onclick="eliminarVacuna(${vId}, ${pId})">X</button>
             </div>
             <input type="text" id="otra_vacuna_txt_${vId}" class="oculto" placeholder="Especifique la vacuna" style="margin-bottom:8px;">
-            <div class="form-group" style="margin-bottom:0;"><label style="font-size:0.75rem;">Fecha Exacta de Aplicación *</label><input type="date" id="fecha_vacuna_${vId}" value="${fBase}" max="${limiteHoy}"></div>
+            <div class="form-group" style="margin-bottom:0;"><label style="font-size:0.75rem;">Fecha Exacta de Aplicación *</label><input type="text" id="fecha_vacuna_${vId}" value="${fBase}" placeholder="DD/MM/AAAA" maxlength="10" oninput="aplicarMascaraFecha(event)"></div>
         </div>`;
         document.getElementById(`contenedor_vacunas_p${pId}`).insertAdjacentHTML('beforeend', html);
         const t = document.getElementById(`tipo_vacunacion_${pId}`).value;
@@ -631,8 +665,8 @@
             if(letra === 'Caso') color = 'radar-rojo';
             else if(letra === 'MF') color = 'radar-azul'; 
             else if(letra === 'CN') color = 'radar-verde';
-            else if(letra === 'V') { color = 'radar-verde'; letra = 'SN'; }
-            else if(letra === 'A' || letra === 'SN') color = 'radar-amarillo';
+            else if(letra === 'V' || letra === 'SN_REG') { color = 'radar-verde'; letra = 'SN'; }
+            else if(letra === 'A' || letra === 'SN' || letra === 'SN_NO') color = 'radar-amarillo';
             else if(letra === 'R') color = 'radar-rojo';
             else if(letra === 'N_CON' || letra === 'N_SIN' || letra === 'negocio') { color = 'radar-azul'; letra = 'N'; }
             else if(letra === 'lote_baldio' || letra === 'deshabitada') { color = 'radar-gris'; letra = 'DH'; }
@@ -642,34 +676,75 @@
         });
     }
 
+    // MOTOR GPS OFFLINE DE ALTO RENDIMIENTO
     function detectarUbicacionGPS() {
-        if (!navigator.geolocation) return alert("GPS no soportado.");
-        navigator.geolocation.getCurrentPosition(pos => { mapaInteractivo.setView([pos.coords.latitude, pos.coords.longitude], 17); chincheta.setLatLng([pos.coords.latitude, pos.coords.longitude]); actualizarCoordenadasPantalla(pos.coords.latitude, pos.coords.longitude); }, () => alert("Mueva el pin a mano."), { enableHighAccuracy: true });
+        if (!navigator.geolocation) return alert("❌ GPS no soportado en tu dispositivo.");
+        
+        const btn = document.querySelector('.btn-gps');
+        const txtOrig = btn.innerHTML;
+        btn.innerHTML = "⏳ Buscando satélites GPS... (sal a cielo abierto)";
+        btn.disabled = true;
+        btn.style.backgroundColor = "#64748b";
+
+        const opcionesGPS = { 
+            enableHighAccuracy: true, 
+            timeout: 15000, 
+            maximumAge: 10000 
+        };
+
+        navigator.geolocation.getCurrentPosition(pos => {
+            btn.innerHTML = txtOrig;
+            btn.disabled = false;
+            btn.style.backgroundColor = "#0ea5e9";
+            
+            mapaInteractivo.setView([pos.coords.latitude, pos.coords.longitude], 17);
+            chincheta.setLatLng([pos.coords.latitude, pos.coords.longitude]);
+            actualizarCoordenadasPantalla(pos.coords.latitude, pos.coords.longitude);
+            alert("📍 Coordenadas detectadas correctamente.");
+        }, err => {
+            btn.innerHTML = txtOrig;
+            btn.disabled = false;
+            btn.style.backgroundColor = "#0ea5e9";
+            
+            let msg = "⚠️ Error al detectar GPS.\n\n";
+            if(err.code === 1) msg += "Permiso de ubicación denegado. Otorga permiso de GPS al navegador.";
+            else if(err.code === 2) msg += "Señal inalcanzable. Asegúrate de tener la Ubicación (GPS) encendida en tu celular y no estar bajo un techo de concreto.";
+            else if(err.code === 3) msg += "Tiempo de espera agotado. El satélite tardó mucho en responder.";
+            
+            alert(msg + "\n\nNOTA: Si no hay señal de satélite, puedes mover el pin rojo manualmente en la pantalla (aunque el mapa se vea gris sin internet, las coordenadas se guardarán bien).");
+        }, opcionesGPS);
     }
+
     function actualizarCoordenadasPantalla(lat, lon) { document.getElementById('latitud').value = lat; document.getElementById('longitud').value = lon; document.getElementById('display_gps').innerHTML = `📍 Lat: ${lat.toFixed(5)} | Lon: ${lon.toFixed(5)}`; }
     function generarUUID() { return 'xxxxxxxx-xxxx-4xxx-yxxx'.replace(/[xy]/g, c => { let r = Math.random()*16|0, v=c=='x'?r:(r&0x3|0x8); return v.toString(16); }); }
 
     /* ==========================================
        MOTOR DE GUARDADO Y SINCRONIZACIÓN OFFLINE
        ========================================== */
-
     function empaquetarYGuardar() {
-        document.querySelectorAll('.campo-invalido').forEach(el => el.classList.remove('campo-invalido')); let hayErrores = false;
-
-        // AÑADIR ESTO AL INICIO DE empaquetarYGuardar()
+        const tAct = document.getElementById('tipo_actividad').value;
         const estadoBloqueo = document.getElementById('estado_bloqueo').value;
         const listaPendientes = JSON.parse(localStorage.getItem('censia_bloqueos_pendientes') || '[]');
 
-        if (document.getElementById('tipo_actividad').value === 'bloqueo') {
+        if (tAct === 'bloqueo') {
             if (estadoBloqueo === 'pendiente' && listaPendientes.length === 0) {
-                alert("⚠️ ERROR: No existen bloqueos pendientes. Selecciona 'Nuevo'.");
-                return; // Detiene la ejecución completamente
+                alert("⚠️ ERROR: No existen bloqueos pendientes en el dispositivo. Selecciona '➕ Iniciar un Nuevo Bloqueo'.");
+                document.getElementById('estado_bloqueo').classList.add('campo-invalido');
+                return;
             }
         }
 
-        const checkReq = (id) => { const el = document.getElementById(id); if(el && el.offsetParent !== null && !el.value) { el.classList.add('campo-invalido'); hayErrores = true; } };
+        document.querySelectorAll('.campo-invalido').forEach(el => el.classList.remove('campo-invalido')); let hayErrores = false;
+        
+        // Validador mejorado para fechas en texto
+        const checkReq = (id) => { 
+            const el = document.getElementById(id); 
+            if(el && el.offsetParent !== null) {
+                if(!el.value) { el.classList.add('campo-invalido'); hayErrores = true; }
+                else if(el.placeholder === "DD/MM/AAAA" && el.value.length !== 10) { el.classList.add('campo-invalido'); hayErrores = true; }
+            }
+        };
 
-        const tAct = document.getElementById('tipo_actividad').value;
         ['tipo_actividad', 'fecha_actividad', 'entidad', 'jurisdiccion', 'municipio', 'localidad', 'nombre_vacunador'].forEach(checkReq);
 
         if(tAct === 'barrido' || tAct === 'bloqueo' || tAct === 'modulo_fijo') {
@@ -686,9 +761,8 @@
         let respCierre = "";
         if (tAct === 'bloqueo') {
             checkReq('estado_bloqueo');
-            const estado = document.getElementById('estado_bloqueo').value;
-            if(estado === 'nuevo') { ['bloqueo_tipo', 'bloqueo_nombre_caso', 'bloqueo_fecha_notificacion', 'bloqueo_fecha_inicio'].forEach(checkReq); }
-            else if (estado === 'pendiente') { checkReq('lista_bloqueos_pendientes'); }
+            if(estadoBloqueo === 'nuevo') { ['bloqueo_tipo', 'bloqueo_nombre_caso', 'bloqueo_fecha_notificacion', 'bloqueo_fecha_inicio'].forEach(checkReq); }
+            else if (estadoBloqueo === 'pendiente') { checkReq('lista_bloqueos_pendientes'); }
             
             checkReq('ultimo_registro_bloqueo');
             respCierre = document.getElementById('ultimo_registro_bloqueo').value;
@@ -703,6 +777,8 @@
                 const pId = t.id.split('_').pop();
                 [`nombre_${pId}`, `fecha_nacimiento_${pId}`, `estado_nac_${pId}`, `sexo_${pId}`, `derecho_${pId}`].forEach(checkReq);
                 
+                if(document.getElementById(`edad_calculada_${pId}`).value === 'Fecha inválida') { document.getElementById(`fecha_nacimiento_${pId}`).classList.add('campo-invalido'); hayErrores = true; }
+
                 if(document.getElementById(`derecho_${pId}`).value === 'OTRA') checkReq(`derecho_otra_${pId}`);
                 if(document.getElementById(`tutor_tipo_${pId}`) && document.getElementById(`tutor_tipo_${pId}`).value === 'Otro parentesco') {
                     checkReq(`tutor_tipo_otro_${pId}`);
@@ -718,7 +794,6 @@
                     } 
                 });
                 
-                // TRACKER VISUAL: Marca en rojo si no hay dosis
                 if(dosis === 0) {
                     hayErrores = true;
                     const primerSelect = document.querySelector(`.vacuna-de-p${pId}`);
@@ -728,7 +803,7 @@
         }
 
         if(hayErrores) {
-            alert("❌ FALTAN CAMPOS OBLIGATORIOS.\n\nRevisa y llena los recuadros marcados en ROJO.");
+            alert("❌ DATOS INCOMPLETOS O INVÁLIDOS.\n\nRevisa los recuadros en ROJO (Asegúrate de que las fechas tengan formato DD/MM/AAAA y seleccionar al menos una vacuna por persona).");
             const primerError = document.querySelector('.campo-invalido'); if(primerError) primerError.scrollIntoView({ behavior: 'smooth', block: 'center' });
             return;
         }
@@ -822,10 +897,6 @@
         btnGuardar.disabled = true;
         btnGuardar.style.backgroundColor = "#64748b";
 
-        console.log("Datos a enviar:", JSON.stringify(payload));
-        // alert(JSON.stringify(payload)); // Descomenta esta línea si quieres ver el JSON en tu cel
-
-        // BYPASS DE SEGURIDAD (Opaque Mode para Google Sheets)
         fetch(GOOGLE_SCRIPT_URL, {
             method: 'POST',
             mode: 'no-cors',
@@ -887,7 +958,6 @@
 
         for (let i = 0; i < cola.length; i++) {
             try {
-                // Sincronización Opaque Loop
                 await fetch(GOOGLE_SCRIPT_URL, {
                     method: 'POST',
                     mode: 'no-cors',
@@ -969,17 +1039,14 @@
         if(mapaInteractivo) pintarRadarHistorial();
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-</script>
 
-<script>
+    // Iniciar PWA
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('sw.js')
-                .then(reg => console.log('Service Worker registrado exitosamente', reg))
-                .catch(err => console.error('Error al registrar el Service Worker', err));
+                .catch(err => console.error('Error SW', err));
         });
     }
 </script>
-
 </body>
 </html>

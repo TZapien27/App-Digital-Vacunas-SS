@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Censo Vacunación CENSIA - V14.5 FINAL</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0056b3">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Censo SS">
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #eef2f5; margin: 0; padding: 10px; color: #333; }
+        .contenedor { max-width: 600px; margin: 0 auto; padding-bottom: 40px;}
+        .tarjeta { background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 15px; border-top: 4px solid #0056b3; }
+        .tarjeta-persona { border-top: 4px solid #28a745; background-color: #fdfdfd; position: relative;}
+        .tarjeta-bloqueo { border-top: 4px solid #8b5cf6; background-color: #f5f3ff; }
+        .tarjeta-mapa { border-top: 4px solid #0ea5e9; }
+        h2 { color: #2c3e50; font-size: 1.1rem; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-top: 0; margin-bottom: 15px; text-transform: uppercase; }
+        .form-group { margin-bottom: 12px; }
+        label { display: block; font-weight: 600; margin-bottom: 4px; font-size: 0.85rem; color: #555; }
+        input[type="text"], input[type="number"], select { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 5px; box-sizing: border-box; font-size: 1rem; background-color: #fff; }
+        input[readonly], select:disabled { background-color: #f1f5f9; color: #64748b; cursor: not-allowed; border-color: #e2e8f0; font-weight: bold; opacity: 1;}
+        
+        .btn { width: 100%; padding: 12px; font-size: 1rem; font-weight: bold; border: none; border-radius: 5px; cursor: pointer; margin-bottom: 10px; display: block; }
+        .btn-gps { background-color: #0ea5e9; color: white; }
+        .btn-add { background-color: #28a745; color: white; margin-top: 10px; }
+        .btn-add-vacuna { background-color: #e2e8f0; color: #334155; padding: 8px; font-size: 0.9rem; margin-top: 5px; border: 1px dashed #94a3b8; }
+        .btn-guardar { background-color: #4f46e5; color: white; padding: 15px; font-size: 1.1rem; margin-top: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .btn-sincronizar { background-color: #f59e0b; color: white; padding: 15px; font-size: 1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 10px; }
+        
+        #mapa { height: 250px; width: 100%; border-radius: 5px; border: 1px solid #cbd5e1; position: relative; overflow: hidden; z-index: 1; margin-bottom:10px; }
+        .btn-eliminar { position: absolute; top: 10px; right: 10px; background: #ef4444; color: white; border: none; border-radius: 3px; padding: 5px 10px; font-size: 0.8rem; cursor: pointer; }
+        
+        .bloque-vacuna { background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px; border-radius: 5px; margin-bottom: 8px; position: relative;}
+        .vacuna-header { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
+        .vacuna-header select { flex-grow: 1; margin-bottom: 0; }
+        .btn-eliminar-vacuna { background: #ef4444; color: white; border: none; border-radius: 4px; padding: 10px 15px; cursor: pointer; font-weight: bold; }
+        .bloque-parentesco { background: #fffbeb; border: 1px solid #fcd34d; padding: 10px; border-radius: 5px; margin-bottom: 12px; }
+        .label-parentesco { color: #b45309; font-weight: bold; font-size: 0.85rem; display: block; margin-bottom: 5px; }
+        
+        .oculto { display: none !important; }
+        .ts-control { border-radius: 5px; border: 1px solid #cbd5e1; padding: 10px; font-size: 1rem; }
+        .campo-invalido { border: 2px solid #ef4444 !important; background-color: #fef2f2 !important; transition: all 0.3s ease; }
+        
+        .pin-radar { border-radius: 50%; border: 2px solid white; box-shadow: 0 0 4px rgba(0,0,0,0.5); width: 22px; height: 22px; display:flex; justify-content:center; align-items:center; color:white; font-size:10px; font-weight:bold; box-sizing:border-box;}
+        .radar-verde { background-color: #22c55e; }
+        .radar-amarillo { background-color: #eab308; }
+        .radar-rojo { background-color: #ef4444; }
+        .radar-gris { background-color: #64748b; }
+        .radar-azul { background-color: #3b82f6; }
+    </style>
+</head>
+<body>
+
+<div class="contenedor" id="formulario_maestro">
+    <div class="tarjeta">
+        <h2>1. Datos Generales de la Jornada</h2>
+        <div class="form-group"><label>Fecha de la Actividad *</label><input type="text" id="fecha_actividad" class="guardar-cache" placeholder="DD/MM/AAAA" maxlength="10" oninput="aplicarMascaraFecha(event)" required></div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div class="form-group"><label>Vacunador 1 *</label><input type="text" id="nombre_vacunador" class="guardar-cache" required></div>
+            <div class="form-group"><label>Vacunador 2</label><input type="text" id="nombre_vacunador_2" class="guardar-cache"></div>
+        </div>
+
+        <div class="form-group"><label>Entidad de Residencia *</label><select id="entidad" class="guardar-cache select-buscable" placeholder="Busca entidad..."></select></div>
+        <div class="form-group"><label>Jurisdicción Sanitaria *</label><select id="jurisdiccion" class="guardar-cache select-buscable" placeholder="Busca jurisdicción..."></select></div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div class="form-group"><label>Municipio *</label><select id="municipio" class="guardar-cache select-buscable" placeholder="Busca municipio..."></select></div>
+            <div class="form-group"><label>AGEB *</label><select id="ageb" class="guardar-cache select-buscable" onchange="verificarOtroAgeb()" placeholder="Busca AGEB..."></select></div>
+        </div>
+        
+        <div class="form-group oculto" id="grupo_otro_ageb"><label style="color:#d97706;">Especifique el AGEB *</label><input type="text" id="otro_ageb_texto" placeholder="Escriba el AGEB no listado"></div>
+        <div class="form-group"><label>Localidad *</label><input type="text" id="localidad" class="guardar-cache"></div>
+
+        <div class="form-group">
+            <label>Tipo de Actividad *</label>
+            <select id="tipo_actividad" class="guardar-cache" onchange="evaluarFlujoLogico();">
+                <option value="">-- Seleccione --</option>
+                <option value="barrido">Barrido</option>
+                <option value="bloqueo">Bloqueo vacunal</option>
+                <option value="modulo_fijo">Módulo fijo</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="tarjeta tarjeta-bloqueo oculto" id="seccion_bloqueo">
+        <h2>🚨 Gestión de Bloqueo Vacunal</h2>
+        
+        <div class="form-group" id="grupo_pregunta_estado_bloqueo">
+            <label>¿Qué deseas hacer? *</label>
+            <select id="estado_bloqueo" onchange="gestionarEstadoBloqueo()">
+                <option value="">-- Seleccione --</option><option value="nuevo">➕ Iniciar un Nuevo Bloqueo</option><option value="pendiente">📂 Continuar un Bloqueo Pendiente</option>
+            </select>
+        </div>
+
+        <div class="form-group oculto" id="selector_bloqueos_pendientes">
+            <label>Seleccione el Bloqueo Pendiente *</label>
+            <select id="lista_bloqueos_pendientes" onchange="cargarMetadatosBloqueo()">
+                <option value="">-- Seleccione un caso --</option>
+            </select>
+        </div>
+
+        <div id="metadatos_bloqueo" class="oculto" style="padding-top: 10px; border-top: 1px dashed #cbd5e1;">
+            <input type="hidden" id="id_bloqueo">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="form-group"><label>Nombre del Caso *</label><input type="text" id="bloqueo_nombre_caso"></div>
+                <div class="form-group">
+                    <label>Tipo de Bloqueo *</label>
+                    <select id="bloqueo_tipo" onchange="if(this.value==='OTRO'){document.getElementById('bloqueo_tipo_otro').classList.remove('oculto')}else{document.getElementById('bloqueo_tipo_otro').classList.add('oculto')}">
+                        <option value="">-- Seleccione --</option><option value="EFE">EFE</option><option value="COQUE">Coque</option><option value="OTRO">Otro</option>
+                    </select>
+                </div>
+            </div>
+            <input type="text" id="bloqueo_tipo_otro" class="oculto" placeholder="Especifique el tipo de bloqueo" style="margin-bottom:12px;">
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="form-group"><label>Fecha Notificación *</label><input type="text" id="bloqueo_fecha_notificacion" placeholder="DD/MM/AAAA" maxlength="10" oninput="aplicarMascaraFecha(event)"></div>
+                <div class="form-group"><label>Fecha Inicio Act. *</label><input type="text" id="bloqueo_fecha_inicio" placeholder="DD/MM/AAAA" maxlength="10" oninput="aplicarMascaraFecha(event)"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tarjeta oculto" id="bloque_domicilio">
+        <h2>2. Domicilio particular de la(s) persona(s)</h2>
+        
+        <div class="form-group" id="grupo_lugar_fijo">
+            <label>¿El registro se realiza desde un lugar fijo?</label>
+            <select id="registro_lugar_fijo" class="guardar-cache">
+                <option value="no" selected>No</option>
+                <option value="si">Sí</option>
+            </select>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div class="form-group"><label>Calle y Número *</label><input type="text" id="calle_numero" class="guardar-cache"></div>
+            <div class="form-group"><label>Colonia *</label><input type="text" id="colonia" class="guardar-cache"></div>
+        </div>
+
+        <div class="form-group oculto" id="grupo_domicilio_visitado">
+            <label>Domicilio Visitado *</label>
+            <select id="domicilio_visitado" onchange="evaluarFlujoLogico()">
+                <option value="">-- Seleccione --</option>
+                <option value="casa">Casa</option>
+                <option value="negocio">Negocio (N)</option>
+                <option value="lote_baldio">Lote baldío (DH)</option>
+                <option value="deshabitada">Casa deshabitada (DH)</option>
+            </select>
+        </div>
+
+        <div class="form-group oculto" id="grupo_situacion_domicilio">
+            <label>Situación del Domicilio / Familia *</label>
+            <select id="situacion_domicilio" onchange="evaluarFlujoLogico()">
+                <option value="">-- Seleccione --</option>
+                <option value="CN">Con niños, se registran (CN)</option>
+                <option value="CN_NR">Con niños, no se registran (CN_NR)</option>
+                <option value="SN_REG">Sin niños, se registra otra persona (SN)</option>
+                <option value="SN_NO">Sin niños, no se registra ninguna persona (SN)</option>
+                <option value="A">Familia ausente (A)</option>
+                <option value="R">Familia renuente (R)</option>
+            </select>
+        </div>
+
+        <div class="form-group oculto" id="grupo_situacion_negocio">
+            <label>Situación del Negocio *</label>
+            <select id="situacion_negocio" onchange="evaluarFlujoLogico()">
+                <option value="">-- Seleccione --</option>
+                <option value="N_CON">Con personas por registrar (N)</option>
+                <option value="N_SIN">Sin personas por registrar (N)</option>
+            </select>
+        </div>
+
+        <div class="form-group oculto" id="grupo_caso_domicilio">
+            <label>Caso en el domicilio visitado</label>
+            <select id="caso_en_domicilio">
+                <option value="ninguno" selected>Ninguno</option>
+                <option value="Sospechoso">Caso sospechoso (Caso*)</option>
+                <option value="Probable">Caso probable (Caso*)</option>
+            </select>
+        </div>
+    </div>
+
+    <div id="bloque_censo" class="oculto">
+        <div id="contenedor_personas"></div>
+        <button type="button" class="btn btn-add" onclick="agregarPersona()">➕ Añadir Nueva Persona</button>
+    </div>
+
+    <div class="tarjeta tarjeta-mapa oculto" id="bloque_mapa">
+        <h2>📍 Ubicación Geográfica</h2>
+        <div class="form-group">
+            <button type="button" class="btn btn-gps" onclick="detectarUbicacionGPS()">📍 Auto-detectar coordenadas del sitio *</button>
+            <div id="display_gps" class="coordenadas-box" style="margin-bottom:8px; text-align:center; font-weight:bold;">📍 Mueve el pin en el mapa</div>
+            <div id="mapa"></div>
+            <input type="hidden" id="latitud" value=""><input type="hidden" id="longitud" value="">
+        </div>
+    </div>
+
+    <div class="tarjeta tarjeta-bloqueo oculto" id="nodo_cierre_bloqueo">
+        <h2>🛑 Cierre del Brote / Bloqueo</h2>
+        <div class="form-group">
+            <label style="color: #b45309;">¿Es el ÚLTIMO registro de este Bloqueo? *</label>
+            <select id="ultimo_registro_bloqueo" onchange="evaluarCierreBloqueo()">
+                <option value="">-- Seleccione --</option>
+                <option value="no">No</option>
+                <option value="si">Sí</option>
+                <option value="pendiente">Marcar como pendiente</option>
+            </select>
+        </div>
+        <div id="campos_cierre_final" class="oculto" style="border-top: 1px solid #cbd5e1; padding-top: 10px;">
+            <div class="form-group"><label>Total de Manzanas Recorridas *</label><input type="number" id="manzanas_recorridas"></div>
+            <div class="form-group"><label>Fecha de Envío / Cierre *</label><input type="text" id="fecha_envio_bloqueo" placeholder="DD/MM/AAAA" maxlength="10" oninput="aplicarMascaraFecha(event)"></div>
+        </div>
+    </div>
+
+    <button type="button" class="btn btn-guardar" onclick="empaquetarYGuardar()">
+        💾 GUARDAR REGISTRO
+    </button>
+    <button type="button" id="btn_sincronizar" class="btn btn-sincronizar oculto" onclick="sincronizarPendientes()">
+        🔄 Sincronizar Datos Pendientes (0)
+    </button>
+</div>
+
+<script>
+    /* ==========================================
+       VARIABLES GLOBALES Y CATÁLOGOS COMPLETOS
+       ========================================== */
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzbKdhqlJCECb5JzlQbFUGW0eb8hHMJCEDou6fz5XebJT82pPoiW8nieGIRZuNn5cft/exec";
+    
+    let personaId = 0; let vacunaId = 0;  
+    let mapaInteractivo = null; let chincheta = null;
+    const DEFAULT_LAT = 25.423214; const DEFAULT_LON = -101.005302;
+    let tomSelectInstances = {};
+
+    const vacunasPorTipo = {
+        "Infante. (0 a 9 años)": ["BCG", "Anti Hepatitis B", "Hexavalente acelular (DPat-VIP-HB-Hib) 1 dósis", "Hexavalente acelular (DPat-VIP-HB-Hib) 2 dósis", "Hexavalente acelular (DPat-VIP-HB-Hib) 3 dósis", "Hexavalente acelular (DPat-VIP-HB-Hib) refuerzo dosis", "DPT", "Anti Rotavirus 1a", "Anti Rotavirus 2a", "Anti Neumococica conjugada (13 serotipos) 1a", "Anti Neumococica conjugada (13 serotipos) 2a", "Anti Neumococica conjugada (13 serotipos) 3a", "Anti Influenza 1a", "Anti Influenza 2a", "Anti Influenza refuerzo", "SRP 0", "SRP 1a", "SRP 2ª", "Otra vacuna"],
+        "Adolescente. (10 a 19 años)": ["Anti Hepatitis B 1a", "Anti Hepatitis B 2a", "TD 1a", "TD 2a", "TD 3a", "TD refuerzo", "TDPA 1a", "Influenza", "SR 1a", "SR 2a", "SR refuerzo", "VPH (niñas y niños de 5o de primaria y de 11 años no escolarizados)", "Varicela", "Anti Hepatitis A", "COVID-19", "Anti Neumococica conjugada (refuerzo)", "Neumo 23", "Otra vacuna"],
+        "Adulto. (20 a 59 años)": ["Anti Hepatitis B 1a", "Anti Hepatitis B 2a", "TD 1a", "TD 2a", "TD 3a", "TD refuerzo", "TDPA 1a", "Influenza", "SR 1a", "SR 2a", "SR refuerzo", "Varicela", "Anti Hepatitis A", "COVID-19", "Anti Neumococica conjugada (refuerzo)", "Neumo 23", "Otra vacuna"],
+        "Adulto Mayor. (60 y más años)": ["Anti Hepatitis B 1a", "Anti Hepatitis B 2a", "TD 1a", "TD 2a", "TD 3a", "TD refuerzo", "TDPA 1a", "Influenza", "SR 1a", "SR 2a", "SR refuerzo", "Varicela", "Anti Hepatitis A", "COVID-19", "Anti Neumococica conjugada (refuerzo)", "Neumo 23", "Otra vacuna"]
+    };
+
+    const catEntidades = ["01 Aguascalientes", "02 Baja California", "03 Baja California Sur", "04 Campeche", "05 Coahuila", "06 Colima", "07 Chiapas", "08 Chihuahua", "09 Ciudad de México", "10 Durango", "11 Guanajuato", "12 Guerrero", "13 Hidalgo", "14 Jalisco", "15 México", "16 Michoacán", "17 Morelos", "18 Nayarit", "19 Nuevo León", "20 Oaxaca", "21 Puebla", "22 Querétaro", "23 Quintana Roo", "24 San Luis Potosí", "25 Sinaloa", "26 Sonora", "27 Tabasco", "28 Tamaulipas", "29 Tlaxcala", "30 Veracruz", "31 Yucatán", "32 Zacatecas"];
+    const catMunicipios = ["003 Allende", "012 Guerrero", "013 Hidalgo", "022 Nava", "025 Piedras Negras", "037 Villa Unión", "002 Acuña", "014 Jiménez", "019 Morelos", "038 Zaragoza", "015 Juárez", "020 Múzquiz", "026 Progreso", "028 Sabinas", "032 San Juan De Sabinas", "001 Abasolo", "005 Candela", "006 Castaños", "008 Escobedo", "010 Frontera", "018 Monclova", "021 Nadadores", "031 San Buenaventura", "007 Cuatro Ciénegas", "016 Lamadrid", "023 Ocampo", "029 Sacramento", "034 Sierra Mojada", "017 Matamoros", "035 Torreón", "036 Viesca", "009 Francisco I. Madero", "033 San Pedro", "004 Arteaga", "011 General Cepeda", "024 Parras", "027 Ramos Arizpe", "030 Saltillo", "Otro"];
+    const catJurisdicciones = ["01 Piedras Negras", "02 Acuña", "03 Sabinas", "04 Monclova", "05 Cuatro Ciénegas", "06 Torreón", "07 Francisco I. Madero", "08 Saltillo"];
+    const catAGEBs = ["Acueducto, Los Arcos - 281-2", "Aeropuerto - 060-9", "Alfredo B. Bonfil - 236-7", "Altos de Bella Unión - 037-5", "América - 148-1", "Ampliación María de León - 521-5", "Ampliación Morelos - 543-1", "Analco - 153-7", "Balcones de las Torres - 572-8", "Baldío - 042-6", "Bella Unión - 037-6", "Bonanza - 213-6", "Centenario - 264-9", "Ciudad Las Torres - 569-6", "Colinas del Sur - 502-2", "Ejidal - 022-9", "El Álamo - 439-7", "Escorial I - 138-2", "Fidel Velázquez - 065-1", "La Herradura - 388-2", "Las Torres - 511-1", "Loma Linda - 495-0", "Mirasierra - 512-6", "Saltillo 2000 - 403-9", "Satélite Sur - 305-A", "Teresitas - 508-A", "Otro"];
+
+    window.onload = function() {
+        poblarCatalogosGenerales();
+        document.querySelectorAll('.select-buscable').forEach(el => { tomSelectInstances[el.id] = new TomSelect(el, { create: false }); });
+        document.querySelectorAll('.guardar-cache').forEach(el => { el.addEventListener('change', (e) => localStorage.setItem(`censia_${e.target.id}`, e.target.value)); });
+        cargarCacheLocal();
+        inicializarMapaDefecto();
+        evaluarFlujoLogico(); 
+        
+        actualizarBotonSincronizacion();
+        window.addEventListener('online', sincronizarPendientes);
+    };
+
+    /* ==========================================
+       NUEVO MOTOR DE FECHAS (Máscaras y Parseo)
+       ========================================== */
+    function aplicarMascaraFecha(e) {
+        let v = e.target.value.replace(/\D/g, ''); // Deja solo números
+        if (v.length >= 2 && v.length < 4) {
+            v = v.substring(0,2) + '/' + v.substring(2);
+        } else if (v.length >= 4) {
+            v = v.substring(0,2) + '/' + v.substring(2,4) + '/' + v.substring(4,8);
+        }
+        e.target.value = v;
+    }
+
+    function parsearFechaDDMMYYYY(str) {
+        if(!str || str.length !== 10) return null;
+        let p = str.split('/');
+        if(p.length !== 3) return null;
+        // Validación matemática simple de fecha
+        let d = parseInt(p[0], 10), m = parseInt(p[1], 10), y = parseInt(p[2], 10);
+        if(m < 1 || m > 12 || d < 1 || d > 31 || y < 1900 || y > 2100) return null;
+        return new Date(y, m - 1, d);
+    }
+
+    // Funciones estándar
+    function poblarCatalogosGenerales() {
+        const llenar = (id, arr) => {
+            const el = document.getElementById(id);
+            if(!el) return;
+            el.innerHTML = '<option value="">-- Seleccione --</option>';
+            arr.forEach(val => { el.add(new Option(val, val)); });
+        };
+        llenar('entidad', catEntidades);
+        llenar('jurisdiccion', catJurisdicciones);
+        llenar('municipio', catMunicipios);
+        llenar('ageb', catAGEBs);
+    }
+
+    function cargarCacheLocal() {
+        const campos = ['fecha_actividad', 'nombre_vacunador', 'nombre_vacunador_2', 'entidad', 'jurisdiccion', 'municipio', 'ageb', 'localidad', 'tipo_actividad', 'registro_lugar_fijo', 'calle_numero', 'colonia'];
+        campos.forEach(id => {
+            const guardado = localStorage.getItem(`censia_${id}`);
+            if (guardado) {
+                if (tomSelectInstances[id]) tomSelectInstances[id].setValue(guardado);
+                else document.getElementById(id).value = guardado;
+            }
+        });
+        
+        if (!document.getElementById('fecha_actividad').value) {
+            let hoy = new Date();
+            let dd = String(hoy.getDate()).padStart(2, '0');
+            let mm = String(hoy.getMonth() + 1).padStart(2, '0');
+            let yyyy = hoy.getFullYear();
+            document.getElementById('fecha_actividad').value = `${dd}/${mm}/${yyyy}`;
+        }
+        verificarOtroAgeb();
+    }
+
+    function verificarOtroAgeb() {
+        const a = document.getElementById('ageb').value;
+        const div = document.getElementById('grupo_otro_ageb');
+        if(a === 'Otro') div.classList.remove('oculto');
+        else { div.classList.add('oculto'); document.getElementById('otro_ageb_texto').value = ''; }
+    }
+
+    function gestionarEstadoBloqueo() {
+        const estado = document.getElementById('estado_bloqueo').value;
+        const selectorPendientes = document.getElementById('selector_bloqueos_pendientes');
+        const metadatos = document.getElementById('metadatos_bloqueo');
+        
+        if (estado === 'nuevo') {
+            selectorPendientes.classList.add('oculto'); metadatos.classList.remove('oculto');
+            document.getElementById('id_bloqueo').value = generarUUID();
+            document.getElementById('bloqueo_nombre_caso').readOnly = false;
+            document.getElementById('bloqueo_nombre_caso').value = '';
+            document.getElementById('bloqueo_fecha_notificacion').readOnly = false;
+            document.getElementById('bloqueo_fecha_notificacion').value = '';
+            document.getElementById('bloqueo_fecha_inicio').readOnly = false;
+            document.getElementById('bloqueo_fecha_inicio').value = '';
+            document.getElementById('bloqueo_tipo').disabled = false;
+            document.getElementById('bloqueo_tipo').value = '';
+        } else if (estado === 'pendiente') {
+            selectorPendientes.classList.remove('oculto'); metadatos.classList.add('oculto');
+            cargarListaPendientes();
+        }
+    }
+
+    function cargarListaPendientes() {
+        const lista = JSON.parse(localStorage.getItem('censia_bloqueos_pendientes') || '[]');
+        const select = document.getElementById('lista_bloqueos_pendientes');
+        select.innerHTML = '<option value="">-- Seleccione un caso --</option>';
+        lista.forEach(b => { let o = document.createElement('option'); o.value = b.id_bloqueo; o.textContent = b.nombre_caso; select.appendChild(o); });
+    }
+
+    function cargarMetadatosBloqueo() {
+        const idSel = document.getElementById('lista_bloqueos_pendientes').value; if(!idSel) return;
+        const lista = JSON.parse(localStorage.getItem('censia_bloqueos_pendientes') || '[]');
+        const b = lista.find(x => x.id_bloqueo === idSel);
+        if(b) {
+            document.getElementById('grupo_pregunta_estado_bloqueo').classList.add('oculto');
+            document.getElementById('selector_bloqueos_pendientes').classList.add('oculto');
+            document.getElementById('metadatos_bloqueo').classList.remove('oculto');
+            
+            document.getElementById('id_bloqueo').value = b.id_bloqueo;
+            
+            const cNom = document.getElementById('bloqueo_nombre_caso'); cNom.value = b.nombre_caso; cNom.readOnly = true;
+            const cNot = document.getElementById('bloqueo_fecha_notificacion'); cNot.value = b.fecha_notificacion; cNot.readOnly = true;
+            const cIni = document.getElementById('bloqueo_fecha_inicio'); cIni.value = b.fecha_inicio; cIni.readOnly = true;
+            
+            let tb = b.tipo || b.tipo_bloqueo || '';
+            const cTipo = document.getElementById('bloqueo_tipo');
+            if (['EFE', 'COQUE'].includes(tb)) {
+                cTipo.value = tb;
+                document.getElementById('bloqueo_tipo_otro').classList.add('oculto');
+            } else {
+                cTipo.value = 'OTRO';
+                const oText = document.getElementById('bloqueo_tipo_otro');
+                oText.value = tb; oText.classList.remove('oculto'); oText.readOnly = true;
+            }
+            cTipo.disabled = true;
+        }
+    }
+
+    function evaluarFlujoLogico() {
+        const scrollY = window.scrollY;
+
+        const listaPendientes = JSON.parse(localStorage.getItem('censia_bloqueos_pendientes') || '[]');
+        const selectEstado = document.getElementById('estado_bloqueo');
+        if (selectEstado) {
+            const optPendiente = selectEstado.querySelector('option[value="pendiente"]');
+            if (listaPendientes.length === 0) {
+                if(optPendiente) optPendiente.disabled = true;
+                if(selectEstado.value === 'pendiente') selectEstado.value = '';
+            } else {
+                if(optPendiente) optPendiente.disabled = false;
+            }
+        }
+
+        const tAct = document.getElementById('tipo_actividad').value; 
+        const dom = document.getElementById('domicilio_visitado').value;
+        const sDom = document.getElementById('situacion_domicilio').value; 
+        const sNeg = document.getElementById('situacion_negocio').value;
+
+        const ids = ['bloque_domicilio', 'bloque_censo', 'bloque_mapa', 'seccion_bloqueo', 'metadatos_bloqueo', 'selector_bloqueos_pendientes', 'grupo_pregunta_estado_bloqueo', 'grupo_lugar_fijo', 'grupo_domicilio_visitado', 'grupo_situacion_domicilio', 'grupo_situacion_negocio', 'grupo_caso_domicilio', 'nodo_cierre_bloqueo', 'campos_cierre_final'];
+        ids.forEach(id => { const el = document.getElementById(id); if (el) el.classList.add('oculto'); });
+        
+        const maestro = document.getElementById('formulario_maestro');
+        const bCenso = document.getElementById('bloque_censo');
+        const bDom = document.getElementById('bloque_domicilio');
+        const bMapa = document.getElementById('bloque_mapa');
+        const bCierre = document.getElementById('nodo_cierre_bloqueo');
+
+        if (tAct === 'modulo_fijo') {
+            maestro.insertBefore(bCenso, bDom); maestro.insertBefore(bMapa, bCierre); 
+        } else {
+            maestro.insertBefore(bDom, bCenso); maestro.insertBefore(bMapa, bCenso); 
+        }
+
+        if (!tAct) { window.scrollTo({ top: scrollY, behavior: 'instant' }); return; }
+
+        if (tAct === 'modulo_fijo') {
+            document.getElementById('bloque_domicilio').classList.remove('oculto'); 
+            document.getElementById('bloque_censo').classList.remove('oculto'); 
+            document.getElementById('bloque_mapa').classList.remove('oculto'); 
+            if (document.querySelectorAll('.tarjeta-persona').length === 0) agregarPersona();
+            setTimeout(() => { if(mapaInteractivo) mapaInteractivo.invalidateSize(); }, 300);
+            window.scrollTo({ top: scrollY, behavior: 'instant' });
+            return;
+        }
+
+        if (tAct === 'bloqueo') {
+            document.getElementById('seccion_bloqueo').classList.remove('oculto');
+            if (listaPendientes.length === 0 && document.getElementById('estado_bloqueo').value === "") {
+                document.getElementById('estado_bloqueo').value = 'nuevo';
+                gestionarEstadoBloqueo(); 
+            } else if (listaPendientes.length > 0 && document.getElementById('id_bloqueo').value === "") {
+                document.getElementById('grupo_pregunta_estado_bloqueo').classList.remove('oculto');
+            } else if (document.getElementById('id_bloqueo').value !== "") {
+                document.getElementById('metadatos_bloqueo').classList.remove('oculto');
+            }
+        }
+
+        if (tAct === 'barrido' || tAct === 'bloqueo') {
+            document.getElementById('bloque_domicilio').classList.remove('oculto');
+            document.getElementById('grupo_lugar_fijo').classList.remove('oculto');
+            document.getElementById('grupo_domicilio_visitado').classList.remove('oculto');
+            document.getElementById('bloque_mapa').classList.remove('oculto');
+            setTimeout(() => { if(mapaInteractivo) mapaInteractivo.invalidateSize(); }, 300); 
+            
+            if (dom === 'casa') {
+                document.getElementById('grupo_situacion_domicilio').classList.remove('oculto');
+                if (tAct === 'bloqueo') document.getElementById('grupo_caso_domicilio').classList.remove('oculto');
+            } else if (dom === 'negocio') {
+                document.getElementById('grupo_situacion_negocio').classList.remove('oculto');
+            }
+        }
+
+        let censo = (sDom === 'CN' || sDom === 'SN_REG' || sNeg === 'N_CON');
+        if (censo) {
+            document.getElementById('bloque_censo').classList.remove('oculto');
+            if (document.querySelectorAll('.tarjeta-persona').length === 0) agregarPersona();
+        } else {
+            document.getElementById('bloque_censo').classList.add('oculto');
+            document.getElementById('contenedor_personas').innerHTML = ''; personaId = 0;
+        }
+
+        if (tAct === 'bloqueo' && dom !== "") document.getElementById('nodo_cierre_bloqueo').classList.remove('oculto');
+        
+        window.scrollTo({ top: scrollY, behavior: 'instant' });
+    }
+
+    function evaluarCierreBloqueo() {
+        const resp = document.getElementById('ultimo_registro_bloqueo').value;
+        const divCierre = document.getElementById('campos_cierre_final');
+        if(resp === 'si') { 
+            divCierre.classList.remove('oculto'); 
+            let hoy = new Date();
+            document.getElementById('fecha_envio_bloqueo').value = `${String(hoy.getDate()).padStart(2, '0')}/${String(hoy.getMonth()+1).padStart(2, '0')}/${hoy.getFullYear()}`; 
+        }
+        else divCierre.classList.add('oculto');
+    }
+
+    function agregarPersona() {
+        personaId++; const pId = personaId;
+        const html = `
+            <div class="tarjeta tarjeta-persona" id="tarjeta_persona_${pId}">
+                <h2>👤 Persona ${pId}</h2><button type="button" class="btn-eliminar" onclick="eliminarPersona(${pId})">X</button>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div class="form-group"><label>Primer Apellido *</label><input type="text" id="paterno_${pId}" oninput="calcularCurpSugerida(${pId})"></div>
+                    <div class="form-group"><label>Segundo Apellido</label><input type="text" id="materno_${pId}" oninput="calcularCurpSugerida(${pId})"></div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div class="form-group"><label>Nombre(s) *</label><input type="text" id="nombre_${pId}" oninput="calcularCurpSugerida(${pId})"></div>
+                    <div class="form-group"><label>Sexo *</label><select id="sexo_${pId}" onchange="calcularCurpSugerida(${pId})"><option value="">-- Seleccione --</option><option value="H">Masculino</option><option value="M">Femenino</option></select></div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div class="form-group"><label>Nacimiento *</label><input type="text" id="fecha_nacimiento_${pId}" placeholder="DD/MM/AAAA" maxlength="10" oninput="aplicarMascaraFecha(event); procesarEdadP(${pId}); calcularCurpSugerida(${pId});"></div>
+                    <div class="form-group"><label>Estado Nacimiento *</label><select id="estado_nac_${pId}" onchange="calcularCurpSugerida(${pId})"><option value="">-- Seleccione --</option></select></div>
+                </div>
+                <div class="form-group"><label>CURP Sugerida</label><input type="text" id="curp_${pId}" style="text-transform: uppercase; font-weight:bold;" maxlength="18"></div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div class="form-group"><label>Edad Calculada</label><input type="text" id="edad_calculada_${pId}" readonly></div>
+                    <div class="form-group"><label>Tipo de vacunación</label><input type="text" id="tipo_vacunacion_visible_${pId}" readonly><input type="hidden" id="tipo_vacunacion_${pId}"></div>
+                </div>
+                
+                <div id="bloque_parentesco_${pId}" class="bloque-parentesco oculto">
+                    <span class="label-parentesco">Datos del Pariente (Menores de edad)</span>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div class="form-group"><label>Nombre Completo</label><input type="text" id="tutor_nombre_${pId}"></div>
+                        <div class="form-group">
+                            <label>Parentesco</label>
+                            <select id="tutor_tipo_${pId}" onchange="if(this.value==='Otro parentesco'){document.getElementById('tutor_tipo_otro_${pId}').classList.remove('oculto')}else{document.getElementById('tutor_tipo_otro_${pId}').classList.add('oculto')}">
+                                <option value="">-- Seleccione --</option>
+                                <option value="Madre">Madre</option><option value="Padre">Padre</option><option value="Abuela">Abuela</option>
+                                <option value="Abuelo">Abuelo</option><option value="Tía">Tía</option><option value="Tío">Tío</option>
+                                <option value="Hija">Hija</option><option value="Hijo">Hijo</option><option value="Prima">Prima</option>
+                                <option value="Primo">Primo</option><option value="Vecino(a)">Vecino(a)</option><option value="Otro parentesco">Otro parentesco</option>
+                            </select>
+                            <input type="text" id="tutor_tipo_otro_${pId}" class="oculto" placeholder="Especifique parentesco" style="margin-top:5px;">
+                        </div>
+                    </div>
+                    <div class="form-group"><label>Fecha de Nacimiento</label><input type="text" id="tutor_fecha_nac_${pId}" placeholder="DD/MM/AAAA" maxlength="10" oninput="aplicarMascaraFecha(event)"></div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div class="form-group">
+                        <label>Derechohabiencia *</label>
+                        <select id="derecho_${pId}" onchange="if(this.value==='OTRA'){document.getElementById('derecho_otra_${pId}').classList.remove('oculto')}else{document.getElementById('derecho_otra_${pId}').classList.add('oculto')}">
+                            <option value="">-- Seleccione --</option><option value="IMSS Ordinario">IMSS Ordinario</option><option value="ISSSTE">ISSSTE</option>
+                            <option value="SSA">SSA</option><option value="Magisterio">Magisterio</option><option value="OTRA">Otra</option><option value="NINGUNA">Ninguna</option>
+                        </select>
+                        <input type="text" id="derecho_otra_${pId}" class="oculto" placeholder="Especifique dependencia" style="margin-top:5px;">
+                    </div>
+                    <div class="form-group"><label>Estatus migratorio</label><select id="migra_${pId}"><option value="REGULAR" selected>Regular</option><option value="IRREGULAR">Irregular</option></select></div>
+                </div>
+                <div class="form-group"><label>Esquema de Vacunación Aplicado</label><div id="contenedor_vacunas_p${pId}"></div><button type="button" class="btn btn-add-vacuna" onclick="agregarVacunaAPersona(${pId})">💉 Añadir vacuna</button></div>
+            </div>`;
+        document.getElementById('contenedor_personas').insertAdjacentHTML('beforeend', html);
+        
+        const selNac = document.getElementById(`estado_nac_${pId}`);
+        catEntidades.forEach(val => { selNac.add(new Option(val, val.substring(0,2))); });
+        tomSelectInstances[`estado_nac_${pId}`] = new TomSelect(selNac, { create: false }); 
+
+        agregarVacunaAPersona(pId);
+    }
+
+    function eliminarPersona(pId) { 
+        if(document.querySelectorAll('.tarjeta-persona').length === 1) return alert("Debe capturar al menos un paciente."); 
+        document.getElementById(`tarjeta_persona_${pId}`).remove(); 
+    }
+
+    function calcularCurpSugerida(pId) {
+        const nom = document.getElementById(`nombre_${pId}`).value.toUpperCase().trim();
+        const pat = document.getElementById(`paterno_${pId}`).value.toUpperCase().trim();
+        const mat = document.getElementById(`materno_${pId}`).value.toUpperCase().trim();
+        const fn = document.getElementById(`fecha_nacimiento_${pId}`).value;
+        const sx = document.getElementById(`sexo_${pId}`).value;
+        const estNum = document.getElementById(`estado_nac_${pId}`).value;
+        
+        if(!pat || fn.length < 10 || !sx || !estNum || pat.length < 2) return;
+
+        const mapaEntidadesRenapo = { "01":"AS", "02":"BC", "03":"BS", "04":"CC", "05":"CL", "06":"CM", "07":"CS", "08":"CH", "09":"DF", "10":"DG", "11":"GT", "12":"GR", "13":"HG", "14":"JC", "15":"MC", "16":"MN", "17":"MS", "18":"NT", "19":"NL", "20":"OC", "21":"PL", "22":"QT", "23":"QR", "24":"SP", "25":"SL", "26":"SR", "27":"TC", "28":"TS", "29":"TL", "30":"VZ", "31":"YN", "32":"ZS" };
+        const estLetras = mapaEntidadesRenapo[estNum] || "NE";
+
+        const getVocal = (str) => { const m = str.substring(1).match(/[AEIOU]/); return m ? m[0] : 'X'; };
+        const getCons = (str) => { const m = str.substring(1).match(/[BCDFGHJKLMNPQRSTVWXYZ]/); return m ? m[0] : 'X'; };
+
+        let curp = pat.charAt(0) + getVocal(pat) + (mat ? mat.charAt(0) : 'X') + (nom ? nom.charAt(0) : 'X');
+        const [dd, mm, yyyy] = fn.split('/');
+        curp += yyyy.substring(2, 4) + mm + dd;
+        curp += sx + estLetras;
+        curp += getCons(pat) + (mat ? getCons(mat) : 'X') + (nom ? getCons(nom) : 'X');
+        curp += "0A"; 
+
+        document.getElementById(`curp_${pId}`).value = curp;
+    }
+
+    function procesarEdadP(pId) {
+        const fA_str = document.getElementById('fecha_actividad').value; 
+        const fN_str = document.getElementById(`fecha_nacimiento_${pId}`).value;
+        
+        if (fA_str.length < 10 || fN_str.length < 10) return;
+        
+        const d1 = parsearFechaDDMMYYYY(fA_str);
+        const d2 = parsearFechaDDMMYYYY(fN_str);
+        
+        if(!d1 || !d2 || d2 > d1) { document.getElementById(`edad_calculada_${pId}`).value = 'Fecha inválida'; return; }
+
+        let anios = d1.getFullYear() - d2.getFullYear(); 
+        let meses = d1.getMonth() - d2.getMonth(); 
+        if (meses < 0 || (meses === 0 && d1.getDate() < d2.getDate())) { anios--; meses += 12; }
+        
+        if (anios < 0 || anios > 120) { document.getElementById(`edad_calculada_${pId}`).value = 'Fecha inválida'; return; }
+
+        document.getElementById(`edad_calculada_${pId}`).value = `${anios} años, ${meses} meses`;
+        let tLabel = anios < 10 ? 'Infante. (0 a 9 años)' : (anios < 20 ? 'Adolescente. (10 a 19 años)' : (anios < 60 ? 'Adulto. (20 a 59 años)' : 'Adulto Mayor. (60 y más años)'));
+        
+        document.getElementById(`tipo_vacunacion_${pId}`).value = tLabel; document.getElementById(`tipo_vacunacion_visible_${pId}`).value = tLabel;
+        
+        const bloqueTutor = document.getElementById(`bloque_parentesco_${pId}`);
+        if(tLabel === 'Infante. (0 a 9 años)' || tLabel === 'Adolescente. (10 a 19 años)') bloqueTutor.classList.remove('oculto');
+        else bloqueTutor.classList.add('oculto');
+
+        document.querySelectorAll(`.vacuna-de-p${pId}`).forEach(el => llenarUnSelect(el.id, tLabel));
+        if (typeof actualizarFiltroExcluyente === 'function') actualizarFiltroExcluyente(pId);
+    }
+
+    function agregarVacunaAPersona(pId) {
+        vacunaId++; const vId = vacunaId; const fBase = document.getElementById('fecha_actividad').value;
+        const html = `<div class="bloque-vacuna" id="bloque_vacuna_${vId}">
+            <div class="vacuna-header">
+                <select id="select_vacuna_${vId}" class="vacuna-de-p${pId}" onchange="actualizarFiltroExcluyente(${pId}); if(this.value==='Otra vacuna'){document.getElementById('otra_vacuna_txt_${vId}').classList.remove('oculto')}else{document.getElementById('otra_vacuna_txt_${vId}').classList.add('oculto')}">
+                    <option value="">-- Ingrese nacimiento --</option>
+                </select>
+                <button type="button" class="btn-eliminar-vacuna" onclick="eliminarVacuna(${vId}, ${pId})">X</button>
+            </div>
+            <input type="text" id="otra_vacuna_txt_${vId}" class="oculto" placeholder="Especifique la vacuna" style="margin-bottom:8px;">
+            <div class="form-group" style="margin-bottom:0;"><label style="font-size:0.75rem;">Fecha Exacta de Aplicación *</label><input type="text" id="fecha_vacuna_${vId}" value="${fBase}" placeholder="DD/MM/AAAA" maxlength="10" oninput="aplicarMascaraFecha(event)"></div>
+        </div>`;
+        document.getElementById(`contenedor_vacunas_p${pId}`).insertAdjacentHTML('beforeend', html);
+        const t = document.getElementById(`tipo_vacunacion_${pId}`).value;
+        if (t) { llenarUnSelect(`select_vacuna_${vId}`, t); actualizarFiltroExcluyente(pId); }
+    }
+
+    function eliminarVacuna(vId, pId) { document.getElementById(`bloque_vacuna_${vId}`).remove(); actualizarFiltroExcluyente(pId); }
+    
+    function llenarUnSelect(id, tLabel) {
+        const sel = document.getElementById(id); const vPrev = sel.value;
+        sel.innerHTML = '<option value="">-- Seleccione Vacuna --</option>';
+        if(vacunasPorTipo[tLabel]) { vacunasPorTipo[tLabel].forEach(v => { let o = document.createElement('option'); o.value=v; o.textContent=v; if(v===vPrev) o.selected=true; sel.appendChild(o); }); }
+    }
+
+    function actualizarFiltroExcluyente(pId) {
+        const selects = document.querySelectorAll(`.vacuna-de-p${pId}`);
+        let vals = Array.from(selects).map(s => s.value).filter(v => v !== "");
+        selects.forEach(s => { Array.from(s.options).forEach(o => { if(o.value === "") return; if(vals.includes(o.value) && s.value !== o.value) { o.disabled = true; o.style.display = 'none'; } else { o.disabled = false; o.style.display = 'block'; } }); });
+    }
+
+    function inicializarMapaDefecto() {
+        if(mapaInteractivo) return;
+        mapaInteractivo = L.map('mapa').setView([DEFAULT_LAT, DEFAULT_LON], 16);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(mapaInteractivo);
+        pintarRadarHistorial();
+        chincheta = L.marker([DEFAULT_LAT, DEFAULT_LON], { draggable: true }).addTo(mapaInteractivo);
+        actualizarCoordenadasPantalla(DEFAULT_LAT, DEFAULT_LON);
+        chincheta.on('dragend', e => actualizarCoordenadasPantalla(e.target.getLatLng().lat, e.target.getLatLng().lng));
+        mapaInteractivo.on('click', e => { chincheta.setLatLng(e.latlng); actualizarCoordenadasPantalla(e.latlng.lat, e.latlng.lng); });
+    }
+
+    function pintarRadarHistorial() {
+        const hist = JSON.parse(localStorage.getItem('censia_radar_mapa') || '[]');
+        const etiquetasDom = { 'casa': 'Casa', 'deshabitada': 'Casa deshabitada', 'lote_baldio': 'Lote baldío', 'negocio': 'Negocio', 'MF': 'Módulo Fijo' };
+        
+        mapaInteractivo.eachLayer(function (layer) {
+            if (layer instanceof L.Marker && layer !== chincheta) { mapaInteractivo.removeLayer(layer); }
+        });
+
+        hist.forEach(p => {
+            let color = 'radar-gris'; let letra = p.sit || p.dom || '';
+            
+            if(letra === 'Caso') color = 'radar-rojo';
+            else if(letra === 'MF') color = 'radar-azul'; 
+            else if(letra === 'CN') color = 'radar-verde';
+            else if(letra === 'V' || letra === 'SN_REG') { color = 'radar-verde'; letra = 'SN'; }
+            else if(letra === 'A' || letra === 'SN' || letra === 'SN_NO') color = 'radar-amarillo';
+            else if(letra === 'R') color = 'radar-rojo';
+            else if(letra === 'N_CON' || letra === 'N_SIN' || letra === 'negocio') { color = 'radar-azul'; letra = 'N'; }
+            else if(letra === 'lote_baldio' || letra === 'deshabitada') { color = 'radar-gris'; letra = 'DH'; }
+            
+            const iconHtml = `<div class="pin-radar ${color}">${letra}</div>`;
+            L.marker([p.lat, p.lon], { icon: L.divIcon({ html: iconHtml, className: '', iconSize:[22,22], iconAnchor:[11,11] }) }).bindTooltip(`<b>${etiquetasDom[p.dom] || 'Ubicación'}</b><br>Sit: ${letra}`, { direction: 'top', offset: [0, -10] }).addTo(mapaInteractivo);
+        });
+    }
+
+    // MOTOR GPS OFFLINE DE ALTO RENDIMIENTO
+    function detectarUbicacionGPS() {
+        if (!navigator.geolocation) return alert("❌ GPS no soportado en tu dispositivo.");
+        
+        const btn = document.querySelector('.btn-gps');
+        const txtOrig = btn.innerHTML;
+        btn.innerHTML = "⏳ Buscando satélites GPS... (sal a cielo abierto)";
+        btn.disabled = true;
+        btn.style.backgroundColor = "#64748b";
+
+        const opcionesGPS = { 
+            enableHighAccuracy: true, 
+            timeout: 15000, 
+            maximumAge: 10000 
+        };
+
+        navigator.geolocation.getCurrentPosition(pos => {
+            btn.innerHTML = txtOrig;
+            btn.disabled = false;
+            btn.style.backgroundColor = "#0ea5e9";
+            
+            mapaInteractivo.setView([pos.coords.latitude, pos.coords.longitude], 17);
+            chincheta.setLatLng([pos.coords.latitude, pos.coords.longitude]);
+            actualizarCoordenadasPantalla(pos.coords.latitude, pos.coords.longitude);
+            alert("📍 Coordenadas detectadas correctamente.");
+        }, err => {
+            btn.innerHTML = txtOrig;
+            btn.disabled = false;
+            btn.style.backgroundColor = "#0ea5e9";
+            
+            let msg = "⚠️ Error al detectar GPS.\n\n";
+            if(err.code === 1) msg += "Permiso de ubicación denegado. Otorga permiso de GPS al navegador.";
+            else if(err.code === 2) msg += "Señal inalcanzable. Asegúrate de tener la Ubicación (GPS) encendida en tu celular y no estar bajo un techo de concreto.";
+            else if(err.code === 3) msg += "Tiempo de espera agotado. El satélite tardó mucho en responder.";
+            
+            alert(msg + "\n\nNOTA: Si no hay señal de satélite, puedes mover el pin rojo manualmente en la pantalla (aunque el mapa se vea gris sin internet, las coordenadas se guardarán bien).");
+        }, opcionesGPS);
+    }
+
+    function actualizarCoordenadasPantalla(lat, lon) { document.getElementById('latitud').value = lat; document.getElementById('longitud').value = lon; document.getElementById('display_gps').innerHTML = `📍 Lat: ${lat.toFixed(5)} | Lon: ${lon.toFixed(5)}`; }
+    function generarUUID() { return 'xxxxxxxx-xxxx-4xxx-yxxx'.replace(/[xy]/g, c => { let r = Math.random()*16|0, v=c=='x'?r:(r&0x3|0x8); return v.toString(16); }); }
+
+    /* ==========================================
+       MOTOR DE GUARDADO Y SINCRONIZACIÓN OFFLINE
+       ========================================== */
+    function empaquetarYGuardar() {
+        const tAct = document.getElementById('tipo_actividad').value;
+        const estadoBloqueo = document.getElementById('estado_bloqueo').value;
+        const listaPendientes = JSON.parse(localStorage.getItem('censia_bloqueos_pendientes') || '[]');
+
+        if (tAct === 'bloqueo') {
+            if (estadoBloqueo === 'pendiente' && listaPendientes.length === 0) {
+                alert("⚠️ ERROR: No existen bloqueos pendientes en el dispositivo. Selecciona '➕ Iniciar un Nuevo Bloqueo'.");
+                document.getElementById('estado_bloqueo').classList.add('campo-invalido');
+                return;
+            }
+        }
+
+        document.querySelectorAll('.campo-invalido').forEach(el => el.classList.remove('campo-invalido')); let hayErrores = false;
+        
+        // Validador mejorado para fechas en texto
+        const checkReq = (id) => { 
+            const el = document.getElementById(id); 
+            if(el && el.offsetParent !== null) {
+                if(!el.value) { el.classList.add('campo-invalido'); hayErrores = true; }
+                else if(el.placeholder === "DD/MM/AAAA" && el.value.length !== 10) { el.classList.add('campo-invalido'); hayErrores = true; }
+            }
+        };
+
+        ['tipo_actividad', 'fecha_actividad', 'entidad', 'jurisdiccion', 'municipio', 'localidad', 'nombre_vacunador'].forEach(checkReq);
+
+        if(tAct === 'barrido' || tAct === 'bloqueo' || tAct === 'modulo_fijo') {
+            ['calle_numero', 'colonia'].forEach(checkReq);
+            if(tAct !== 'modulo_fijo') {
+                checkReq('latitud'); 
+                checkReq('domicilio_visitado');
+                const dom = document.getElementById('domicilio_visitado').value;
+                if(dom === 'casa') checkReq('situacion_domicilio');
+                if(dom === 'negocio') checkReq('situacion_negocio');
+            }
+        }
+
+        let respCierre = "";
+        if (tAct === 'bloqueo') {
+            checkReq('estado_bloqueo');
+            if(estadoBloqueo === 'nuevo') { ['bloqueo_tipo', 'bloqueo_nombre_caso', 'bloqueo_fecha_notificacion', 'bloqueo_fecha_inicio'].forEach(checkReq); }
+            else if (estadoBloqueo === 'pendiente') { checkReq('lista_bloqueos_pendientes'); }
+            
+            checkReq('ultimo_registro_bloqueo');
+            respCierre = document.getElementById('ultimo_registro_bloqueo').value;
+            if(respCierre === 'si') { ['manzanas_recorridas', 'fecha_envio_bloqueo'].forEach(checkReq); }
+        }
+
+        const censoVisible = !document.getElementById('bloque_censo').classList.contains('oculto');
+        if(censoVisible) {
+            const tarjetas = document.querySelectorAll('.tarjeta-persona');
+            if(tarjetas.length === 0) { alert("Añada al menos una persona."); hayErrores = true; }
+            tarjetas.forEach(t => {
+                const pId = t.id.split('_').pop();
+                [`nombre_${pId}`, `fecha_nacimiento_${pId}`, `estado_nac_${pId}`, `sexo_${pId}`, `derecho_${pId}`].forEach(checkReq);
+                
+                if(document.getElementById(`edad_calculada_${pId}`).value === 'Fecha inválida') { document.getElementById(`fecha_nacimiento_${pId}`).classList.add('campo-invalido'); hayErrores = true; }
+
+                if(document.getElementById(`derecho_${pId}`).value === 'OTRA') checkReq(`derecho_otra_${pId}`);
+                if(document.getElementById(`tutor_tipo_${pId}`) && document.getElementById(`tutor_tipo_${pId}`).value === 'Otro parentesco') {
+                    checkReq(`tutor_tipo_otro_${pId}`);
+                }
+
+                let dosis = 0;
+                document.querySelectorAll(`.vacuna-de-p${pId}`).forEach(s => { 
+                    const vId = s.id.split('_').pop(); 
+                    if(s.value) { 
+                        dosis++; 
+                        checkReq(`fecha_vacuna_${vId}`); 
+                        if(s.value === 'Otra vacuna') checkReq(`otra_vacuna_txt_${vId}`); 
+                    } 
+                });
+                
+                if(dosis === 0) {
+                    hayErrores = true;
+                    const primerSelect = document.querySelector(`.vacuna-de-p${pId}`);
+                    if(primerSelect) primerSelect.classList.add('campo-invalido');
+                }
+            });
+        }
+
+        if(hayErrores) {
+            alert("❌ DATOS INCOMPLETOS O INVÁLIDOS.\n\nRevisa los recuadros en ROJO (Asegúrate de que las fechas tengan formato DD/MM/AAAA y seleccionar al menos una vacuna por persona).");
+            const primerError = document.querySelector('.campo-invalido'); if(primerError) primerError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
+
+        const getVal = (id) => { const el = document.getElementById(id); return el && !el.classList.contains('oculto') ? el.value : ""; };
+        
+        const payload = {
+            general: {
+                tipo_actividad: getVal('tipo_actividad'),
+                bloqueo_tipo: getVal('bloqueo_tipo') === 'OTRO' ? 'OTRO' : getVal('bloqueo_tipo'),
+                bloqueo_tipo_otro: getVal('bloqueo_tipo') === 'OTRO' ? getVal('bloqueo_tipo_otro') : '',
+                fecha_actividad: getVal('fecha_actividad'),
+                bloqueo_nombre_caso: getVal('bloqueo_nombre_caso'),
+                bloqueo_fecha_notificacion: getVal('bloqueo_fecha_notificacion'),
+                bloqueo_fecha_inicio: getVal('bloqueo_fecha_inicio'),
+                fecha_envio_bloqueo: getVal('fecha_envio_bloqueo'),
+                domicilio_visitado: getVal('domicilio_visitado'),
+                situacion_domicilio: getVal('situacion_domicilio') || getVal('situacion_negocio'),
+                caso_en_domicilio: getVal('caso_en_domicilio'),
+                nombre_vacunador: getVal('nombre_vacunador'),
+                nombre_vacunador_2: getVal('nombre_vacunador_2'),
+                entidad: getVal('entidad'),
+                jurisdiccion: getVal('jurisdiccion'),
+                municipio: getVal('municipio'),
+                ageb: getVal('ageb'),
+                otro_ageb_texto: getVal('otro_ageb_texto'),
+                localidad: getVal('localidad'),
+                calle_numero: getVal('calle_numero'),
+                colonia: getVal('colonia'),
+                ubicacion_gps: getVal('latitud') && getVal('longitud') ? `${getVal('latitud')}, ${getVal('longitud')}` : "",
+                resp_cierre: respCierre,
+                ultimo_registro_bloqueo: getVal('ultimo_registro_bloqueo'),
+                manzanas_recorridas: getVal('manzanas_recorridas'),
+                registro_lugar_fijo: getVal('registro_lugar_fijo'),
+                id_bloqueo: getVal('id_bloqueo')
+            },
+            pacientes: []
+        };
+
+        if(censoVisible) {
+            document.querySelectorAll('.tarjeta-persona').forEach(t => {
+                const pId = t.id.split('_').pop();
+                const idPaciente = generarUUID(); 
+                
+                let paciente = {
+                    id_paciente: idPaciente,
+                    paterno: getVal(`paterno_${pId}`),
+                    materno: getVal(`materno_${pId}`),
+                    nombres: getVal(`nombre_${pId}`),
+                    curp: getVal(`curp_${pId}`),
+                    nombre_pariente: getVal(`tutor_nombre_${pId}`),
+                    tipo_parentesco: getVal(`tutor_tipo_${pId}`),
+                    otro_parentesco: getVal(`tutor_tipo_otro_${pId}`),
+                    fecha_nac_pariente: getVal(`tutor_fecha_nac_${pId}`),
+                    tipo_vacunacion: getVal(`tipo_vacunacion_${pId}`),
+                    fecha_nacimiento: getVal(`fecha_nacimiento_${pId}`),
+                    edad: getVal(`edad_calculada_${pId}`),
+                    sexo: getVal(`sexo_${pId}`),
+                    derechohabiencia: getVal(`derecho_${pId}`),
+                    otra_derechohabiencia: getVal(`derecho_otra_${pId}`),
+                    estatus_migratorio: getVal(`migra_${pId}`),
+                    entidad_nacimiento: getVal(`estado_nac_${pId}`),
+                    vacunas: []
+                };
+
+                document.querySelectorAll(`.vacuna-de-p${pId}`).forEach(s => { 
+                    const vId = s.id.split('_').pop(); 
+                    if(s.value) { 
+                        paciente.vacunas.push({
+                            id_dosis: generarUUID(),
+                            vacuna_aplicada: s.value,
+                            vacuna_especificar: s.value === 'Otra vacuna' ? getVal(`otra_vacuna_txt_${vId}`) : '',
+                            fecha_ingresada: getVal(`fecha_vacuna_${vId}`)
+                        });
+                    } 
+                });
+                payload.pacientes.push(paciente);
+            });
+        } else {
+            payload.pacientes.push({ id_paciente: generarUUID(), vacunas: [] });
+        }
+
+        if (!navigator.onLine) {
+            guardarEnColaLocal(payload, tAct, respCierre, payload.general.domicilio_visitado, payload.general.situacion_domicilio, payload.general.caso_en_domicilio);
+            return;
+        }
+
+        const btnGuardar = document.querySelector('.btn-guardar');
+        const textoOriginalBtn = btnGuardar.innerHTML;
+        btnGuardar.innerHTML = "⏳ ENVIANDO DATOS A LA NUBE...";
+        btnGuardar.disabled = true;
+        btnGuardar.style.backgroundColor = "#64748b";
+
+        fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            body: JSON.stringify(payload),
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' } 
+        })
+        .then(response => {
+            btnGuardar.innerHTML = textoOriginalBtn;
+            btnGuardar.disabled = false;
+            btnGuardar.style.backgroundColor = "#4f46e5";
+
+            alert("✅ REGISTRO GUARDADO Y ENVIADO CON ÉXITO A GOOGLE SHEETS.");
+            procesarLimpiezaYMemoria(tAct, respCierre, payload.general.domicilio_visitado, payload.general.situacion_domicilio, payload.general.caso_en_domicilio);
+        })
+        .catch(error => {
+            btnGuardar.innerHTML = textoOriginalBtn;
+            btnGuardar.disabled = false;
+            btnGuardar.style.backgroundColor = "#4f46e5";
+            guardarEnColaLocal(payload, tAct, respCierre, payload.general.domicilio_visitado, payload.general.situacion_domicilio, payload.general.caso_en_domicilio);
+        });
+    }
+
+    function guardarEnColaLocal(payload, tAct, respCierre, dom, sitDom, casoDom) {
+        let cola = JSON.parse(localStorage.getItem('censia_cola_envios') || '[]');
+        cola.push(payload);
+        localStorage.setItem('censia_cola_envios', JSON.stringify(cola));
+        
+        alert("📡 REGISTRO GUARDADO LOCALMENTE.\n\nEl registro se ha guardado de forma segura en tu dispositivo. Asegúrate de enviarlo luego presionando el botón 'Sincronizar'.");
+        
+        procesarLimpiezaYMemoria(tAct, respCierre, dom, sitDom, casoDom);
+        actualizarBotonSincronizacion();
+    }
+
+    function actualizarBotonSincronizacion() {
+        const cola = JSON.parse(localStorage.getItem('censia_cola_envios') || '[]');
+        const btnSync = document.getElementById('btn_sincronizar');
+        if (btnSync) {
+            if (cola.length > 0) {
+                btnSync.innerHTML = `🔄 Sincronizar ${cola.length} registro(s) pendiente(s)`;
+                btnSync.classList.remove('oculto');
+            } else {
+                btnSync.classList.add('oculto');
+            }
+        }
+    }
+
+    async function sincronizarPendientes() {
+        if (!navigator.onLine) return alert("Aún no tienes conexión a internet para sincronizar.");
+        
+        let cola = JSON.parse(localStorage.getItem('censia_cola_envios') || '[]');
+        if (cola.length === 0) return;
+
+        const btnSync = document.getElementById('btn_sincronizar');
+        btnSync.innerHTML = "⏳ Sincronizando datos...";
+        btnSync.disabled = true;
+        
+        let pendientesFallidos = [];
+        let exitosos = 0;
+
+        for (let i = 0; i < cola.length; i++) {
+            try {
+                await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: JSON.stringify(cola[i]),
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+                });
+                exitosos++; 
+            } catch(e) {
+                pendientesFallidos.push(cola[i]); 
+            }
+        }
+
+        localStorage.setItem('censia_cola_envios', JSON.stringify(pendientesFallidos));
+        actualizarBotonSincronizacion();
+        btnSync.disabled = false;
+        
+        if (pendientesFallidos.length === 0) {
+            alert(`✅ Sincronización Completa.\n\nSe enviaron ${exitosos} registro(s) correctamente a la base de datos.`);
+        } else {
+            alert(`⚠️ Sincronización Parcial.\n\nSe enviaron ${exitosos} registros. Faltaron ${pendientesFallidos.length}. Intenta de nuevo.`);
+        }
+    }
+
+    function procesarLimpiezaYMemoria(tAct, respCierre, dom, sitDom, casoDom) {
+        if(tAct === 'barrido' || tAct === 'bloqueo' || tAct === 'modulo_fijo') {
+            const hist = JSON.parse(localStorage.getItem('censia_radar_mapa') || '[]');
+            let sitGuardada = (casoDom === 'Sospechoso' || casoDom === 'Probable') ? 'Caso' : (sitDom || dom || (tAct === 'modulo_fijo' ? 'MF' : ''));
+            let tPers = 0; let tDos = 0;
+            if(!document.getElementById('bloque_censo').classList.contains('oculto')) {
+                document.querySelectorAll('.tarjeta-persona').forEach(t => {
+                    tPers++; const pId = t.id.split('_').pop();
+                    document.querySelectorAll(`.vacuna-de-p${pId}`).forEach(s => { if(s.value) tDos++; });
+                });
+            }
+            hist.push({ lat: document.getElementById('latitud').value, lon: document.getElementById('longitud').value, dom: (tAct === 'modulo_fijo' ? 'MF' : dom), sit: sitGuardada, total_personas: tPers, total_dosis: tDos });
+            localStorage.setItem('censia_radar_mapa', JSON.stringify(hist));
+        }
+
+        if (tAct === 'bloqueo') {
+            let listaPendientes = JSON.parse(localStorage.getItem('censia_bloqueos_pendientes') || '[]');
+            const idB = document.getElementById('id_bloqueo').value;
+            const tipoB = document.getElementById('bloqueo_tipo').value === 'OTRO' ? document.getElementById('bloqueo_tipo_otro').value : document.getElementById('bloqueo_tipo').value;
+            
+            if (respCierre === 'si') {
+                listaPendientes = listaPendientes.filter(b => b.id_bloqueo !== idB);
+            } else if (respCierre === 'pendiente' || respCierre === 'no') {
+                const index = listaPendientes.findIndex(b => b.id_bloqueo === idB);
+                const objData = { id_bloqueo: idB, nombre_caso: document.getElementById('bloqueo_nombre_caso').value, fecha_notificacion: document.getElementById('bloqueo_fecha_notificacion').value, fecha_inicio: document.getElementById('bloqueo_fecha_inicio').value, tipo_bloqueo: tipoB };
+                if(index > -1) listaPendientes[index] = objData; else listaPendientes.push(objData);
+            }
+            localStorage.setItem('censia_bloqueos_pendientes', JSON.stringify(listaPendientes));
+        }
+
+        document.getElementById('contenedor_personas').innerHTML = ''; personaId = 0;
+        ['domicilio_visitado', 'situacion_domicilio', 'situacion_negocio', 'ultimo_registro_bloqueo', 'manzanas_recorridas'].forEach(id => {
+            const el = document.getElementById(id); if(el) el.value = '';
+        });
+        const casoDomEl = document.getElementById('caso_en_domicilio'); if(casoDomEl) casoDomEl.value = 'ninguno'; 
+        const lf = document.getElementById('registro_lugar_fijo'); if(lf) lf.value = 'no';
+
+        if (tAct === 'bloqueo' && respCierre === 'no') { 
+            document.getElementById('bloqueo_nombre_caso').readOnly = true; 
+            document.getElementById('bloqueo_fecha_notificacion').readOnly = true; 
+            document.getElementById('bloqueo_fecha_inicio').readOnly = true; 
+            document.getElementById('bloqueo_tipo').disabled = true;
+            evaluarFlujoLogico(); 
+        } else {
+            ['id_bloqueo', 'estado_bloqueo', 'lista_bloqueos_pendientes', 'bloqueo_nombre_caso', 'bloqueo_fecha_notificacion', 'bloqueo_fecha_inicio', 'bloqueo_tipo', 'fecha_envio_bloqueo'].forEach(id => {
+                const el = document.getElementById(id); if(el) el.value = '';
+            });
+            document.getElementById('bloqueo_nombre_caso').readOnly = false; 
+            document.getElementById('bloqueo_fecha_notificacion').readOnly = false; 
+            document.getElementById('bloqueo_fecha_inicio').readOnly = false; 
+            document.getElementById('bloqueo_tipo').disabled = false;
+            
+            evaluarFlujoLogico(); 
+        }
+        
+        if(mapaInteractivo) pintarRadarHistorial();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Iniciar PWA
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js')
+                .catch(err => console.error('Error SW', err));
+        });
+    }
+</script>
+</body>
+</html>
