@@ -64,7 +64,7 @@
 <div class="contenedor" id="formulario_maestro">
     <div class="tarjeta">
         <h2>1. Datos Generales de la Jornada</h2>
-        <div class="form-group"><label>Fecha de la Actividad *</label><input type="text" id="fecha_actividad" class="guardar-cache" placeholder="DD/MM/AAAA" maxlength="10" oninput="aplicarMascaraFecha(event)" required></div>
+        <div class="form-group"><label>Fecha de la Actividad *</label><input type="text" inputmode="numeric" id="fecha_actividad" class="guardar-cache" placeholder="DD/MM/AAAA" maxlength="10" oninput="aplicarMascaraFecha(event)" required></div>
         
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
             <div class="form-group"><label>Vacunador 1 *</label><input type="text" id="nombre_vacunador" class="guardar-cache" required></div>
@@ -123,8 +123,8 @@
             <input type="text" id="bloqueo_tipo_otro" class="oculto" placeholder="Especifique el tipo de bloqueo" style="margin-bottom:12px;">
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <div class="form-group"><label>Fecha Notificación *</label><input type="text" id="bloqueo_fecha_notificacion" placeholder="DD/MM/AAAA" maxlength="10" oninput="aplicarMascaraFecha(event)"></div>
-                <div class="form-group"><label>Fecha Inicio Act. *</label><input type="text" id="bloqueo_fecha_inicio" placeholder="DD/MM/AAAA" maxlength="10" oninput="aplicarMascaraFecha(event)"></div>
+                <div class="form-group"><label>Fecha Notificación *</label><input type="text" inputmode="numeric" id="bloqueo_fecha_notificacion" placeholder="DD/MM/AAAA" maxlength="10" oninput="aplicarMascaraFecha(event)"></div>
+                <div class="form-group"><label>Fecha Inicio Act. *</label><input type="text" inputmode="numeric" id="bloqueo_fecha_inicio" placeholder="DD/MM/AAAA" maxlength="10" oninput="aplicarMascaraFecha(event)"></div>
             </div>
         </div>
     </div>
@@ -216,7 +216,7 @@
         </div>
         <div id="campos_cierre_final" class="oculto" style="border-top: 1px solid #cbd5e1; padding-top: 10px;">
             <div class="form-group"><label>Total de Manzanas Recorridas *</label><input type="number" id="manzanas_recorridas"></div>
-            <div class="form-group"><label>Fecha de Envío / Cierre *</label><input type="text" id="fecha_envio_bloqueo" placeholder="DD/MM/AAAA" maxlength="10" oninput="aplicarMascaraFecha(event)"></div>
+            <div class="form-group"><label>Fecha de Envío / Cierre *</label><input type="text" inputmode="numeric" id="fecha_envio_bloqueo" placeholder="DD/MM/AAAA" maxlength="10" oninput="aplicarMascaraFecha(event)"></div>
         </div>
     </div>
 
@@ -267,6 +267,9 @@
        NUEVO MOTOR DE FECHAS (Máscaras y Parseo)
        ========================================== */
     function aplicarMascaraFecha(e) {
+        // Permite que el encuestador borre sin que la diagonal vuelva a aparecer de golpe
+        if (e.inputType === 'deleteContentBackward') return;
+
         let v = e.target.value.replace(/\D/g, ''); // Deja solo números
         if (v.length >= 2 && v.length < 4) {
             v = v.substring(0,2) + '/' + v.substring(2);
