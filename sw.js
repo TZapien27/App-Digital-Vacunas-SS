@@ -1,4 +1,4 @@
-const CACHE_NAME = 'censo-v1';
+const CACHE_NAME = 'censo-v15.1';
 const urlsToCache = [
   './',
   './index.html',
