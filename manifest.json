@@ -1,0 +1,15 @@
+{
+  "name": "Censo Vacunación SS",
+  "short_name": "Censo SS",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#eef2f5",
+  "theme_color": "#0056b3",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3004/3004451.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
