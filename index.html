@@ -500,7 +500,7 @@
                     <div class="form-group"><label>Sexo *</label><select id="sexo_${pId}" onchange="calcularCurpSugerida(${pId})"><option value="">-- Seleccione --</option><option value="H">Masculino</option><option value="M">Femenino</option></select></div>
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <div class="form-group"><label>Nacimiento *</label><input type="text" id="fecha_nacimiento_${pId}" placeholder="DD/MM/AAAA" maxlength="10" oninput="aplicarMascaraFecha(event); procesarEdadP(${pId}); calcularCurpSugerida(${pId});"></div>
+                    <div class="form-group"><label>Nacimiento *</label><input type="numeric" id="fecha_nacimiento_${pId}" placeholder="DD/MM/AAAA" maxlength="10" oninput="aplicarMascaraFecha(event); procesarEdadP(${pId}); calcularCurpSugerida(${pId});"></div>
                     <div class="form-group"><label>Estado Nacimiento *</label><select id="estado_nac_${pId}" onchange="calcularCurpSugerida(${pId})"><option value="">-- Seleccione --</option></select></div>
                 </div>
                 <div class="form-group"><label>CURP Sugerida</label><input type="text" id="curp_${pId}" style="text-transform: uppercase; font-weight:bold;" maxlength="18"></div>
@@ -525,7 +525,7 @@
                             <input type="text" id="tutor_tipo_otro_${pId}" class="oculto" placeholder="Especifique parentesco" style="margin-top:5px;">
                         </div>
                     </div>
-                    <div class="form-group"><label>Fecha de Nacimiento</label><input type="text" id="tutor_fecha_nac_${pId}" placeholder="DD/MM/AAAA" maxlength="10" oninput="aplicarMascaraFecha(event)"></div>
+                    <div class="form-group"><label>Fecha de Nacimiento</label><input type="numeric" id="tutor_fecha_nac_${pId}" placeholder="DD/MM/AAAA" maxlength="10" oninput="aplicarMascaraFecha(event)"></div>
                 </div>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
@@ -621,7 +621,7 @@
                 <button type="button" class="btn-eliminar-vacuna" onclick="eliminarVacuna(${vId}, ${pId})">X</button>
             </div>
             <input type="text" id="otra_vacuna_txt_${vId}" class="oculto" placeholder="Especifique la vacuna" style="margin-bottom:8px;">
-            <div class="form-group" style="margin-bottom:0;"><label style="font-size:0.75rem;">Fecha Exacta de Aplicación *</label><input type="text" id="fecha_vacuna_${vId}" value="${fBase}" placeholder="DD/MM/AAAA" maxlength="10" oninput="aplicarMascaraFecha(event)"></div>
+            <div class="form-group" style="margin-bottom:0;"><label style="font-size:0.75rem;">Fecha Exacta de Aplicación *</label><input type="numeric" id="fecha_vacuna_${vId}" value="${fBase}" placeholder="DD/MM/AAAA" maxlength="10" oninput="aplicarMascaraFecha(event)"></div>
         </div>`;
         document.getElementById(`contenedor_vacunas_p${pId}`).insertAdjacentHTML('beforeend', html);
         const t = document.getElementById(`tipo_vacunacion_${pId}`).value;
