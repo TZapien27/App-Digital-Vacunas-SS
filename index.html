@@ -58,6 +58,7 @@
         .radar-gris { background-color: #64748b; }
         .radar-azul { background-color: #3b82f6; }
     </style>
+    <script src="catalogos.js"></script>
 </head>
 <body>
 
@@ -244,11 +245,6 @@
         "Adulto. (20 a 59 años)": ["Anti Hepatitis B 1a", "Anti Hepatitis B 2a", "TD 1a", "TD 2a", "TD 3a", "TD refuerzo", "TDPA 1a", "Influenza", "SR 1a", "SR 2a", "SR refuerzo", "Varicela", "Anti Hepatitis A", "COVID-19", "Anti Neumococica conjugada (refuerzo)", "Neumo 23", "Otra vacuna"],
         "Adulto Mayor. (60 y más años)": ["Anti Hepatitis B 1a", "Anti Hepatitis B 2a", "TD 1a", "TD 2a", "TD 3a", "TD refuerzo", "TDPA 1a", "Influenza", "SR 1a", "SR 2a", "SR refuerzo", "Varicela", "Anti Hepatitis A", "COVID-19", "Anti Neumococica conjugada (refuerzo)", "Neumo 23", "Otra vacuna"]
     };
-
-    const catEntidades = ["01 Aguascalientes", "02 Baja California", "03 Baja California Sur", "04 Campeche", "05 Coahuila", "06 Colima", "07 Chiapas", "08 Chihuahua", "09 Ciudad de México", "10 Durango", "11 Guanajuato", "12 Guerrero", "13 Hidalgo", "14 Jalisco", "15 México", "16 Michoacán", "17 Morelos", "18 Nayarit", "19 Nuevo León", "20 Oaxaca", "21 Puebla", "22 Querétaro", "23 Quintana Roo", "24 San Luis Potosí", "25 Sinaloa", "26 Sonora", "27 Tabasco", "28 Tamaulipas", "29 Tlaxcala", "30 Veracruz", "31 Yucatán", "32 Zacatecas"];
-    const catMunicipios = ["003 Allende", "012 Guerrero", "013 Hidalgo", "022 Nava", "025 Piedras Negras", "037 Villa Unión", "002 Acuña", "014 Jiménez", "019 Morelos", "038 Zaragoza", "015 Juárez", "020 Múzquiz", "026 Progreso", "028 Sabinas", "032 San Juan De Sabinas", "001 Abasolo", "005 Candela", "006 Castaños", "008 Escobedo", "010 Frontera", "018 Monclova", "021 Nadadores", "031 San Buenaventura", "007 Cuatro Ciénegas", "016 Lamadrid", "023 Ocampo", "029 Sacramento", "034 Sierra Mojada", "017 Matamoros", "035 Torreón", "036 Viesca", "009 Francisco I. Madero", "033 San Pedro", "004 Arteaga", "011 General Cepeda", "024 Parras", "027 Ramos Arizpe", "030 Saltillo", "Otro"];
-    const catJurisdicciones = ["01 Piedras Negras", "02 Acuña", "03 Sabinas", "04 Monclova", "05 Cuatro Ciénegas", "06 Torreón", "07 Francisco I. Madero", "08 Saltillo"];
-    const catAGEBs = ["Acueducto, Los Arcos - 281-2", "Aeropuerto - 060-9", "Alfredo B. Bonfil - 236-7", "Altos de Bella Unión - 037-5", "América - 148-1", "Ampliación María de León - 521-5", "Ampliación Morelos - 543-1", "Analco - 153-7", "Balcones de las Torres - 572-8", "Baldío - 042-6", "Bella Unión - 037-6", "Bonanza - 213-6", "Centenario - 264-9", "Ciudad Las Torres - 569-6", "Colinas del Sur - 502-2", "Ejidal - 022-9", "El Álamo - 439-7", "Escorial I - 138-2", "Fidel Velázquez - 065-1", "La Herradura - 388-2", "Las Torres - 511-1", "Loma Linda - 495-0", "Mirasierra - 512-6", "Saltillo 2000 - 403-9", "Satélite Sur - 305-A", "Teresitas - 508-A", "Otro"];
 
     window.onload = function() {
         poblarCatalogosGenerales();

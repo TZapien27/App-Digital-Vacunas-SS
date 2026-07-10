@@ -1,7 +1,8 @@
-const CACHE_NAME = 'censo-v15.1';
+const CACHE_NAME = 'censo-v15.2';
 const urlsToCache = [
   './',
   './index.html',
+  './catalogos.js',  // <-- Agregamos el archivo externo para uso Offline
   'manifest.json',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
