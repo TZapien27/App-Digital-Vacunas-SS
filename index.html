@@ -186,6 +186,11 @@
                 <option value="Probable">Caso probable (Caso*)</option>
             </select>
         </div>
+        <!-- INYECCIÓN: CAMPO OBSERVACIONES DE BRIGADA -->
+        <div class="form-group" id="grupo_observaciones_domicilio">
+            <label>Observaciones de la Brigada (Opcional)</label>
+            <textarea id="observaciones_domicilio" class="guardar-cache" rows="2" placeholder="Detalles operativos, condiciones del domicilio..." style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 5px; font-family: inherit; resize: vertical; box-sizing: border-box;"></textarea>
+        </div>
     </div>
 
     <div id="bloque_censo" class="oculto">
@@ -831,6 +836,8 @@
                 localidad: getVal('localidad'),
                 calle_numero: getVal('calle_numero'),
                 colonia: getVal('colonia'),
+                // INYECCIÓN: CAPTURA DE OBSERVACIONES
+                observaciones_domicilio: getVal('observaciones_domicilio'),
                 ubicacion_gps: getVal('latitud') && getVal('longitud') ? `${getVal('latitud')}, ${getVal('longitud')}` : "",
                 resp_cierre: respCierre,
                 ultimo_registro_bloqueo: getVal('ultimo_registro_bloqueo'),
