@@ -1064,21 +1064,18 @@
     }
 
     /* ==========================================
-       MOTOR DE BÚSQUEDA ASÍNCRONA BLINDADO
+       MOTOR DE BÚSQUEDA ASÍNCRONA (CORRECCIÓN CORS)
        ========================================== */
     async function ejecutarBusqueda() {
         const inputEl = document.getElementById('input_busqueda');
         const contenedorResultados = document.getElementById('resultados_busqueda');
 
-        if (!inputEl || !contenedorResultados) {
-            console.error("No se encontraron los elementos del buscador en el DOM.");
-            return;
-        }
+        if (!inputEl || !contenedorResultados) return;
 
         const query = inputEl.value.trim();
 
         if (query.length < 3) {
-            contenedorResultados.innerHTML = "<span style='color: #ef4444; font-weight: bold;'>⚠️ Ingresa al menos 3 caracteres para buscar.</span>";
+            contenedorResultados.innerHTML = "<span style='color: #ef4444; font-weight: bold;'>⚠️ Ingresa al menos 3 caracteres.</span>";
             return;
         }
 
@@ -1087,18 +1084,21 @@
         try {
             const url = `${GOOGLE_SCRIPT_URL}?action=buscar&q=${encodeURIComponent(query)}`;
             
+            // CONCEPTO APLICADO: Solicitud Simple (Sin headers) y seguimiento de redirección 302
             const respuesta = await fetch(url, {
                 method: 'GET',
-                headers: { 'Cache-Control': 'no-cache' }
+                redirect: 'follow' 
             });
             
+            // Analizar la respuesta JSON directamente
             const datos = await respuesta.json();
 
-            if (!datos || datos.length === 0) {
+            if (!datos || datos.length === 0 || datos.error) {
                 contenedorResultados.innerHTML = "❌ No se encontraron pacientes coincidentes.";
                 return;
             }
 
+            // Renderizado inmutable respetando maquetación
             let html = "<ul style='list-style: none; padding: 0; margin: 0;'>";
             datos.forEach(paciente => {
                 html += `<li style="background: #ffffff; padding: 10px; margin-top: 8px; border-radius: 5px; border: 1px solid #e2e8f0; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
@@ -1113,7 +1113,7 @@
 
         } catch (error) {
             contenedorResultados.innerHTML = "<span style='color: #ef4444; font-weight: bold;'>❌ Error de conexión al consultar el servidor.</span>";
-            console.error("Error en la búsqueda:", error);
+            console.error("Detalle del fallo CORS/Red de la búsqueda:", error);
         }
     }
 </script>
