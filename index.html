@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Censo Vacunación CENSIA - V15.3</title>
+    <title>App Digital Vacunación SNSP-SS - V15.5</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0056b3">
@@ -63,8 +63,18 @@
 <body>
 
 <div class="contenedor" id="formulario_maestro">
+    <!-- INYECCIÓN: MÓDULO DE BÚSQUEDA DE PACIENTES -->
+        <div class="tarjeta" id="bloque_buscador" style="background-color: #f8fafc; border-left: 4px solid #3b82f6;">
+            <h2 style="color: #1e293b; margin-top: 0; font-size: 1.2em;">🔍 Búsqueda Rápida de Pacientes</h2>
+            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                <input type="text" id="input_busqueda" placeholder="Buscar por Apellido, CURP o Calle..." style="flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 5px; font-family: inherit;">
+                <button type="button" class="btn" onclick="ejecutarBusqueda()" style="width: auto; margin: 0; background-color: #3b82f6; padding: 10px 20px;">Buscar</button>
+            </div>
+            <div id="resultados_busqueda" style="font-size: 0.9em; color: #475569;"></div>
+        </div>
+        <!-- FIN INYECCIÓN -->
     <div class="tarjeta">
-<h2>1. Datos Generales de la Jornada <span style="color: #ef4444; font-size: 0.8rem; background: #fee2e2; padding: 2px 6px; border-radius: 4px; float: right;">v15.3</span></h2>        <div class="form-group"><label>Fecha de la Actividad *</label><input type="text" inputmode="numeric" autocomplete="off" id="fecha_actividad" class="guardar-cache" placeholder="DD/MM/AAAA" maxlength="10" oninput="aplicarMascaraFecha(event)" required></div>
+        <h2>1. Datos Generales de la Jornada <span style="color: #ef4444; font-size: 0.8rem; background: #fee2e2; padding: 2px 6px; border-radius: 4px; float: right;">v15.5</span></h2>        <div class="form-group"><label>Fecha de la Actividad *</label><input type="text" inputmode="numeric" autocomplete="off" id="fecha_actividad" class="guardar-cache" placeholder="DD/MM/AAAA" maxlength="10" oninput="aplicarMascaraFecha(event)" required></div>
         
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
             <div class="form-group"><label>Vacunador 1 *</label><input type="text" id="nombre_vacunador" class="guardar-cache" required></div>
@@ -189,7 +199,7 @@
         <!-- INYECCIÓN: CAMPO OBSERVACIONES DE BRIGADA -->
         <div class="form-group" id="grupo_observaciones_domicilio">
             <label>Observaciones de la Brigada (Opcional)</label>
-            <textarea id="observaciones_domicilio" class="guardar-cache" rows="2" placeholder="Detalles operativos, condiciones del domicilio..." style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 5px; font-family: inherit; resize: vertical; box-sizing: border-box;"></textarea>
+            <textarea id="observaciones_domicilio" class="guardar-cache" rows="2" placeholder="Detalles operativos o de las personas, condiciones del domicilio..." style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 5px; font-family: inherit; resize: vertical; box-sizing: border-box;"></textarea>
         </div>
     </div>
 
@@ -237,7 +247,7 @@
     /* ==========================================
        VARIABLES GLOBALES Y CATÁLOGOS COMPLETOS
        ========================================== */
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxr_gvP13QK8mH-buUBgbtFaYre-3u6DImJwgfs7-O_nIuiOnRUVDOQvqxvZv-LYRDC/exec";
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyRj1WvFOS20ytT4_Uvu5LSjy3jsGGDqyLFmx1__1UaGfU8GsrkJFioICFXvv8fL2mD/exec";
     
     let personaId = 0; let vacunaId = 0;  
     let mapaInteractivo = null; let chincheta = null;
@@ -837,7 +847,7 @@
                 calle_numero: getVal('calle_numero'),
                 colonia: getVal('colonia'),
                 // INYECCIÓN: CAPTURA DE OBSERVACIONES
-                observaciones_domicilio: getVal('observaciones_domicilio'),
+                observaciones: getVal('observaciones_domicilio'),
                 ubicacion_gps: getVal('latitud') && getVal('longitud') ? `${getVal('latitud')}, ${getVal('longitud')}` : "",
                 resp_cierre: respCierre,
                 ultimo_registro_bloqueo: getVal('ultimo_registro_bloqueo'),
@@ -1051,6 +1061,56 @@
             navigator.serviceWorker.register('sw.js')
                 .catch(err => console.error('Error SW', err));
         });
+    }
+    
+    /* ==========================================
+       MOTOR DE BÚSQUEDA ASÍNCRONA (HTTP GET)
+       ========================================== */
+    async function ejecutarBusqueda() {
+        const query = document.getElementById('input_busqueda').value.trim();
+        const contenedorResultados = document.getElementById('resultados_busqueda');
+
+        if (query.length < 3) {
+            contenedorResultados.innerHTML = "<span style='color: #ef4444; font-weight: bold;'>⚠️ Ingresa al menos 3 caracteres.</span>";
+            return;
+        }
+
+        contenedorResultados.innerHTML = "⏳ Consultando base de datos central...";
+
+        try {
+            // Utiliza la URL global definida al inicio de tu script
+            const url = `${GOOGLE_SCRIPT_URL}?action=buscar&q=${encodeURIComponent(query)}`;
+            
+            const respuesta = await fetch(url, {
+                method: 'GET',
+                // Previene problemas de caché en el dispositivo móvil
+                headers: { 'Cache-Control': 'no-cache' } 
+            });
+            
+            const datos = await respuesta.json();
+
+            if (!datos || datos.length === 0) {
+                contenedorResultados.innerHTML = "❌ No se encontraron pacientes coincidentes.";
+                return;
+            }
+
+            // Construcción dinámica del HTML (Renderizado de resultados)
+            let html = "<ul style='list-style: none; padding: 0; margin: 0;'>";
+            datos.forEach(paciente => {
+                html += `<li style="background: #ffffff; padding: 10px; margin-top: 8px; border-radius: 5px; border: 1px solid #e2e8f0; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                            <strong style="color: #0f172a;">${paciente.nombres} ${paciente.paterno} ${paciente.materno}</strong><br>
+                            <span style="color: #64748b;">CURP:</span> <span style="font-weight: bold;">${paciente.curp}</span><br>
+                            <span style="color: #64748b;">Domicilio:</span> ${paciente.domicilio}
+                         </li>`;
+            });
+            html += "</ul>";
+            
+            contenedorResultados.innerHTML = html;
+
+        } catch (error) {
+            contenedorResultados.innerHTML = "<span style='color: #ef4444; font-weight: bold;'>❌ Error de conexión. Asegúrate de tener internet.</span>";
+            console.error("Error en la búsqueda:", error);
+        }
     }
 </script>
 </body>
