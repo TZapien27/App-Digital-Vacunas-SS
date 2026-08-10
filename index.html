@@ -1062,29 +1062,34 @@
                 .catch(err => console.error('Error SW', err));
         });
     }
-    
+
     /* ==========================================
-       MOTOR DE BÚSQUEDA ASÍNCRONA (HTTP GET)
+       MOTOR DE BÚSQUEDA ASÍNCRONA BLINDADO
        ========================================== */
     async function ejecutarBusqueda() {
-        const query = document.getElementById('input_busqueda').value.trim();
+        const inputEl = document.getElementById('input_busqueda');
         const contenedorResultados = document.getElementById('resultados_busqueda');
 
+        if (!inputEl || !contenedorResultados) {
+            console.error("No se encontraron los elementos del buscador en el DOM.");
+            return;
+        }
+
+        const query = inputEl.value.trim();
+
         if (query.length < 3) {
-            contenedorResultados.innerHTML = "<span style='color: #ef4444; font-weight: bold;'>⚠️ Ingresa al menos 3 caracteres.</span>";
+            contenedorResultados.innerHTML = "<span style='color: #ef4444; font-weight: bold;'>⚠️ Ingresa al menos 3 caracteres para buscar.</span>";
             return;
         }
 
         contenedorResultados.innerHTML = "⏳ Consultando base de datos central...";
 
         try {
-            // Utiliza la URL global definida al inicio de tu script
             const url = `${GOOGLE_SCRIPT_URL}?action=buscar&q=${encodeURIComponent(query)}`;
             
             const respuesta = await fetch(url, {
                 method: 'GET',
-                // Previene problemas de caché en el dispositivo móvil
-                headers: { 'Cache-Control': 'no-cache' } 
+                headers: { 'Cache-Control': 'no-cache' }
             });
             
             const datos = await respuesta.json();
@@ -1094,7 +1099,6 @@
                 return;
             }
 
-            // Construcción dinámica del HTML (Renderizado de resultados)
             let html = "<ul style='list-style: none; padding: 0; margin: 0;'>";
             datos.forEach(paciente => {
                 html += `<li style="background: #ffffff; padding: 10px; margin-top: 8px; border-radius: 5px; border: 1px solid #e2e8f0; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
@@ -1108,7 +1112,7 @@
             contenedorResultados.innerHTML = html;
 
         } catch (error) {
-            contenedorResultados.innerHTML = "<span style='color: #ef4444; font-weight: bold;'>❌ Error de conexión. Asegúrate de tener internet.</span>";
+            contenedorResultados.innerHTML = "<span style='color: #ef4444; font-weight: bold;'>❌ Error de conexión al consultar el servidor.</span>";
             console.error("Error en la búsqueda:", error);
         }
     }
