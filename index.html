@@ -1142,14 +1142,10 @@
         }
     }
 
+
+
     /* ==========================================
-       CAPA VECTORIAL REMOTA (HISTORIAL DE BRIGADAS)
-       ========================================== */
-    /* ==========================================
-       CAPA VECTORIAL REMOTA (CON DATA-DRIVEN STYLING RGBA)
-       ========================================== */
-    /* ==========================================
-       CAPA VECTORIAL REMOTA (DATA-DRIVEN STYLING RGBA)
+       CAPA VECTORIAL REMOTA (DATA-DRIVEN STYLING + FUZZY MATCHING)
        ========================================== */
     async function cargarHistorialGpsRemoto() {
         if (!mapaInteractivo) return;
@@ -1167,36 +1163,41 @@
                     let bgFondo = 'rgba(100, 116, 139, 0.45)'; 
                     let colorBorde = 'rgba(100, 116, 139, 0.8)';
                     
-                    // 2. Normalización de cadenas de la base de datos
-                    const situacion = (p.situacion || "").toString().trim();
-                    const domicilio = (p.domicilio || "").toString().trim();
+                    // 2. Normalización de Cadenas (Mayúsculas y sin espacios muertos)
+                    const sit = (p.situacion || "").toString().trim().toUpperCase();
+                    const dom = (p.domicilio || "").toString().trim().toUpperCase();
                     
-                    // Evaluamos tanto la situación como el tipo de domicilio para abarcar todos tus <option>
-                    const parametroEvaluacion = situacion || domicilio;
+                    // RASTREADOR TÉCNICO: Presiona F12 para ver exactamente qué texto está enviando Sheets
+                    // console.log(`Evaluando -> Lat: ${p.lat}, Domicilio: '${dom}', Situacion: '${sit}'`);
 
-                    // 3. Diccionario Lógico Relacional (Mapeo de values del HTML a Colores RGBA)
-                    if (parametroEvaluacion === 'CN' || parametroEvaluacion === 'CN_NR') {
-                        // Censo Nominal / Con Niños (Verde con 45% opacidad)
+                    // 3. Diccionario Lógico por Coincidencia Parcial (Fuzzy Matching)
+                    if (sit.includes('CN') || sit.includes('CON NIÑOS')) {
+                        // Censo Nominal (Verde)
                         bgFondo = 'rgba(34, 197, 94, 0.45)'; 
                         colorBorde = 'rgba(34, 197, 94, 0.8)';
-                    } else if (parametroEvaluacion === 'A') {
-                        // Familia Ausente (Amarillo con 45% opacidad)
+                    } 
+                    else if (sit === 'A' || sit.includes('AUSENTE') || sit.includes('(A)')) {
+                        // Ausente (Amarillo)
                         bgFondo = 'rgba(234, 179, 8, 0.45)';
                         colorBorde = 'rgba(234, 179, 8, 0.8)';
-                    } else if (parametroEvaluacion === 'R') {
-                        // Familia Renuente (Rojo con 45% opacidad)
+                    } 
+                    else if (sit === 'R' || sit.includes('RENUENTE') || sit.includes('(R)')) {
+                        // Renuente (Rojo)
                         bgFondo = 'rgba(239, 68, 68, 0.45)';
                         colorBorde = 'rgba(239, 68, 68, 0.8)';
-                    } else if (parametroEvaluacion === 'SN_REG' || parametroEvaluacion === 'SN_NO') {
-                        // Sin Niños (Azul con 45% opacidad)
+                    } 
+                    else if (sit.includes('SN') || sit.includes('SIN NIÑOS')) {
+                        // Sin Niños (Azul)
                         bgFondo = 'rgba(59, 130, 246, 0.45)';
                         colorBorde = 'rgba(59, 130, 246, 0.8)';
-                    } else if (parametroEvaluacion === 'N_CON' || parametroEvaluacion === 'N_SIN' || parametroEvaluacion === 'negocio') {
-                        // Negocios (Morado con 45% opacidad)
+                    } 
+                    else if (sit.includes('N_') || dom.includes('NEGOCIO') || dom.includes('(N)')) {
+                        // Negocios (Morado)
                         bgFondo = 'rgba(168, 85, 247, 0.45)';
                         colorBorde = 'rgba(168, 85, 247, 0.8)';
-                    } else if (parametroEvaluacion === 'deshabitada' || parametroEvaluacion === 'lote_baldio') {
-                        // Deshabitado / Lote Baldío (Negro/Gris muy oscuro con 45% opacidad)
+                    } 
+                    else if (dom.includes('DESHABITADA') || dom.includes('BALDIO') || dom.includes('BALDÍO') || dom.includes('DH')) {
+                        // Deshabitado / Baldío (Negro translúcido)
                         bgFondo = 'rgba(15, 23, 42, 0.45)';
                         colorBorde = 'rgba(15, 23, 42, 0.8)';
                     }
@@ -1209,12 +1210,12 @@
                         iconAnchor: [7, 7]
                     });
 
-                    // 5. Instanciación en el mapa con Popup informativo
+                    // 5. Instanciación en el mapa
                     L.marker([p.lat, p.lon], { icon: iconoHistoricoDinamico })
                      .addTo(mapaInteractivo)
                      .bindPopup(`<b style="color: #0f172a; font-size: 1.1em;">Historial CENSIA</b><br>
-                                 <span style="color: #64748b; font-size: 0.9em;">Tipo: ${domicilio || 'N/D'}</span><br>
-                                 <span style="color: #334155; font-size: 0.9em; font-weight: bold;">Estatus (Cod): ${situacion || 'N/D'}</span>`);
+                                 <span style="color: #64748b; font-size: 0.9em;">Tipo: ${p.domicilio || 'N/D'}</span><br>
+                                 <span style="color: #334155; font-size: 0.9em; font-weight: bold;">Estatus: ${p.situacion || 'N/D'}</span>`);
                 }
             });
 
