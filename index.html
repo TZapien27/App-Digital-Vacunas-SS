@@ -1066,6 +1066,9 @@
     /* ==========================================
        MOTOR DE BÚSQUEDA ASÍNCRONA (CORRECCIÓN CORS)
        ========================================== */
+    /* ==========================================
+       MOTOR DE BÚSQUEDA ASÍNCRONA (CORRECCIÓN CORS + RELACIONAL)
+       ========================================== */
     async function ejecutarBusqueda() {
         const inputEl = document.getElementById('input_busqueda');
         const contenedorResultados = document.getElementById('resultados_busqueda');
@@ -1079,18 +1082,16 @@
             return;
         }
 
-        contenedorResultados.innerHTML = "⏳ Consultando base de datos central...";
+        contenedorResultados.innerHTML = "⏳ Consultando base de datos central y cruzando historiales...";
 
         try {
             const url = `${GOOGLE_SCRIPT_URL}?action=buscar&q=${encodeURIComponent(query)}`;
             
-            // CONCEPTO APLICADO: Solicitud Simple (Sin headers) y seguimiento de redirección 302
             const respuesta = await fetch(url, {
                 method: 'GET',
                 redirect: 'follow' 
             });
             
-            // Analizar la respuesta JSON directamente
             const datos = await respuesta.json();
 
             if (!datos || datos.length === 0 || datos.error) {
@@ -1100,11 +1101,37 @@
 
             // Renderizado inmutable respetando maquetación
             let html = "<ul style='list-style: none; padding: 0; margin: 0;'>";
+            
             datos.forEach(paciente => {
-                html += `<li style="background: #ffffff; padding: 10px; margin-top: 8px; border-radius: 5px; border: 1px solid #e2e8f0; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-                            <strong style="color: #0f172a;">${paciente.nombres} ${paciente.paterno} ${paciente.materno}</strong><br>
-                            <span style="color: #64748b;">CURP:</span> <span style="font-weight: bold;">${paciente.curp}</span><br>
-                            <span style="color: #64748b;">Domicilio:</span> ${paciente.domicilio}
+                
+                // Mapeo Dinámico de Vacunas (Iteración sobre el arreglo inyectado)
+                let htmlVacunas = "";
+                if (paciente.vacunas && paciente.vacunas.length > 0) {
+                    htmlVacunas = "<ul style='margin: 8px 0 0 15px; padding-left: 10px; font-size: 0.9em; border-left: 2px solid #3b82f6;'>";
+                    paciente.vacunas.forEach(v => {
+                        htmlVacunas += `<li style="margin-bottom: 3px; color: #334155;"><b>${v.vacuna}</b> <span style="color:#64748b;">(Aplicada: ${v.fecha})</span></li>`;
+                    });
+                    htmlVacunas += "</ul>";
+                } else {
+                    htmlVacunas = "<div style='color: #94a3b8; font-size: 0.85em; margin-top: 5px; font-style: italic;'>Sin dosis registradas en sistema.</div>";
+                }
+
+                html += `<li style="background: #ffffff; padding: 12px; margin-top: 10px; border-radius: 6px; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                            <strong style="color: #0f172a; font-size: 1.05em;">${paciente.nombres} ${paciente.paterno} ${paciente.materno}</strong><br>
+                            
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 6px; font-size: 0.9em;">
+                                <div><span style="color: #64748b;">CURP:</span> <span style="font-weight: bold;">${paciente.curp}</span></div>
+                                <div><span style="color: #64748b;">Seguridad Social:</span> <b>${paciente.derecho}</b></div>
+                            </div>
+                            
+                            <div style="font-size: 0.9em; margin-top: 4px;">
+                                <span style="color: #64748b;">Domicilio:</span> ${paciente.domicilio}
+                            </div>
+                            
+                            <div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed #cbd5e1;">
+                                <span style="color: #0f172a; font-weight: 600; font-size: 0.9em;">💉 Historial Vacunal</span>
+                                ${htmlVacunas}
+                            </div>
                          </li>`;
             });
             html += "</ul>";
