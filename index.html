@@ -1145,8 +1145,11 @@
     /* ==========================================
        CAPA VECTORIAL REMOTA (HISTORIAL DE BRIGADAS)
        ========================================== */
+    /* ==========================================
+       CAPA VECTORIAL REMOTA (CON DATA-DRIVEN STYLING RGBA)
+       ========================================== */
     async function cargarHistorialGpsRemoto() {
-        if (!mapaInteractivo) return; // Si el mapa no existe, abortamos.
+        if (!mapaInteractivo) return;
 
         try {
             const url = `${GOOGLE_SCRIPT_URL}?action=historial_gps`;
@@ -1155,22 +1158,53 @@
 
             if (!puntos || puntos.length === 0) return;
 
-            // Marcador visualmente diferenciado (Círculo gris oscuro con borde blanco)
-            const iconoHistorico = L.divIcon({
-                className: 'marcador-historial-remoto',
-                html: '<div style="background-color: #64748b; width: 12px; height: 12px; border-radius: 50%; border: 2px solid #ffffff; box-shadow: 0 0 4px rgba(0,0,0,0.5);"></div>',
-                iconSize: [12, 12],
-                iconAnchor: [6, 6]
-            });
-
             puntos.forEach(p => {
-                L.marker([p.lat, p.lon], { icon: iconoHistorico })
-                 .addTo(mapaInteractivo)
-                 .bindPopup(`<b style="color: #0f172a;">Historial CENSIA</b><br><span style="color: #64748b;">${p.domicilio}</span>`);
+                if(p.lat && p.lon) {
+                    // 1. Definición de colores por defecto (Gris deslavado)
+                    let bgFondo = 'rgba(100, 116, 139, 0.45)'; 
+                    let colorBorde = 'rgba(100, 116, 139, 0.8)';
+                    
+                    // 2. Normalizamos la cadena para evitar errores por mayúsculas/espacios
+                    const estatus = (p.situacion || "").toString().trim().toUpperCase();
+
+                    // 3. Diccionario Lógico de Colores (Modifica las siglas según tu Catálogo)
+                    if (estatus === 'CN' || estatus.includes('CENSO')) {
+                        // Censo Nominal = Verde con 45% opacidad
+                        bgFondo = 'rgba(34, 197, 94, 0.45)'; 
+                        colorBorde = 'rgba(34, 197, 94, 0.8)';
+                    } else if (estatus === 'A' || estatus.includes('AUSENTE')) {
+                        // Ausente = Amarillo con 45% opacidad
+                        bgFondo = 'rgba(234, 179, 8, 0.45)';
+                        colorBorde = 'rgba(234, 179, 8, 0.8)';
+                    } else if (estatus === 'R' || estatus === 'N' || estatus.includes('RECHAZO')) {
+                        // Rechazo/Negativa = Rojo con 45% opacidad
+                        bgFondo = 'rgba(239, 68, 68, 0.45)';
+                        colorBorde = 'rgba(239, 68, 68, 0.8)';
+                    } else if (estatus === 'D' || estatus.includes('DESHABITADO')) {
+                        // Deshabitado = Negro/Gris muy oscuro translúcido
+                        bgFondo = 'rgba(15, 23, 42, 0.45)';
+                        colorBorde = 'rgba(15, 23, 42, 0.8)';
+                    }
+
+                    // 4. Inyección dinámica del CSS al marcador de Leaflet
+                    const iconoHistoricoDinamico = L.divIcon({
+                        className: 'marcador-historial-dinamico',
+                        html: `<div style="background-color: ${bgFondo}; width: 14px; height: 14px; border-radius: 50%; border: 2px solid ${colorBorde}; box-shadow: 0 0 2px rgba(0,0,0,0.3);"></div>`,
+                        iconSize: [14, 14],
+                        iconAnchor: [7, 7]
+                    });
+
+                    // 5. Renderizado
+                    L.marker([p.lat, p.lon], { icon: iconoHistoricoDinamico })
+                     .addTo(mapaInteractivo)
+                     .bindPopup(`<b style="color: #0f172a;">Historial CENSIA</b><br>
+                                 <span style="color: #64748b;">${p.domicilio}</span><br>
+                                 <span style="font-size: 0.9em; font-weight: bold;">Estatus: ${p.situacion || 'N/D'}</span>`);
+                }
             });
 
         } catch (error) {
-            console.warn("Sincronización de mapa histórico abortada por falta de red.");
+            console.error("Sincronización de mapa histórico abortada:", error);
         }
     }
 </script>
