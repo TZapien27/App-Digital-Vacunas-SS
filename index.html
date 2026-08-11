@@ -662,6 +662,7 @@
         actualizarCoordenadasPantalla(DEFAULT_LAT, DEFAULT_LON);
         chincheta.on('dragend', e => actualizarCoordenadasPantalla(e.target.getLatLng().lat, e.target.getLatLng().lng));
         mapaInteractivo.on('click', e => { chincheta.setLatLng(e.latlng); actualizarCoordenadasPantalla(e.latlng.lat, e.latlng.lng); });
+        cargarHistorialGpsRemoto();
     }
 
     function pintarRadarHistorial() {
@@ -1064,9 +1065,6 @@
     }
 
     /* ==========================================
-       MOTOR DE BÚSQUEDA ASÍNCRONA (CORRECCIÓN CORS)
-       ========================================== */
-    /* ==========================================
        MOTOR DE BÚSQUEDA ASÍNCRONA (CORRECCIÓN CORS + RELACIONAL)
        ========================================== */
     async function ejecutarBusqueda() {
@@ -1141,6 +1139,38 @@
         } catch (error) {
             contenedorResultados.innerHTML = "<span style='color: #ef4444; font-weight: bold;'>❌ Error de conexión al consultar el servidor.</span>";
             console.error("Detalle del fallo CORS/Red de la búsqueda:", error);
+        }
+    }
+
+    /* ==========================================
+       CAPA VECTORIAL REMOTA (HISTORIAL DE BRIGADAS)
+       ========================================== */
+    async function cargarHistorialGpsRemoto() {
+        if (!mapaInteractivo) return; // Si el mapa no existe, abortamos.
+
+        try {
+            const url = `${GOOGLE_SCRIPT_URL}?action=historial_gps`;
+            const respuesta = await fetch(url, { method: 'GET', redirect: 'follow' });
+            const puntos = await respuesta.json();
+
+            if (!puntos || puntos.length === 0) return;
+
+            // Marcador visualmente diferenciado (Círculo gris oscuro con borde blanco)
+            const iconoHistorico = L.divIcon({
+                className: 'marcador-historial-remoto',
+                html: '<div style="background-color: #64748b; width: 12px; height: 12px; border-radius: 50%; border: 2px solid #ffffff; box-shadow: 0 0 4px rgba(0,0,0,0.5);"></div>',
+                iconSize: [12, 12],
+                iconAnchor: [6, 6]
+            });
+
+            puntos.forEach(p => {
+                L.marker([p.lat, p.lon], { icon: iconoHistorico })
+                 .addTo(mapaInteractivo)
+                 .bindPopup(`<b style="color: #0f172a;">Historial CENSIA</b><br><span style="color: #64748b;">${p.domicilio}</span>`);
+            });
+
+        } catch (error) {
+            console.warn("Sincronización de mapa histórico abortada por falta de red.");
         }
     }
 </script>
