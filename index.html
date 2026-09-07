@@ -76,7 +76,7 @@
     <div class="tarjeta">
         <!-- INYECCIÓN: DATOS DEL REGISTRADOR Y MÓDULO (REQ 2 y 3) -->
         <fieldset style="border: 1px solid #cbd5e1; padding: 15px; margin-bottom: 15px; border-radius: 6px; background-color: #f8fafc;">
-            <legend style="font-weight: bold; color: #0f172a; padding: 0 5px;">Datos del Registrador</legend>
+            <h2>1. Datos Generales de la Jornada <span style="color: #ef4444; font-size: 0.8rem; background: #fee2e2; padding: 2px 6px; border-radius: 4px; float: right;">v15.6</span></h2>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                 <div class="form-group">
                     <label>Nombre de quien registra *</label>
@@ -710,6 +710,11 @@
         chincheta.on('dragend', e => actualizarCoordenadasPantalla(e.target.getLatLng().lat, e.target.getLatLng().lng));
         mapaInteractivo.on('click', e => { chincheta.setLatLng(e.latlng); actualizarCoordenadasPantalla(e.latlng.lat, e.latlng.lng); });
         cargarHistorialGpsRemoto();
+        
+        // CORRECCIÓN MAPA BLANCO: Forzar recálculo de dimensiones
+        setTimeout(() => {
+            if(mapaInteractivo) mapaInteractivo.invalidateSize();
+        }, 500);
     }
 
     function pintarRadarHistorial() {
@@ -742,37 +747,54 @@
         if (!navigator.geolocation) return alert("❌ GPS no soportado en tu dispositivo.");
         
         const btn = document.querySelector('.btn-gps');
-        const txtOrig = btn.innerHTML;
-        btn.innerHTML = "⏳ Buscando satélites GPS... (sal a cielo abierto)";
-        btn.disabled = true;
-        btn.style.backgroundColor = "#64748b";
+        const txtOrig = btn ? btn.innerHTML : "";
+        if (btn) {
+            btn.innerHTML = "⏳ Buscando satélites GPS... (sal a cielo abierto)";
+            btn.disabled = true;
+            btn.style.backgroundColor = "#64748b";
+        }
 
         const opcionesGPS = { 
             enableHighAccuracy: true, 
             timeout: 15000, 
-            maximumAge: 10000 
+            maximumAge: 0 
         };
 
         navigator.geolocation.getCurrentPosition(pos => {
-            btn.innerHTML = txtOrig;
-            btn.disabled = false;
-            btn.style.backgroundColor = "#0ea5e9";
+            if (btn) {
+                btn.innerHTML = txtOrig;
+                btn.disabled = false;
+                btn.style.backgroundColor = "#0ea5e9";
+            }
             
-            mapaInteractivo.setView([pos.coords.latitude, pos.coords.longitude], 17);
-            chincheta.setLatLng([pos.coords.latitude, pos.coords.longitude]);
-            actualizarCoordenadasPantalla(pos.coords.latitude, pos.coords.longitude);
+            const lat = pos.coords.latitude;
+            const lon = pos.coords.longitude;
+
+            if (mapaInteractivo) {
+                mapaInteractivo.setView([lat, lon], 17);
+                if (chincheta) {
+                    chincheta.setLatLng([lat, lon]);
+                }
+                setTimeout(() => {
+                    mapaInteractivo.invalidateSize();
+                }, 200);
+            }
+            
+            actualizarCoordenadasPantalla(lat, lon);
             alert("📍 Coordenadas detectadas correctamente.");
         }, err => {
-            btn.innerHTML = txtOrig;
-            btn.disabled = false;
-            btn.style.backgroundColor = "#0ea5e9";
+            if (btn) {
+                btn.innerHTML = txtOrig;
+                btn.disabled = false;
+                btn.style.backgroundColor = "#0ea5e9";
+            }
             
             let msg = "⚠️ Error al detectar GPS.\n\n";
             if(err.code === 1) msg += "Permiso de ubicación denegado. Otorga permiso de GPS al navegador.";
             else if(err.code === 2) msg += "Señal inalcanzable. Asegúrate de tener la Ubicación (GPS) encendida en tu celular y no estar bajo un techo de concreto.";
             else if(err.code === 3) msg += "Tiempo de espera agotado. El satélite tardó mucho en responder.";
             
-            alert(msg + "\n\nNOTA: Si no hay señal de satélite, puedes mover el pin rojo manualmente en la pantalla (aunque el mapa se vea gris sin internet, las coordenadas se guardarán bien).");
+            alert(msg + "\n\nNOTA: Si no hay señal de satélite, puedes mover el pin rojo manualmente en la pantalla.");
         }, opcionesGPS);
     }
 
@@ -928,12 +950,16 @@
                 const idPaciente = generarUUID(); 
                 
                 // Conversión de archivo (REQ 7)
-                let fotoFile = document.getElementById(`foto_cartilla_${pId}`).files[0];
+                let fotoFile = document.getElementById(`foto_cartilla_${pId}`)?.files[0];
                 let fotoB64 = null, fotoNombre = null, fotoMime = null;
                 if(fotoFile) {
-                    fotoB64 = await leerArchivoBase64(fotoFile);
-                    fotoNombre = fotoFile.name;
-                    fotoMime = fotoFile.type;
+                    try {
+                        fotoB64 = await leerArchivoBase64(fotoFile);
+                        fotoNombre = fotoFile.name;
+                        fotoMime = fotoFile.type;
+                    } catch(e) {
+                        console.warn("No se pudo procesar la imagen de la cartilla:", e);
+                    }
                 }
 
                 let paciente = {
