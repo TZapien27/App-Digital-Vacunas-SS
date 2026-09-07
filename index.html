@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>App Digital Vacunación SNSP-SS - V15.5</title>
+    <title>App Digital Vacunación SNSP-SS - V15.6</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0056b3">
@@ -74,12 +74,31 @@
         </div>
         <!-- FIN INYECCIÓN -->
     <div class="tarjeta">
-        <h2>1. Datos Generales de la Jornada <span style="color: #ef4444; font-size: 0.8rem; background: #fee2e2; padding: 2px 6px; border-radius: 4px; float: right;">v15.5</span></h2>        <div class="form-group"><label>Fecha de la Actividad *</label><input type="text" inputmode="numeric" autocomplete="off" id="fecha_actividad" class="guardar-cache" placeholder="DD/MM/AAAA" maxlength="10" oninput="aplicarMascaraFecha(event)" required></div>
-        
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-            <div class="form-group"><label>Vacunador 1 *</label><input type="text" id="nombre_vacunador" class="guardar-cache" required></div>
-            <div class="form-group"><label>Vacunador 2</label><input type="text" id="nombre_vacunador_2" class="guardar-cache"></div>
-        </div>
+        <!-- INYECCIÓN: DATOS DEL REGISTRADOR Y MÓDULO (REQ 2 y 3) -->
+        <fieldset style="border: 1px solid #cbd5e1; padding: 15px; margin-bottom: 15px; border-radius: 6px; background-color: #f8fafc;">
+            <legend style="font-weight: bold; color: #0f172a; padding: 0 5px;">Datos del Registrador</legend>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                <div class="form-group">
+                    <label>Nombre de quien registra *</label>
+                    <input type="text" id="registrador_nombre" class="guardar-cache" required placeholder="Nombre completo del brigadista">
+                </div>
+                <div class="form-group">
+                    <label>Institución a la que pertenece *</label>
+                    <select id="registrador_institucion" class="guardar-cache" onchange="evaluarCascadaGlobal()" required>
+                        <option value="">-- Seleccione --</option>
+                        <option value="IMSS">IMSS / IMSS Bienestar</option>
+                        <option value="SSA">Secretaría de Salud (SSA)</option>
+                        <option value="OTRA">Otra Institución</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Referencia del Módulo Fijo (si aplica)</label>
+                <input type="text" id="lugar_fijo" class="guardar-cache" placeholder="Ej. Centro de Salud Madero">
+            </div>
+        </fieldset>
+
+        <div class="form-group"><label>Fecha de la Actividad *</label><input type="text" inputmode="numeric" autocomplete="off" id="fecha_actividad" class="guardar-cache" placeholder="DD/MM/AAAA" maxlength="10" oninput="aplicarMascaraFecha(event)" required></div>
 
         <div class="form-group"><label>Entidad de Residencia *</label><select id="entidad" class="guardar-cache select-buscable" placeholder="Busca entidad..."></select></div>
         <div class="form-group"><label>Jurisdicción Sanitaria *</label><select id="jurisdiccion" class="guardar-cache select-buscable" placeholder="Busca jurisdicción..."></select></div>
@@ -247,7 +266,7 @@
     /* ==========================================
        VARIABLES GLOBALES Y CATÁLOGOS COMPLETOS
        ========================================== */
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby-EiYgcG_l_kjGP_BpzKwFF7aq8HJtkhkmWstj7Y899HWw9rrTAk_fGqICUfpG_K4I/exec";
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyjKIXoNE6wV7hj77IMfeJF2-8gOPE68DDsJsEGBCeoqA7azHL4laZ48oIpWFLPY3mW0w/exec";
     
     let personaId = 0; let vacunaId = 0;  
     let mapaInteractivo = null; let chincheta = null;
@@ -256,6 +275,7 @@
 
     const vacunasPorTipo = {
         "Infante. (0 a 9 años)": ["BCG", "Anti Hepatitis B", "Hexavalente acelular (DPat-VIP-HB-Hib) 1 dósis", "Hexavalente acelular (DPat-VIP-HB-Hib) 2 dósis", "Hexavalente acelular (DPat-VIP-HB-Hib) 3 dósis", "Hexavalente acelular (DPat-VIP-HB-Hib) refuerzo dosis", "DPT", "Anti Rotavirus 1a", "Anti Rotavirus 2a", "Anti Neumococica conjugada (13 serotipos) 1a", "Anti Neumococica conjugada (13 serotipos) 2a", "Anti Neumococica conjugada (13 serotipos) 3a", "Anti Influenza 1a", "Anti Influenza 2a", "Anti Influenza refuerzo", "SRP 0", "SRP 1a", "SRP 2ª", "Otra vacuna"],
+        "Infante. (0 a 9 años)": ["BCG", "Anti Hepatitis B", "Hexavalente acelular (DPat-VIP-HB-Hib) 1 dósis", "Hexavalente acelular (DPat-VIP-HB-Hib) 2 dósis", "Hexavalente acelular (DPat-VIP-HB-Hib) 3 dósis", "Hexavalente acelular (DPat-VIP-HB-Hib) refuerzo dosis", "DPT", "Anti Rotavirus 1a", "Anti Rotavirus 2a", "Anti Neumococica conjugada (13 serotipos) 1a", "Anti Neumococica conjugada (13 serotipos) 2a", "Anti Neumococica conjugada (13 serotipos) 3a", "Anti Influenza 1a", "Anti Influenza 2a", "Anti Influenza refuerzo", "SRP 0", "SRP 1a", "SRP 2ª", "VPH Virus del Papiloma Humano", "Otra vacuna"],
         "Adolescente. (10 a 19 años)": ["Anti Hepatitis B 1a", "Anti Hepatitis B 2a", "TD 1a", "TD 2a", "TD 3a", "TD refuerzo", "TDPA 1a", "Influenza", "SR 1a", "SR 2a", "SR refuerzo", "VPH (niñas y niños de 5o de primaria y de 11 años no escolarizados)", "Varicela", "Anti Hepatitis A", "COVID-19", "Anti Neumococica conjugada (refuerzo)", "Neumo 23", "Otra vacuna"],
         "Adulto. (20 a 59 años)": ["Anti Hepatitis B 1a", "Anti Hepatitis B 2a", "TD 1a", "TD 2a", "TD 3a", "TD refuerzo", "TDPA 1a", "Influenza", "SR 1a", "SR 2a", "SR refuerzo", "Varicela", "Anti Hepatitis A", "COVID-19", "Anti Neumococica conjugada (refuerzo)", "Neumo 23", "Otra vacuna"],
         "Adulto Mayor. (60 y más años)": ["Anti Hepatitis B 1a", "Anti Hepatitis B 2a", "TD 1a", "TD 2a", "TD 3a", "TD refuerzo", "TDPA 1a", "Influenza", "SR 1a", "SR 2a", "SR refuerzo", "Varicela", "Anti Hepatitis A", "COVID-19", "Anti Neumococica conjugada (refuerzo)", "Neumo 23", "Otra vacuna"]
@@ -502,6 +522,13 @@
         const html = `
             <div class="tarjeta tarjeta-persona" id="tarjeta_persona_${pId}">
                 <h2>👤 Persona ${pId}</h2><button type="button" class="btn-eliminar" onclick="eliminarPersona(${pId})">X</button>
+                
+                <!-- INYECCIÓN: CASO ÍNDICE (REQ 1) -->
+                <div class="form-group" style="background: #fee2e2; padding: 8px; border-radius: 4px; margin-bottom: 10px;">
+                    <input type="checkbox" id="caso_indice_${pId}" value="SI">
+                    <label for="caso_indice_${pId}" style="color: #b91c1c; font-weight: bold; margin-left: 5px; display:inline-block;">Marcar como Caso Índice 🚨</label>
+                </div>
+
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                     <div class="form-group"><label>Primer Apellido *</label><input type="text" id="paterno_${pId}" oninput="calcularCurpSugerida(${pId})"></div>
                     <div class="form-group"><label>Segundo Apellido</label><input type="text" id="materno_${pId}" oninput="calcularCurpSugerida(${pId})"></div>
@@ -542,15 +569,34 @@
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                     <div class="form-group">
                         <label>Derechohabiencia *</label>
-                        <select id="derecho_${pId}" onchange="if(this.value==='OTRA'){document.getElementById('derecho_otra_${pId}').classList.remove('oculto')}else{document.getElementById('derecho_otra_${pId}').classList.add('oculto')}">
-                            <option value="">-- Seleccione --</option><option value="IMSS Ordinario">IMSS Ordinario</option><option value="ISSSTE">ISSSTE</option>
+                        <select id="derecho_${pId}" onchange="if(this.value==='OTRA'){document.getElementById('derecho_otra_${pId}').classList.remove('oculto')}else{document.getElementById('derecho_otra_${pId}').classList.add('oculto')}; evaluarCascadaIMSS(${pId});">
+                            <option value="">-- Seleccione --</option><option value="IMSS Ordinario">IMSS Ordinario</option><option value="IMSS Bienestar">IMSS Bienestar</option><option value="ISSSTE">ISSSTE</option>
                             <option value="SSA">SSA</option><option value="Magisterio">Magisterio</option><option value="OTRA">Otra</option><option value="NINGUNA">Ninguna</option>
                         </select>
                         <input type="text" id="derecho_otra_${pId}" class="oculto" placeholder="Especifique dependencia" style="margin-top:5px;">
                     </div>
                     <div class="form-group"><label>Estatus migratorio</label><select id="migra_${pId}"><option value="REGULAR" selected>Regular</option><option value="IRREGULAR">Irregular</option></select></div>
                 </div>
+
+                <!-- INYECCIÓN: BLOQUE IMSS CONDICIONAL (REQ 4) -->
+                <div id="bloque_clinico_imss_${pId}" style="display: none; background: #f0fdf4; padding: 10px; border: 1px dashed #22c55e; margin-bottom: 10px;">
+                    <div class="form-group">
+                        <label id="label_nss_${pId}">NSS + Agregado Médico</label>
+                        <input type="text" id="nss_afiliacion_${pId}">
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 5px;">
+                        <div class="form-group"><label>Peso (Kg)</label><input type="number" step="0.1" id="peso_kg_${pId}"></div>
+                        <div class="form-group"><label>Talla (cm)</label><input type="number" step="0.1" id="talla_cm_${pId}"></div>
+                    </div>
+                </div>
+
                 <div class="form-group"><label>Esquema de Vacunación Aplicado</label><div id="contenedor_vacunas_p${pId}"></div><button type="button" class="btn btn-add-vacuna" onclick="agregarVacunaAPersona(${pId})">💉 Añadir vacuna</button></div>
+                
+                <!-- INYECCIÓN: FOTO CARTILLA (REQ 7) -->
+                <div class="form-group" style="margin-top: 15px; border-top: 1px solid #cbd5e1; padding-top: 10px;">
+                    <label>📷 Fotografía de Cartilla Nacional (Opcional)</label>
+                    <input type="file" id="foto_cartilla_${pId}" accept="image/*" capture="environment" style="background-color: #f8fafc; padding: 8px;">
+                </div>
             </div>`;
         document.getElementById('contenedor_personas').insertAdjacentHTML('beforeend', html);
         
@@ -559,6 +605,7 @@
         tomSelectInstances[`estado_nac_${pId}`] = new TomSelect(selNac, { create: false }); 
 
         agregarVacunaAPersona(pId);
+        evaluarCascadaIMSS(pId); // Forzar validación inicial
     }
 
     function eliminarPersona(pId) { 
@@ -735,7 +782,7 @@
     /* ==========================================
        MOTOR DE GUARDADO Y SINCRONIZACIÓN OFFLINE
        ========================================== */
-    function empaquetarYGuardar() {
+    async function empaquetarYGuardar() {
         const tAct = document.getElementById('tipo_actividad').value;
         const estadoBloqueo = document.getElementById('estado_bloqueo').value;
         const listaPendientes = JSON.parse(localStorage.getItem('censia_bloqueos_pendientes') || '[]');
@@ -750,16 +797,15 @@
 
         document.querySelectorAll('.campo-invalido').forEach(el => el.classList.remove('campo-invalido')); let hayErrores = false;
         
-        // Validador mejorado para fechas en texto
         const checkReq = (id) => { 
             const el = document.getElementById(id); 
             if(el && el.offsetParent !== null) {
-                if(!el.value) { el.classList.add('campo-invalido'); hayErrores = true; }
+                if(!el.value && el.required !== false) { el.classList.add('campo-invalido'); hayErrores = true; }
                 else if(el.placeholder === "DD/MM/AAAA" && el.value.length !== 10) { el.classList.add('campo-invalido'); hayErrores = true; }
             }
         };
 
-        ['tipo_actividad', 'fecha_actividad', 'entidad', 'jurisdiccion', 'municipio', 'localidad', 'nombre_vacunador'].forEach(checkReq);
+        ['registrador_nombre', 'registrador_institucion', 'tipo_actividad', 'fecha_actividad', 'entidad', 'jurisdiccion', 'municipio', 'localidad', 'nombre_vacunador'].forEach(checkReq);
 
         if(tAct === 'barrido' || tAct === 'bloqueo' || tAct === 'modulo_fijo') {
             ['calle_numero', 'colonia'].forEach(checkReq);
@@ -797,6 +843,11 @@
                 if(document.getElementById(`tutor_tipo_${pId}`) && document.getElementById(`tutor_tipo_${pId}`).value === 'Otro parentesco') {
                     checkReq(`tutor_tipo_otro_${pId}`);
                 }
+                
+                // Validación estricta NSS IMSS
+                if(document.getElementById(`nss_afiliacion_${pId}`) && document.getElementById(`nss_afiliacion_${pId}`).required) {
+                    checkReq(`nss_afiliacion_${pId}`);
+                }
 
                 let dosis = 0;
                 document.querySelectorAll(`.vacuna-de-p${pId}`).forEach(s => { 
@@ -817,13 +868,20 @@
         }
 
         if(hayErrores) {
-            alert("❌ DATOS INCOMPLETOS O INVÁLIDOS.\n\nRevisa los recuadros en ROJO (Asegúrate de que las fechas tengan formato DD/MM/AAAA y seleccionar al menos una vacuna por persona).");
+            alert("❌ DATOS INCOMPLETOS O INVÁLIDOS.\n\nRevisa los recuadros en ROJO.");
             const primerError = document.querySelector('.campo-invalido'); if(primerError) primerError.scrollIntoView({ behavior: 'smooth', block: 'center' });
             return;
         }
 
         const getVal = (id) => { const el = document.getElementById(id); return el && !el.classList.contains('oculto') ? el.value : ""; };
         
+        // Cierre de botones UX
+        const btnGuardar = document.querySelector('.btn-guardar');
+        const textoOriginalBtn = btnGuardar.innerHTML;
+        btnGuardar.innerHTML = "⏳ PROCESANDO IMÁGENES Y ENVIANDO A LA NUBE...";
+        btnGuardar.disabled = true;
+        btnGuardar.style.backgroundColor = "#64748b";
+
         const payload = {
             general: {
                 tipo_actividad: getVal('tipo_actividad'),
@@ -847,23 +905,37 @@
                 localidad: getVal('localidad'),
                 calle_numero: getVal('calle_numero'),
                 colonia: getVal('colonia'),
-                // INYECCIÓN: CAPTURA DE OBSERVACIONES
                 observaciones: getVal('observaciones_domicilio'),
                 ubicacion_gps: getVal('latitud') && getVal('longitud') ? `${getVal('latitud')}, ${getVal('longitud')}` : "",
                 resp_cierre: respCierre,
                 ultimo_registro_bloqueo: getVal('ultimo_registro_bloqueo'),
                 manzanas_recorridas: getVal('manzanas_recorridas'),
                 registro_lugar_fijo: getVal('registro_lugar_fijo'),
-                id_bloqueo: getVal('id_bloqueo')
+                id_bloqueo: getVal('id_bloqueo'),
+                // INYECCIÓN REQ 2 y 3:
+                registrador_nombre: getVal('registrador_nombre'),
+                registrador_institucion: getVal('registrador_institucion'),
+                lugar_fijo: getVal('lugar_fijo')
             },
             pacientes: []
         };
 
         if(censoVisible) {
-            document.querySelectorAll('.tarjeta-persona').forEach(t => {
+            const tarjetas = document.querySelectorAll('.tarjeta-persona');
+            // Bucle FOR OF para soportar await con las imágenes
+            for (let t of tarjetas) {
                 const pId = t.id.split('_').pop();
                 const idPaciente = generarUUID(); 
                 
+                // Conversión de archivo (REQ 7)
+                let fotoFile = document.getElementById(`foto_cartilla_${pId}`).files[0];
+                let fotoB64 = null, fotoNombre = null, fotoMime = null;
+                if(fotoFile) {
+                    fotoB64 = await leerArchivoBase64(fotoFile);
+                    fotoNombre = fotoFile.name;
+                    fotoMime = fotoFile.type;
+                }
+
                 let paciente = {
                     id_paciente: idPaciente,
                     paterno: getVal(`paterno_${pId}`),
@@ -882,6 +954,14 @@
                     otra_derechohabiencia: getVal(`derecho_otra_${pId}`),
                     estatus_migratorio: getVal(`migra_${pId}`),
                     entidad_nacimiento: getVal(`estado_nac_${pId}`),
+                    // INYECCIÓN REQ 1, 4 y 7:
+                    caso_indice: document.getElementById(`caso_indice_${pId}`).checked ? "SI" : "NO",
+                    nss_afiliacion: getVal(`nss_afiliacion_${pId}`),
+                    peso_kg: getVal(`peso_kg_${pId}`),
+                    talla_cm: getVal(`talla_cm_${pId}`),
+                    foto_cartilla_base64: fotoB64,
+                    foto_cartilla_nombre: fotoNombre,
+                    foto_cartilla_mime: fotoMime,
                     vacunas: []
                 };
 
@@ -897,21 +977,18 @@
                     } 
                 });
                 payload.pacientes.push(paciente);
-            });
+            }
         } else {
             payload.pacientes.push({ id_paciente: generarUUID(), vacunas: [] });
         }
 
         if (!navigator.onLine) {
             guardarEnColaLocal(payload, tAct, respCierre, payload.general.domicilio_visitado, payload.general.situacion_domicilio, payload.general.caso_en_domicilio);
+            btnGuardar.innerHTML = textoOriginalBtn;
+            btnGuardar.disabled = false;
+            btnGuardar.style.backgroundColor = "#4f46e5";
             return;
         }
-
-        const btnGuardar = document.querySelector('.btn-guardar');
-        const textoOriginalBtn = btnGuardar.innerHTML;
-        btnGuardar.innerHTML = "⏳ ENVIANDO DATOS A LA NUBE...";
-        btnGuardar.disabled = true;
-        btnGuardar.style.backgroundColor = "#64748b";
 
         fetch(GOOGLE_SCRIPT_URL, {
             method: 'POST',
@@ -923,7 +1000,6 @@
             btnGuardar.innerHTML = textoOriginalBtn;
             btnGuardar.disabled = false;
             btnGuardar.style.backgroundColor = "#4f46e5";
-
             alert("✅ REGISTRO GUARDADO Y ENVIADO CON ÉXITO A GOOGLE SHEETS.");
             procesarLimpiezaYMemoria(tAct, respCierre, payload.general.domicilio_visitado, payload.general.situacion_domicilio, payload.general.caso_en_domicilio);
         })
@@ -1143,7 +1219,6 @@
     }
 
 
-
     /* ==========================================
        CAPA VECTORIAL REMOTA (MAPEO GRANULAR DE ESTADOS)
        ========================================== */
@@ -1159,60 +1234,56 @@
 
             puntos.forEach(p => {
                 if(p.lat && p.lon) {
-                    let bgFondo = 'rgba(100, 116, 139, 0.45)'; 
-                    let colorBorde = 'rgba(100, 116, 139, 0.8)';
+                    // Evaluación Req 1: Caso Índice
+                    let esCasoIndice = (p.caso_indice === 'SI');
+                    
+                    let bgFondo = esCasoIndice ? 'rgba(220, 38, 38, 0.9)' : 'rgba(100, 116, 139, 0.45)'; 
+                    let colorBorde = esCasoIndice ? '#7f1d1d' : 'rgba(100, 116, 139, 0.8)';
+                    let tamanio = esCasoIndice ? 18 : 14;
+                    let zIndexOffset = esCasoIndice ? 1000 : 0;
                     
                     const sit = (p.situacion || "").toString().trim().toUpperCase();
                     const dom = (p.domicilio || "").toString().trim().toUpperCase();
-                    
-                    // Variable puente para traducir el código a texto descriptivo legible
                     let etiquetaEstatus = p.situacion || 'N/D';
 
-                    // 1. REGLA: CON NIÑOS (VERDE)
-                    if (sit === 'CN' || sit === 'CN_NR' || sit.includes('CON NIÑOS')) {
-                        bgFondo = 'rgba(34, 197, 94, 0.45)'; colorBorde = 'rgba(34, 197, 94, 0.8)';
-                        etiquetaEstatus = (sit === 'CN_NR' || sit.includes('NO')) ? "Con niños (Sin registro)" : "Con niños (Con registro)";
-                    } 
-                    // 2. REGLA: SIN NIÑOS (VERDE)
-                    else if (sit === 'SN_REG' || sit === 'SN_NO' || sit.includes('SIN NIÑOS')) {
-                        bgFondo = 'rgba(34, 197, 94, 0.45)'; colorBorde = 'rgba(34, 197, 94, 0.8)';
-                        etiquetaEstatus = (sit === 'SN_NO') ? "Sin niños (Sin registro)" : "Sin niños (Con registro)";
-                    } 
-                    // 3. REGLA: NEGOCIOS (AZUL)
-                    else if (sit.includes('N_') || dom.includes('NEGOCIO') || dom.includes('(N)')) {
-                        bgFondo = 'rgba(59, 130, 246, 0.45)'; colorBorde = 'rgba(59, 130, 246, 0.8)';
-                        etiquetaEstatus = (sit === 'N_SIN') ? "Negocio (Sin personas por vacunar)" : "Negocio (Con personas por vacunar)";
-                    } 
-                    // 4. REGLA: AUSENTE (AMARILLO)
-                    else if (sit === 'A' || sit.includes('AUSENTE') || sit.includes('(A)')) {
-                        bgFondo = 'rgba(234, 179, 8, 0.45)'; colorBorde = 'rgba(234, 179, 8, 0.8)';
-                        etiquetaEstatus = "Familia Ausente";
-                    } 
-                    // 5. REGLA: RENUENTE (ROJO)
-                    else if (sit === 'R' || sit.includes('RENUENTE') || sit.includes('(R)')) {
-                        bgFondo = 'rgba(239, 68, 68, 0.45)'; colorBorde = 'rgba(239, 68, 68, 0.8)';
-                        etiquetaEstatus = "Familia Renuente";
-                    } 
-                    // 6. REGLA: DESHABITADO / BALDÍO (NEGRO)
-                    else if (dom.includes('DESHABITADA') || dom.includes('BALDIO') || dom.includes('BALDÍO') || dom.includes('DH')) {
-                        bgFondo = 'rgba(15, 23, 42, 0.45)'; colorBorde = 'rgba(15, 23, 42, 0.8)';
-                        etiquetaEstatus = "Deshabitado / Baldío";
+                    if (!esCasoIndice) {
+                        if (sit === 'CN' || sit === 'CN_NR' || sit.includes('CON NIÑOS')) {
+                            bgFondo = 'rgba(34, 197, 94, 0.45)'; colorBorde = 'rgba(34, 197, 94, 0.8)';
+                            etiquetaEstatus = (sit === 'CN_NR' || sit.includes('NO')) ? "Con niños (Sin registro)" : "Con niños (Con registro)";
+                        } else if (sit === 'SN_REG' || sit === 'SN_NO' || sit.includes('SIN NIÑOS')) {
+                            bgFondo = 'rgba(34, 197, 94, 0.45)'; colorBorde = 'rgba(34, 197, 94, 0.8)';
+                            etiquetaEstatus = (sit === 'SN_NO') ? "Sin niños (Sin registro)" : "Sin niños (Con registro)";
+                        } else if (sit.includes('N_') || dom.includes('NEGOCIO') || dom.includes('(N)')) {
+                            bgFondo = 'rgba(59, 130, 246, 0.45)'; colorBorde = 'rgba(59, 130, 246, 0.8)';
+                            etiquetaEstatus = (sit === 'N_SIN') ? "Negocio (Sin personas por vacunar)" : "Negocio (Con personas por vacunar)";
+                        } else if (sit === 'A' || sit.includes('AUSENTE') || sit.includes('(A)')) {
+                            bgFondo = 'rgba(234, 179, 8, 0.45)'; colorBorde = 'rgba(234, 179, 8, 0.8)';
+                            etiquetaEstatus = "Familia Ausente";
+                        } else if (sit === 'R' || sit.includes('RENUENTE') || sit.includes('(R)')) {
+                            bgFondo = 'rgba(239, 68, 68, 0.45)'; colorBorde = 'rgba(239, 68, 68, 0.8)';
+                            etiquetaEstatus = "Familia Renuente";
+                        } else if (dom.includes('DESHABITADA') || dom.includes('BALDIO') || dom.includes('BALDÍO') || dom.includes('DH')) {
+                            bgFondo = 'rgba(15, 23, 42, 0.45)'; colorBorde = 'rgba(15, 23, 42, 0.8)';
+                            etiquetaEstatus = "Deshabitado / Baldío";
+                        }
                     }
 
                     const iconoHistoricoDinamico = L.divIcon({
                         className: 'marcador-historial-dinamico',
-                        html: `<div style="background-color: ${bgFondo}; width: 14px; height: 14px; border-radius: 50%; border: 2px solid ${colorBorde}; box-shadow: 0 0 2px rgba(0,0,0,0.3);"></div>`,
-                        iconSize: [14, 14],
-                        iconAnchor: [7, 7]
+                        html: `<div style="background-color: ${bgFondo}; width: ${tamanio}px; height: ${tamanio}px; border-radius: 50%; border: 2px solid ${colorBorde}; box-shadow: 0 0 ${esCasoIndice ? '8px red' : '2px rgba(0,0,0,0.3)'};"></div>`,
+                        iconSize: [tamanio, tamanio],
+                        iconAnchor: [tamanio/2, tamanio/2]
                     });
 
-                    // Construcción del Pop-up con Inyección de Dirección y Colonia
-                    L.marker([p.lat, p.lon], { icon: iconoHistoricoDinamico })
+                    // Req 6: Fecha de Actividad inyectada
+                    L.marker([p.lat, p.lon], { icon: iconoHistoricoDinamico, zIndexOffset: zIndexOffset })
                      .addTo(mapaInteractivo)
-                     .bindPopup(`<b style="color: #0f172a; font-size: 1.1em; border-bottom: 1px solid #cbd5e1; display:block; padding-bottom:3px; margin-bottom:5px;">Historial CENSIA</b>
+                     .bindPopup(`<b style="color: ${esCasoIndice ? '#dc2626' : '#0f172a'}; font-size: 1.1em; border-bottom: 1px solid #cbd5e1; display:block; padding-bottom:3px; margin-bottom:5px;">${esCasoIndice ? '🚨 CASO ÍNDICE' : 'Acciones realizadas'}</b>
+                                 <span style="color: #2563eb; font-weight: bold; font-size: 0.9em; display:block; margin-bottom:4px;">📅 Fecha: ${p.fecha_actividad || 'S/D'}</span>
                                  <span style="color: #475569; font-size: 0.9em;"><b>Dirección:</b> ${p.calle || 'S/D'}, Col. ${p.colonia || 'S/D'}</span><br>
                                  <span style="color: #334155; font-size: 0.9em; display:block; margin-top:4px;"><b>Tipo:</b> ${p.domicilio || 'N/D'}</span>
-                                 <span style="color: #0f172a; font-size: 0.95em; font-weight: bold; background-color: #f1f5f9; padding: 2px 4px; border-radius: 3px; display:inline-block; margin-top:4px;">Estatus: ${etiquetaEstatus}</span>`);
+                                 <span style="color: #475569; font-size: 0.85em; display:block; margin-top:4px;">👤 Registró: ${p.registrador_nombre || 'N/D'} (${p.registrador_institucion || '-'})</span>
+                                 <span style="color: #0f172a; font-size: 0.95em; font-weight: bold; background-color: ${esCasoIndice ? '#fee2e2' : '#f1f5f9'}; padding: 2px 4px; border-radius: 3px; display:inline-block; margin-top:4px;">Estatus: ${etiquetaEstatus}</span>`);
                 }
             });
 
@@ -1220,6 +1291,47 @@
             console.error("Fallo de sincronización de la capa vectorial histórica:", error);
         }
     }
+
+    /* ==========================================
+       LÓGICA V15.6: CASCADAS IMSS Y BASE64
+       ========================================== */
+    function evaluarCascadaGlobal() {
+        document.querySelectorAll('.tarjeta-persona').forEach(t => {
+            evaluarCascadaIMSS(t.id.split('_').pop());
+        });
+    }
+
+    function evaluarCascadaIMSS(pId) {
+        const instRegistrador = document.getElementById('registrador_institucion') ? document.getElementById('registrador_institucion').value : "";
+        const derPaciente = document.getElementById(`derecho_${pId}`).value.toUpperCase();
+        const bloqueImss = document.getElementById(`bloque_clinico_imss_${pId}`);
+        const inputNss = document.getElementById(`nss_afiliacion_${pId}`);
+        const labelNss = document.getElementById(`label_nss_${pId}`);
+
+        if (instRegistrador === 'IMSS') {
+            bloqueImss.style.display = 'block';
+            if (derPaciente.includes('IMSS')) {
+                inputNss.required = true;
+                labelNss.innerHTML = 'NSS + Agregado Médico <span style="color:red; font-size:0.8em;">* Oblig.</span>';
+            } else {
+                inputNss.required = false;
+                labelNss.innerHTML = 'NSS + Agregado Médico <span style="color:gray; font-size:0.8em;">(Opcional)</span>';
+            }
+        } else {
+            bloqueImss.style.display = 'none';
+            inputNss.required = false;
+            inputNss.value = "";
+            document.getElementById(`peso_kg_${pId}`).value = "";
+            document.getElementById(`talla_cm_${pId}`).value = "";
+        }
+    }
+
+    const leerArchivoBase64 = (file) => new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+        reader.readAsDataURL(file);
+    });
 </script>
 </body>
 </html>
