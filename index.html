@@ -648,12 +648,13 @@
 
                 <div class="form-group"><label>Esquema de Vacunación Aplicado</label><div id="contenedor_vacunas_p${pId}"></div><button type="button" class="btn btn-add-vacuna" onclick="agregarVacunaAPersona(${pId})">💉 Añadir vacuna</button></div>
                 
-                <!-- INYECCIÓN: FOTO CARTILLA (REQ 7) -->
-                <div class="form-group" style="margin-top: 15px; border-top: 1px solid #cbd5e1; padding-top: 10px;">
+                <!-- FUNCIÓN DESHABILITADA TEMPORALMENTE: FOTO CARTILLA (REQ 7) -->
+                <div class="form-group oculto" style="display: none; margin-top: 15px; border-top: 1px solid #cbd5e1; padding-top: 10px;">
                     <label>📷 Fotografía de Cartilla Nacional (Opcional)</label>
-                    <input type="file" id="foto_cartilla_${pId}" accept="image/*" capture="environment" style="background-color: #f8fafc; padding: 8px;">
+                    <input type="file" id="foto_cartilla_${pId}" accept="image/*" capture="environment" style="background-color: #f8fafc; padding: 8px;" disabled>
                 </div>
-            </div>`;
+                </div>`;
+
         document.getElementById('contenedor_personas').insertAdjacentHTML('beforeend', html);
         
         const selNac = document.getElementById(`estado_nac_${pId}`);
@@ -1009,8 +1010,10 @@
                     const pId = t.id.split('_').pop();
                     const idPaciente = generarUUID(); 
                     
-                    let inputFoto = document.getElementById(`foto_cartilla_${pId}`);
                     let fotoB64 = null, fotoNombre = null, fotoMime = null;
+                    /* =======================================================
+                        BLOQUE INACTIVO: Descomentar para reactivar subida de fotos
+                    let inputFoto = document.getElementById(`foto_cartilla_${pId}`);
                     if (inputFoto && inputFoto.files && inputFoto.files.length > 0) {
                         try {
                             fotoB64 = await leerArchivoBase64(inputFoto.files[0]);
@@ -1020,6 +1023,7 @@
                             console.warn("Error al procesar la foto:", errFoto);
                         }
                     }
+                    ========================================================== */
 
                     let paciente = {
                         id_paciente: idPaciente,
