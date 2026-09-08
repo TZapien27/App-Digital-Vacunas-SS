@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>App Digital Vacunación SNSP-SS - V15.6</title>
+    <title>App Digital Vacunación SNSP-SS - V15.7</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0056b3">
@@ -87,7 +87,7 @@
         <!-- INYECCIÓN: DATOS DEL REGISTRADOR Y MÓDULO (REQ 2 y 3) -->
         <fieldset style="border: 1px solid #cbd5e1; padding: 15px; margin-bottom: 15px; border-radius: 6px; background-color: #f8fafc;">
             <div class="tarjeta">
-        <h2>1. Datos Generales de la Jornada <span style="color: #ef4444; font-size: 0.8rem; background: #fee2e2; padding: 2px 6px; border-radius: 4px; float: right;">v15.6</span></h2>
+        <h2>1. Datos Generales de la Jornada <span style="color: #ef4444; font-size: 0.8rem; background: #fee2e2; padding: 2px 6px; border-radius: 4px; float: right;">v15.7</span></h2>
         
         <fieldset style="border: 1px solid #cbd5e1; padding: 15px; margin-bottom: 15px; border-radius: 6px; background-color: #f8fafc;">
             <legend style="font-weight: bold; color: #0f172a; padding: 0 5px;">Datos del Registrador</legend>
@@ -138,6 +138,18 @@
                 <option value="bloqueo">Bloqueo vacunal</option>
                 <option value="modulo_fijo">Módulo fijo</option>
             </select>
+        </div>
+
+        <!-- CAMPO EXCLUSIVO: REFERENCIA MÓDULO FIJO -->
+        <div class="form-group oculto" id="grupo_ref_modulo_fijo">
+            <label>Referencia del Módulo Fijo (si aplica)</label>
+            <input type="text" id="lugar_fijo" class="guardar-cache" placeholder="Ej. Centro de Salud Madero">
+        </div>
+
+        <!-- CAMPO EXCLUSIVO REQUERIDO: IDENTIFICADOR DE BARRIDO -->
+        <div class="form-group oculto" id="grupo_identificador_barrido">
+            <label>Identificador del Barrido (Opcional)</label>
+            <input type="text" id="identificador_barrido" class="guardar-cache" placeholder="Ej. BARRIDO-ZONA-04">
         </div>
     </div>
 
@@ -460,7 +472,7 @@
         const sDom = document.getElementById('situacion_domicilio') ? document.getElementById('situacion_domicilio').value : "";
         const sNeg = document.getElementById('situacion_negocio') ? document.getElementById('situacion_negocio').value : "";
 
-        const ids = ['bloque_domicilio', 'bloque_censo', 'bloque_mapa', 'seccion_bloqueo', 'metadatos_bloqueo', 'selector_bloqueos_pendientes', 'grupo_pregunta_estado_bloqueo', 'grupo_lugar_fijo', 'grupo_domicilio_visitado', 'grupo_situacion_domicilio', 'grupo_situacion_negocio', 'grupo_caso_domicilio', 'nodo_cierre_bloqueo', 'campos_cierre_final', 'grupo_ref_modulo_fijo'];
+        const ids = ['bloque_domicilio', 'bloque_censo', 'bloque_mapa', 'seccion_bloqueo', 'metadatos_bloqueo', 'selector_bloqueos_pendientes', 'grupo_pregunta_estado_bloqueo', 'grupo_lugar_fijo', 'grupo_domicilio_visitado', 'grupo_situacion_domicilio', 'grupo_situacion_negocio', 'grupo_caso_domicilio', 'nodo_cierre_bloqueo', 'campos_cierre_final', 'grupo_ref_modulo_fijo', 'grupo_identificador_barrido'];
         ids.forEach(id => { const el = document.getElementById(id); if (el) el.classList.add('oculto'); });
 
         const maestro = document.getElementById('formulario_maestro');
@@ -469,11 +481,13 @@
         const bMapa = document.getElementById('bloque_mapa');
         const bCierre = document.getElementById('nodo_cierre_bloqueo');
 
-        // Blindaje de reordenamiento DOM para evitar excepciones de nodos huérfanos
+        // Blindaje de reordenamiento DOM: 
+        // - Módulo Fijo: Datos Generales -> Censo (Personas) -> Domicilio -> Mapa
+        // - Barrido / Bloqueo: Datos Generales -> Domicilio -> Mapa -> Censo (Personas)
         try {
             if (tAct === 'modulo_fijo') {
                 if (maestro && bCenso && bDom && bCenso.parentNode === maestro && bDom.parentNode === maestro) maestro.insertBefore(bCenso, bDom);
-                if (maestro && bMapa && bCierre && bMapa.parentNode === maestro && bCierre.parentNode === maestro) maestro.insertBefore(bMapa, bCierre);
+                if (maestro && bDom && bMapa && bDom.parentNode === maestro && bMapa.parentNode === maestro) maestro.insertBefore(bMapa, null); // Manda el mapa al final o después del domicilio
             } else {
                 if (maestro && bDom && bCenso && bDom.parentNode === maestro && bCenso.parentNode === maestro) maestro.insertBefore(bDom, bCenso);
                 if (maestro && bMapa && bCenso && bMapa.parentNode === maestro && bCenso.parentNode === maestro) maestro.insertBefore(bMapa, bCenso);
@@ -484,13 +498,14 @@
 
         if (!tAct) { window.scrollTo({ top: scrollY, behavior: 'instant' }); return; }
 
+        // Control de visibilidad para campos exclusivos post Tipo de Actividad
         if (tAct === 'modulo_fijo') {
+            const elRef = document.getElementById('grupo_ref_modulo_fijo');
+            if (elRef) elRef.classList.remove('oculto');
+
             document.getElementById('bloque_domicilio').classList.remove('oculto');
             document.getElementById('bloque_censo').classList.remove('oculto');
             document.getElementById('bloque_mapa').classList.remove('oculto');
-
-            const elRef = document.getElementById('grupo_ref_modulo_fijo');
-            if (elRef) elRef.classList.remove('oculto');
 
             if (document.querySelectorAll('.tarjeta-persona').length === 0) agregarPersona();
             setTimeout(() => {
@@ -502,6 +517,11 @@
             }, 200);
             window.scrollTo({ top: scrollY, behavior: 'instant' });
             return;
+        }
+
+        if (tAct === 'barrido') {
+            const elIdBarrido = document.getElementById('grupo_identificador_barrido');
+            if (elIdBarrido) elIdBarrido.classList.remove('oculto');
         }
 
         if (tAct === 'bloqueo') {
@@ -520,7 +540,7 @@
             document.getElementById('bloque_domicilio').classList.remove('oculto');
             document.getElementById('grupo_lugar_fijo').classList.remove('oculto');
             document.getElementById('grupo_domicilio_visitado').classList.remove('oculto');
-            document.getElementById('bloque_mapa').classList.remove('oculto');
+            document.getElementById('bloque_mapa').classList.remove('oculto'); // El mapa se muestra enseguida del domicilio
 
             const elRef = document.getElementById('grupo_ref_modulo_fijo');
             if (elRef) elRef.classList.add('oculto');
@@ -559,9 +579,23 @@
             if (bCierre) bCierre.classList.remove('oculto');
         }
 
+        const esBloqueoActivo = (tAct === 'bloqueo');
+        document.querySelectorAll('.tarjeta-persona').forEach(t => {
+            const pId = t.id.split('_').pop();
+            const divCaso = document.getElementById(`contenedor_caso_indice_${pId}`);
+            if (divCaso) {
+                if (esBloqueoActivo) divCaso.classList.remove('oculto');
+                else {
+                    divCaso.classList.add('oculto');
+                    const chk = document.getElementById(`caso_indice_${pId}`);
+                    if (chk) chk.checked = false; // Limpia la selección si cambia de actividad
+                }
+            }
+        });
+
         window.scrollTo({ top: scrollY, behavior: 'instant' });
     }
-
+    
     function evaluarCierreBloqueo() {
         const resp = document.getElementById('ultimo_registro_bloqueo').value;
         const divCierre = document.getElementById('campos_cierre_final');
@@ -579,8 +613,8 @@
             <div class="tarjeta tarjeta-persona" id="tarjeta_persona_${pId}">
                 <h2>👤 Persona ${pId}</h2><button type="button" class="btn-eliminar" onclick="eliminarPersona(${pId})">X</button>
                 
-                <!-- INYECCIÓN: CASO ÍNDICE (REQ 1) -->
-                <div class="form-group" style="background: #fee2e2; padding: 8px; border-radius: 4px; margin-bottom: 10px;">
+                <!-- CASO ÍNDICE EXCLUSIVO PARA BLOQUEOS -->
+                <div class="form-group oculto" id="contenedor_caso_indice_${pId}" style="background: #fee2e2; padding: 8px; border-radius: 4px; margin-bottom: 10px;">
                     <input type="checkbox" id="caso_indice_${pId}" value="SI">
                     <label for="caso_indice_${pId}" style="color: #b91c1c; font-weight: bold; margin-left: 5px; display:inline-block;">Marcar como Caso Índice 🚨</label>
                 </div>
@@ -999,7 +1033,7 @@
                     id_bloqueo: getVal('id_bloqueo'),
                     registrador_nombre: getVal('registrador_nombre'),
                     registrador_institucion: getVal('registrador_institucion'),
-                    lugar_fijo: getVal('lugar_fijo')
+                    lugar_fijo: getVal('lugar_fijo')|| getVal('identificador_barrido')
                 },
                 pacientes: []
             };
