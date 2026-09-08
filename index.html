@@ -503,17 +503,13 @@
             document.getElementById('grupo_lugar_fijo').classList.remove('oculto');
             document.getElementById('grupo_domicilio_visitado').classList.remove('oculto');
             document.getElementById('bloque_mapa').classList.remove('oculto');
-<<<<<<< Updated upstream
 
             // INYECCIÓN: Ocultar y limpiar Referencia de Módulo si no es Módulo Fijo
             document.getElementById('grupo_ref_modulo_fijo').classList.add('oculto');
-            document.getElementById('lugar_fijo').value = ""; 
+            const elLugarFijo = document.getElementById('lugar_fijo');
+            if (elLugarFijo) elLugarFijo.value = ""; 
             
-            setTimeout(() => { if(mapaInteractivo) mapaInteractivo.invalidateSize(); }, 300); 
-            // ... resto del código ...
-
-            setTimeout(() => { if(mapaInteractivo) mapaInteractivo.invalidateSize(); }, 300); 
-=======
+            // Forzar recálculo del mapa para evitar renderizado en blanco
             setTimeout(() => { 
                 if(mapaInteractivo) {
                     mapaInteractivo.invalidateSize();
@@ -521,7 +517,6 @@
                     inicializarMapaDefecto();
                 }
             }, 200);
->>>>>>> Stashed changes
             
             if (dom === 'casa') {
                 document.getElementById('grupo_situacion_domicilio').classList.remove('oculto');
