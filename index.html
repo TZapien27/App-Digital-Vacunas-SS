@@ -811,7 +811,10 @@
         const etiquetasDom = { 'casa': 'Casa', 'deshabitada': 'Casa deshabitada', 'lote_baldio': 'Lote baldío', 'negocio': 'Negocio', 'MF': 'Módulo Fijo' };
         
         mapaInteractivo.eachLayer(function (layer) {
-            if (layer instanceof L.Marker && layer !== chincheta) { mapaInteractivo.removeLayer(layer); }
+            // BLINDAJE: Evita borrar los puntos remotos transparentes (esHistoricoRemoto)
+            if (layer instanceof L.Marker && layer !== chincheta && !layer.options.esHistoricoRemoto) { 
+                mapaInteractivo.removeLayer(layer); 
+            }
         });
 
         hist.forEach(p => {
@@ -1368,6 +1371,7 @@
                 if(p.lat && p.lon) {
                     let esCasoIndice = (p.caso_indice === 'SI');
                     
+                    // TRANSPARENCIAS APLICADAS (0.45 = 45% de opacidad)
                     let bgFondo = esCasoIndice ? 'rgba(220, 38, 38, 0.9)' : 'rgba(100, 116, 139, 0.45)'; 
                     let colorBorde = esCasoIndice ? '#7f1d1d' : 'rgba(100, 116, 139, 0.8)';
                     let tamanio = esCasoIndice ? 18 : 14;
@@ -1381,33 +1385,25 @@
                         if (dom === 'MF' || dom.includes('MODULO') || dom.includes('MÓDULO')) {
                             bgFondo = 'rgba(59, 130, 246, 0.45)'; colorBorde = 'rgba(59, 130, 246, 0.8)';
                             etiquetaEstatus = "Módulo Fijo";
-                        } 
+                        }
                         else if (sit === 'CN' || sit === 'CN_NR' || sit.includes('CON NIÑOS')) {
                             bgFondo = 'rgba(34, 197, 94, 0.45)'; colorBorde = 'rgba(34, 197, 94, 0.8)';
-                            etiquetaEstatus = (sit === 'CN_NR' || sit.includes('NO SE REGISTRAN') || sit.includes('(CN_NR)')) ? "Con niños (Sin registro)" : "Con niños (Con registro)";
-                        } 
-                        else if (sit === 'SN_REG' || sit === 'SN_NO' || sit.includes('SIN NIÑOS')) {
+                            etiquetaEstatus = (sit === 'CN_NR' || sit.includes('NO SE REGISTRAN')) ? "Con niños (Sin registro)" : "Con niños (Con registro)";
+                        } else if (sit === 'SN_REG' || sit === 'SN_NO' || sit.includes('SIN NIÑOS')) {
                             bgFondo = 'rgba(34, 197, 94, 0.45)'; colorBorde = 'rgba(34, 197, 94, 0.8)';
-                            etiquetaEstatus = (sit === 'SN_NO' || sit.includes('NO SE REGISTRA') || sit.includes('NINGUNA PERSONA')) ? "Sin niños (Sin registro)" : "Sin niños (Con registro)";
-                        } 
-                        else if (sit.includes('N_') || dom.includes('NEGOCIO') || sit.includes('(N)')) {
+                            etiquetaEstatus = (sit === 'SN_NO' || sit.includes('NO SE REGISTRA')) ? "Sin niños (Sin registro)" : "Sin niños (Con registro)";
+                        } else if (sit.includes('N_') || dom.includes('NEGOCIO') || dom.includes('(N)')) {
                             bgFondo = 'rgba(59, 130, 246, 0.45)'; colorBorde = 'rgba(59, 130, 246, 0.8)';
                             etiquetaEstatus = (sit === 'N_SIN' || sit.includes('SIN PERSONAS')) ? "Negocio (Sin personas por vacunar)" : "Negocio (Con personas por vacunar)";
-                        } 
-                        else if (sit === 'A' || sit.includes('AUSENTE') || sit.includes('(A)')) {
+                        } else if (sit === 'A' || sit.includes('AUSENTE') || sit.includes('(A)')) {
                             bgFondo = 'rgba(234, 179, 8, 0.45)'; colorBorde = 'rgba(234, 179, 8, 0.8)';
                             etiquetaEstatus = "Familia Ausente";
-                        } 
-                        else if (sit === 'R' || sit.includes('RENUENTE') || sit.includes('(R)')) {
+                        } else if (sit === 'R' || sit.includes('RENUENTE') || sit.includes('(R)')) {
                             bgFondo = 'rgba(239, 68, 68, 0.45)'; colorBorde = 'rgba(239, 68, 68, 0.8)';
                             etiquetaEstatus = "Familia Renuente";
-                        } 
-                        else if (dom.includes('DESHABITADA') || dom.includes('BALDIO') || dom.includes('BALDÍO') || dom.includes('DH')) {
+                        } else if (dom.includes('DESHABITADA') || dom.includes('BALDIO') || dom.includes('BALDÍO') || dom.includes('DH')) {
                             bgFondo = 'rgba(15, 23, 42, 0.45)'; colorBorde = 'rgba(15, 23, 42, 0.8)';
                             etiquetaEstatus = "Deshabitado / Baldío";
-                        } 
-                        else {
-                            etiquetaEstatus = `Estatus desconocido`; // Fallback visual
                         }
                     }
 
@@ -1418,18 +1414,19 @@
                         iconAnchor: [tamanio/2, tamanio/2]
                     });
 
-                    // CÁLCULO DE FECHA CORTA
+                    // GENERADOR DE FECHA CORTA (DD/MM/YY)
                     let fechaCorta = "S/D";
                     if (p.fecha_actividad) {
                         let partesFecha = p.fecha_actividad.split('/');
                         if (partesFecha.length === 3) {
                             fechaCorta = `${partesFecha[0]}/${partesFecha[1]}/${partesFecha[2].slice(-2)}`;
                         } else {
-                            fechaCorta = p.fecha_actividad; 
+                            fechaCorta = p.fecha_actividad;
                         }
                     }
 
-                    L.marker([p.lat, p.lon], { icon: iconoHistoricoDinamico, zIndexOffset: zIndexOffset })
+                    // ETIQUETA esHistoricoRemoto: true PARA EVITAR QUE SE BORRE
+                    L.marker([p.lat, p.lon], { icon: iconoHistoricoDinamico, zIndexOffset: zIndexOffset, esHistoricoRemoto: true })
                      .addTo(mapaInteractivo)
                      .bindPopup(`<b style="color: ${esCasoIndice ? '#dc2626' : '#0f172a'}; font-size: 1.1em; border-bottom: 1px solid #cbd5e1; display:block; padding-bottom:3px; margin-bottom:5px;">${esCasoIndice ? '🚨 CASO ÍNDICE' : 'Acciones realizadas'}</b>
                                  <span style="color: #2563eb; font-weight: bold; font-size: 0.9em; display:block; margin-bottom:4px;">📅 Fecha: ${fechaCorta}</span>
@@ -1444,7 +1441,6 @@
             console.error("Fallo de sincronización de la capa vectorial histórica:", error);
         }
     }
-
     /* ==========================================
        LÓGICA V15.6: CASCADAS IMSS Y BASE64
        ========================================== */
