@@ -453,14 +453,14 @@
             }
         }
 
-        const tAct = document.getElementById('tipo_actividad').value; 
-        const dom = document.getElementById('domicilio_visitado').value;
-        const sDom = document.getElementById('situacion_domicilio').value; 
-        const sNeg = document.getElementById('situacion_negocio').value;
+        const tAct = document.getElementById('tipo_actividad') ? document.getElementById('tipo_actividad').value : "";
+        const dom = document.getElementById('domicilio_visitado') ? document.getElementById('domicilio_visitado').value : "";
+        const sDom = document.getElementById('situacion_domicilio') ? document.getElementById('situacion_domicilio').value : "";
+        const sNeg = document.getElementById('situacion_negocio') ? document.getElementById('situacion_negocio').value : "";
 
         const ids = ['bloque_domicilio', 'bloque_censo', 'bloque_mapa', 'seccion_bloqueo', 'metadatos_bloqueo', 'selector_bloqueos_pendientes', 'grupo_pregunta_estado_bloqueo', 'grupo_lugar_fijo', 'grupo_domicilio_visitado', 'grupo_situacion_domicilio', 'grupo_situacion_negocio', 'grupo_caso_domicilio', 'nodo_cierre_bloqueo', 'campos_cierre_final'];
         ids.forEach(id => { const el = document.getElementById(id); if (el) el.classList.add('oculto'); });
-        
+
         const maestro = document.getElementById('formulario_maestro');
         const bCenso = document.getElementById('bloque_censo');
         const bDom = document.getElementById('bloque_domicilio');
@@ -468,26 +468,28 @@
         const bCierre = document.getElementById('nodo_cierre_bloqueo');
 
         if (tAct === 'modulo_fijo') {
-            maestro.insertBefore(bCenso, bDom); maestro.insertBefore(bMapa, bCierre); 
+            if (maestro && bCenso && bDom) maestro.insertBefore(bCenso, bDom);
+            if (maestro && bMapa && bCierre) maestro.insertBefore(bMapa, bCierre);
         } else {
-            maestro.insertBefore(bDom, bCenso); maestro.insertBefore(bMapa, bCenso); 
+            if (maestro && bDom && bCenso) maestro.insertBefore(bDom, bCenso);
+            if (maestro && bMapa && bCenso) maestro.insertBefore(bMapa, bCenso);
         }
 
         if (!tAct) { window.scrollTo({ top: scrollY, behavior: 'instant' }); return; }
 
         if (tAct === 'modulo_fijo') {
-            document.getElementById('bloque_domicilio').classList.remove('oculto'); 
-            document.getElementById('bloque_censo').classList.remove('oculto'); 
-            document.getElementById('bloque_mapa').classList.remove('oculto'); 
+            document.getElementById('bloque_domicilio').classList.remove('oculto');
+            document.getElementById('bloque_censo').classList.remove('oculto');
+            document.getElementById('bloque_mapa').classList.remove('oculto');
 
-            // INYECCIÓN: Mostrar Referencia de Módulo
-            document.getElementById('grupo_ref_modulo_fijo').classList.remove('oculto');
+            const elRef = document.getElementById('grupo_ref_modulo_fijo');
+            if (elRef) elRef.classList.remove('oculto');
 
             if (document.querySelectorAll('.tarjeta-persona').length === 0) agregarPersona();
-            setTimeout(() => { 
+            setTimeout(() => {
                 if(mapaInteractivo) {
                     mapaInteractivo.invalidateSize();
-                } else {
+                } else if (typeof inicializarMapaDefecto === 'function') {
                     inicializarMapaDefecto();
                 }
             }, 200);
@@ -499,7 +501,7 @@
             document.getElementById('seccion_bloqueo').classList.remove('oculto');
             if (listaPendientes.length === 0 && document.getElementById('estado_bloqueo').value === "") {
                 document.getElementById('estado_bloqueo').value = 'nuevo';
-                gestionarEstadoBloqueo(); 
+                if (typeof gestionarEstadoBloqueo === 'function') gestionarEstadoBloqueo();
             } else if (listaPendientes.length > 0 && document.getElementById('id_bloqueo').value === "") {
                 document.getElementById('grupo_pregunta_estado_bloqueo').classList.remove('oculto');
             } else if (document.getElementById('id_bloqueo').value !== "") {
@@ -513,20 +515,19 @@
             document.getElementById('grupo_domicilio_visitado').classList.remove('oculto');
             document.getElementById('bloque_mapa').classList.remove('oculto');
 
-            // INYECCIÓN: Ocultar y limpiar Referencia de Módulo si no es Módulo Fijo
-            document.getElementById('grupo_ref_modulo_fijo').classList.add('oculto');
+            const elRef = document.getElementById('grupo_ref_modulo_fijo');
+            if (elRef) elRef.classList.add('oculto');
             const elLugarFijo = document.getElementById('lugar_fijo');
-            if (elLugarFijo) elLugarFijo.value = ""; 
-            
-            // Forzar recálculo del mapa para evitar renderizado en blanco
-            setTimeout(() => { 
+            if (elLugarFijo) elLugarFijo.value = "";
+
+            setTimeout(() => {
                 if(mapaInteractivo) {
                     mapaInteractivo.invalidateSize();
-                } else {
+                } else if (typeof inicializarMapaDefecto === 'function') {
                     inicializarMapaDefecto();
                 }
             }, 200);
-            
+
             if (dom === 'casa') {
                 document.getElementById('grupo_situacion_domicilio').classList.remove('oculto');
                 if (tAct === 'bloqueo') document.getElementById('grupo_caso_domicilio').classList.remove('oculto');
@@ -541,14 +542,19 @@
             if (document.querySelectorAll('.tarjeta-persona').length === 0) agregarPersona();
         } else {
             document.getElementById('bloque_censo').classList.add('oculto');
-            document.getElementById('contenedor_personas').innerHTML = ''; personaId = 0;
+            const contPer = document.getElementById('contenedor_personas');
+            if (contPer) contPer.innerHTML = '';
+            personaId = 0;
         }
 
-        if (tAct === 'bloqueo' && dom !== "") document.getElementById('nodo_cierre_bloqueo').classList.remove('oculto');
-        
+        if (tAct === 'bloqueo' && dom !== "") {
+            const bCierre = document.getElementById('nodo_cierre_bloqueo');
+            if (bCierre) bCierre.classList.remove('oculto');
+        }
+
         window.scrollTo({ top: scrollY, behavior: 'instant' });
     }
-
+    
     function evaluarCierreBloqueo() {
         const resp = document.getElementById('ultimo_registro_bloqueo').value;
         const divCierre = document.getElementById('campos_cierre_final');
