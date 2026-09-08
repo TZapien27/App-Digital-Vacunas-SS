@@ -818,241 +818,252 @@
        MOTOR DE GUARDADO Y SINCRONIZACIÓN OFFLINE
        ========================================== */
     async function empaquetarYGuardar() {
-        const tAct = document.getElementById('tipo_actividad').value;
-        const estadoBloqueo = document.getElementById('estado_bloqueo').value;
-        const listaPendientes = JSON.parse(localStorage.getItem('censia_bloqueos_pendientes') || '[]');
+        // BLINDAJE ANTI-CRASH: Capturamos cualquier error antes del fetch
+        try {
+            const tAct = document.getElementById('tipo_actividad').value;
+            const estadoBloqueo = document.getElementById('estado_bloqueo').value;
+            const listaPendientes = JSON.parse(localStorage.getItem('censia_bloqueos_pendientes') || '[]');
 
-        if (tAct === 'bloqueo') {
-            if (estadoBloqueo === 'pendiente' && listaPendientes.length === 0) {
-                alert("⚠️ ERROR: No existen bloqueos pendientes en el dispositivo. Selecciona '➕ Iniciar un Nuevo Bloqueo'.");
-                document.getElementById('estado_bloqueo').classList.add('campo-invalido');
+            if (tAct === 'bloqueo') {
+                if (estadoBloqueo === 'pendiente' && listaPendientes.length === 0) {
+                    alert("⚠️ ERROR: No existen bloqueos pendientes en el dispositivo. Selecciona '➕ Iniciar un Nuevo Bloqueo'.");
+                    document.getElementById('estado_bloqueo').classList.add('campo-invalido');
+                    return;
+                }
+            }
+
+            document.querySelectorAll('.campo-invalido').forEach(el => el.classList.remove('campo-invalido')); let hayErrores = false;
+            
+            const checkReq = (id) => { 
+                const el = document.getElementById(id); 
+                if(el && el.offsetParent !== null) {
+                    if(!el.value && el.required !== false) { el.classList.add('campo-invalido'); hayErrores = true; }
+                    else if(el.placeholder === "DD/MM/AAAA" && el.value.length !== 10) { el.classList.add('campo-invalido'); hayErrores = true; }
+                }
+            };
+
+            ['registrador_nombre', 'registrador_institucion', 'tipo_actividad', 'fecha_actividad', 'entidad', 'jurisdiccion', 'municipio', 'localidad', 'nombre_vacunador'].forEach(checkReq);
+
+            if(tAct === 'barrido' || tAct === 'bloqueo' || tAct === 'modulo_fijo') {
+                ['calle_numero', 'colonia'].forEach(checkReq);
+                if(tAct !== 'modulo_fijo') {
+                    checkReq('latitud'); 
+                    checkReq('domicilio_visitado');
+                    const dom = document.getElementById('domicilio_visitado').value;
+                    if(dom === 'casa') checkReq('situacion_domicilio');
+                    if(dom === 'negocio') checkReq('situacion_negocio');
+                }
+            }
+
+            let respCierre = "";
+            if (tAct === 'bloqueo') {
+                checkReq('estado_bloqueo');
+                if(estadoBloqueo === 'nuevo') { ['bloqueo_tipo', 'bloqueo_nombre_caso', 'bloqueo_fecha_notificacion', 'bloqueo_fecha_inicio'].forEach(checkReq); }
+                else if (estadoBloqueo === 'pendiente') { checkReq('lista_bloqueos_pendientes'); }
+                
+                checkReq('ultimo_registro_bloqueo');
+                respCierre = document.getElementById('ultimo_registro_bloqueo').value;
+                if(respCierre === 'si') { ['manzanas_recorridas', 'fecha_envio_bloqueo'].forEach(checkReq); }
+            }
+
+            const censoVisible = !document.getElementById('bloque_censo').classList.contains('oculto');
+            if(censoVisible) {
+                const tarjetas = document.querySelectorAll('.tarjeta-persona');
+                if(tarjetas.length === 0) { alert("Añada al menos una persona."); hayErrores = true; }
+                tarjetas.forEach(t => {
+                    const pId = t.id.split('_').pop();
+                    [`nombre_${pId}`, `fecha_nacimiento_${pId}`, `estado_nac_${pId}`, `sexo_${pId}`, `derecho_${pId}`].forEach(checkReq);
+                    
+                    if(document.getElementById(`edad_calculada_${pId}`).value === 'Fecha inválida') { document.getElementById(`fecha_nacimiento_${pId}`).classList.add('campo-invalido'); hayErrores = true; }
+
+                    if(document.getElementById(`derecho_${pId}`).value === 'OTRA') checkReq(`derecho_otra_${pId}`);
+                    if(document.getElementById(`tutor_tipo_${pId}`) && document.getElementById(`tutor_tipo_${pId}`).value === 'Otro parentesco') {
+                        checkReq(`tutor_tipo_otro_${pId}`);
+                    }
+                    
+                    if(document.getElementById(`nss_afiliacion_${pId}`) && document.getElementById(`nss_afiliacion_${pId}`).required) {
+                        checkReq(`nss_afiliacion_${pId}`);
+                    }
+
+                    let dosis = 0;
+                    document.querySelectorAll(`.vacuna-de-p${pId}`).forEach(s => { 
+                        const vId = s.id.split('_').pop(); 
+                        if(s.value) { 
+                            dosis++; 
+                            checkReq(`fecha_vacuna_${vId}`); 
+                            if(s.value === 'Otra vacuna') checkReq(`otra_vacuna_txt_${vId}`); 
+                        } 
+                    });
+                    
+                    if(dosis === 0) {
+                        hayErrores = true;
+                        const primerSelect = document.querySelector(`.vacuna-de-p${pId}`);
+                        if(primerSelect) primerSelect.classList.add('campo-invalido');
+                    }
+                });
+            }
+
+            if(hayErrores) {
+                alert("❌ DATOS INCOMPLETOS O INVÁLIDOS.\n\nRevisa los recuadros en ROJO.");
+                const primerError = document.querySelector('.campo-invalido'); if(primerError) primerError.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 return;
             }
-        }
 
-        document.querySelectorAll('.campo-invalido').forEach(el => el.classList.remove('campo-invalido')); let hayErrores = false;
-        
-        const checkReq = (id) => { 
-            const el = document.getElementById(id); 
-            if(el && el.offsetParent !== null) {
-                if(!el.value && el.required !== false) { el.classList.add('campo-invalido'); hayErrores = true; }
-                else if(el.placeholder === "DD/MM/AAAA" && el.value.length !== 10) { el.classList.add('campo-invalido'); hayErrores = true; }
-            }
-        };
-
-        ['registrador_nombre', 'registrador_institucion', 'tipo_actividad', 'fecha_actividad', 'entidad', 'jurisdiccion', 'municipio', 'localidad', 'nombre_vacunador'].forEach(checkReq);
-
-        if(tAct === 'barrido' || tAct === 'bloqueo' || tAct === 'modulo_fijo') {
-            ['calle_numero', 'colonia'].forEach(checkReq);
-            if(tAct !== 'modulo_fijo') {
-                checkReq('latitud'); 
-                checkReq('domicilio_visitado');
-                const dom = document.getElementById('domicilio_visitado').value;
-                if(dom === 'casa') checkReq('situacion_domicilio');
-                if(dom === 'negocio') checkReq('situacion_negocio');
-            }
-        }
-
-        let respCierre = "";
-        if (tAct === 'bloqueo') {
-            checkReq('estado_bloqueo');
-            if(estadoBloqueo === 'nuevo') { ['bloqueo_tipo', 'bloqueo_nombre_caso', 'bloqueo_fecha_notificacion', 'bloqueo_fecha_inicio'].forEach(checkReq); }
-            else if (estadoBloqueo === 'pendiente') { checkReq('lista_bloqueos_pendientes'); }
+            // FUNCIÓN MEJORADA: Tolera nodos inexistentes o con estilos en línea de display: none
+            const getVal = (id) => { 
+                const el = document.getElementById(id); 
+                if (!el) return "";
+                if (el.classList.contains('oculto') || el.style.display === 'none') return "";
+                return el.value; 
+            };
             
-            checkReq('ultimo_registro_bloqueo');
-            respCierre = document.getElementById('ultimo_registro_bloqueo').value;
-            if(respCierre === 'si') { ['manzanas_recorridas', 'fecha_envio_bloqueo'].forEach(checkReq); }
-        }
+            const btnGuardar = document.querySelector('.btn-guardar');
+            const textoOriginalBtn = btnGuardar.innerHTML;
+            btnGuardar.innerHTML = "⏳ PROCESANDO Y ENVIANDO A LA NUBE...";
+            btnGuardar.disabled = true;
+            btnGuardar.style.backgroundColor = "#64748b";
 
-        const censoVisible = !document.getElementById('bloque_censo').classList.contains('oculto');
-        if(censoVisible) {
-            const tarjetas = document.querySelectorAll('.tarjeta-persona');
-            if(tarjetas.length === 0) { alert("Añada al menos una persona."); hayErrores = true; }
-            tarjetas.forEach(t => {
-                const pId = t.id.split('_').pop();
-                [`nombre_${pId}`, `fecha_nacimiento_${pId}`, `estado_nac_${pId}`, `sexo_${pId}`, `derecho_${pId}`].forEach(checkReq);
-                
-                if(document.getElementById(`edad_calculada_${pId}`).value === 'Fecha inválida') { document.getElementById(`fecha_nacimiento_${pId}`).classList.add('campo-invalido'); hayErrores = true; }
+            const payload = {
+                general: {
+                    tipo_actividad: getVal('tipo_actividad'),
+                    bloqueo_tipo: getVal('bloqueo_tipo') === 'OTRO' ? 'OTRO' : getVal('bloqueo_tipo'),
+                    bloqueo_tipo_otro: getVal('bloqueo_tipo') === 'OTRO' ? getVal('bloqueo_tipo_otro') : '',
+                    fecha_actividad: getVal('fecha_actividad'),
+                    bloqueo_nombre_caso: getVal('bloqueo_nombre_caso'),
+                    bloqueo_fecha_notificacion: getVal('bloqueo_fecha_notificacion'),
+                    bloqueo_fecha_inicio: getVal('bloqueo_fecha_inicio'),
+                    fecha_envio_bloqueo: getVal('fecha_envio_bloqueo'),
+                    domicilio_visitado: getVal('domicilio_visitado'),
+                    situacion_domicilio: getVal('situacion_domicilio') || getVal('situacion_negocio'),
+                    caso_en_domicilio: getVal('caso_en_domicilio'),
+                    nombre_vacunador: getVal('nombre_vacunador'),
+                    nombre_vacunador_2: getVal('nombre_vacunador_2'),
+                    entidad: getVal('entidad'),
+                    jurisdiccion: getVal('jurisdiccion'),
+                    municipio: getVal('municipio'),
+                    ageb: getVal('ageb'),
+                    otro_ageb_texto: getVal('otro_ageb_texto'),
+                    localidad: getVal('localidad'),
+                    calle_numero: getVal('calle_numero'),
+                    colonia: getVal('colonia'),
+                    observaciones: getVal('observaciones_domicilio'),
+                    ubicacion_gps: getVal('latitud') && getVal('longitud') ? `${getVal('latitud')}, ${getVal('longitud')}` : "",
+                    resp_cierre: respCierre,
+                    ultimo_registro_bloqueo: getVal('ultimo_registro_bloqueo'),
+                    manzanas_recorridas: getVal('manzanas_recorridas'),
+                    registro_lugar_fijo: getVal('registro_lugar_fijo'),
+                    id_bloqueo: getVal('id_bloqueo'),
+                    registrador_nombre: getVal('registrador_nombre'),
+                    registrador_institucion: getVal('registrador_institucion'),
+                    lugar_fijo: getVal('lugar_fijo')
+                },
+                pacientes: []
+            };
 
-                if(document.getElementById(`derecho_${pId}`).value === 'OTRA') checkReq(`derecho_otra_${pId}`);
-                if(document.getElementById(`tutor_tipo_${pId}`) && document.getElementById(`tutor_tipo_${pId}`).value === 'Otro parentesco') {
-                    checkReq(`tutor_tipo_otro_${pId}`);
-                }
-                
-                // Validación estricta NSS IMSS
-                if(document.getElementById(`nss_afiliacion_${pId}`) && document.getElementById(`nss_afiliacion_${pId}`).required) {
-                    checkReq(`nss_afiliacion_${pId}`);
-                }
-
-                let dosis = 0;
-                document.querySelectorAll(`.vacuna-de-p${pId}`).forEach(s => { 
-                    const vId = s.id.split('_').pop(); 
-                    if(s.value) { 
-                        dosis++; 
-                        checkReq(`fecha_vacuna_${vId}`); 
-                        if(s.value === 'Otra vacuna') checkReq(`otra_vacuna_txt_${vId}`); 
-                    } 
-                });
-                
-                if(dosis === 0) {
-                    hayErrores = true;
-                    const primerSelect = document.querySelector(`.vacuna-de-p${pId}`);
-                    if(primerSelect) primerSelect.classList.add('campo-invalido');
-                }
-            });
-        }
-
-        if(hayErrores) {
-            alert("❌ DATOS INCOMPLETOS O INVÁLIDOS.\n\nRevisa los recuadros en ROJO.");
-            const primerError = document.querySelector('.campo-invalido'); if(primerError) primerError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            return;
-        }
-
-        const getVal = (id) => { const el = document.getElementById(id); return el && !el.classList.contains('oculto') ? el.value : ""; };
-        
-        // Cierre de botones UX
-        const btnGuardar = document.querySelector('.btn-guardar');
-        const textoOriginalBtn = btnGuardar.innerHTML;
-        btnGuardar.innerHTML = "⏳ PROCESANDO IMÁGENES Y ENVIANDO A LA NUBE...";
-        btnGuardar.disabled = true;
-        btnGuardar.style.backgroundColor = "#64748b";
-
-        const payload = {
-            general: {
-                tipo_actividad: getVal('tipo_actividad'),
-                bloqueo_tipo: getVal('bloqueo_tipo') === 'OTRO' ? 'OTRO' : getVal('bloqueo_tipo'),
-                bloqueo_tipo_otro: getVal('bloqueo_tipo') === 'OTRO' ? getVal('bloqueo_tipo_otro') : '',
-                fecha_actividad: getVal('fecha_actividad'),
-                bloqueo_nombre_caso: getVal('bloqueo_nombre_caso'),
-                bloqueo_fecha_notificacion: getVal('bloqueo_fecha_notificacion'),
-                bloqueo_fecha_inicio: getVal('bloqueo_fecha_inicio'),
-                fecha_envio_bloqueo: getVal('fecha_envio_bloqueo'),
-                domicilio_visitado: getVal('domicilio_visitado'),
-                situacion_domicilio: getVal('situacion_domicilio') || getVal('situacion_negocio'),
-                caso_en_domicilio: getVal('caso_en_domicilio'),
-                nombre_vacunador: getVal('nombre_vacunador'),
-                nombre_vacunador_2: getVal('nombre_vacunador_2'),
-                entidad: getVal('entidad'),
-                jurisdiccion: getVal('jurisdiccion'),
-                municipio: getVal('municipio'),
-                ageb: getVal('ageb'),
-                otro_ageb_texto: getVal('otro_ageb_texto'),
-                localidad: getVal('localidad'),
-                calle_numero: getVal('calle_numero'),
-                colonia: getVal('colonia'),
-                observaciones: getVal('observaciones_domicilio'),
-                ubicacion_gps: getVal('latitud') && getVal('longitud') ? `${getVal('latitud')}, ${getVal('longitud')}` : "",
-                resp_cierre: respCierre,
-                ultimo_registro_bloqueo: getVal('ultimo_registro_bloqueo'),
-                manzanas_recorridas: getVal('manzanas_recorridas'),
-                registro_lugar_fijo: getVal('registro_lugar_fijo'),
-                id_bloqueo: getVal('id_bloqueo'),
-                // INYECCIÓN REQ 2 y 3:
-                registrador_nombre: getVal('registrador_nombre'),
-                registrador_institucion: getVal('registrador_institucion'),
-                lugar_fijo: getVal('lugar_fijo')
-            },
-            pacientes: []
-        };
-
-        if(censoVisible) {
-            const tarjetas = document.querySelectorAll('.tarjeta-persona');
-            // Bucle FOR OF para soportar await con las imágenes
-            for (let t of tarjetas) {
-                const pId = t.id.split('_').pop();
-                const idPaciente = generarUUID(); 
-                
-                // BLINDAJE CONTRA CRASH: Lectura segura de imagen (Optional Chaining)
-                let inputFoto = document.getElementById(`foto_cartilla_${pId}`);
-                let fotoB64 = null, fotoNombre = null, fotoMime = null;
-                
-                if (inputFoto && inputFoto.files && inputFoto.files.length > 0) {
-                    try {
-                        let fotoFile = inputFoto.files[0];
-                        fotoB64 = await leerArchivoBase64(fotoFile);
-                        fotoNombre = fotoFile.name;
-                        fotoMime = fotoFile.type;
-                    } catch(e) {
-                        console.error("Error aislando foto:", e);
-                    }
-                }
-
-                let paciente = {
-                    id_paciente: idPaciente,
-                    paterno: getVal(`paterno_${pId}`),
-                    materno: getVal(`materno_${pId}`),
-                    nombres: getVal(`nombre_${pId}`),
-                    curp: getVal(`curp_${pId}`),
-                    nombre_pariente: getVal(`tutor_nombre_${pId}`),
-                    tipo_parentesco: getVal(`tutor_tipo_${pId}`),
-                    otro_parentesco: getVal(`tutor_tipo_otro_${pId}`),
-                    fecha_nac_pariente: getVal(`tutor_fecha_nac_${pId}`),
-                    tipo_vacunacion: getVal(`tipo_vacunacion_${pId}`),
-                    fecha_nacimiento: getVal(`fecha_nacimiento_${pId}`),
-                    edad: getVal(`edad_calculada_${pId}`),
-                    sexo: getVal(`sexo_${pId}`),
-                    derechohabiencia: getVal(`derecho_${pId}`),
-                    otra_derechohabiencia: getVal(`derecho_otra_${pId}`),
-                    estatus_migratorio: getVal(`migra_${pId}`),
-                    entidad_nacimiento: getVal(`estado_nac_${pId}`),
+            if(censoVisible) {
+                const tarjetas = document.querySelectorAll('.tarjeta-persona');
+                for (let t of tarjetas) {
+                    const pId = t.id.split('_').pop();
+                    const idPaciente = generarUUID(); 
                     
-                    // Asegurar lectura booleana correcta
-                    caso_indice: document.getElementById(`caso_indice_${pId}`)?.checked ? "SI" : "NO",
-                    nss_afiliacion: getVal(`nss_afiliacion_${pId}`),
-                    peso_kg: getVal(`peso_kg_${pId}`),
-                    talla_cm: getVal(`talla_cm_${pId}`),
-                    foto_cartilla_base64: fotoB64,
-                    foto_cartilla_nombre: fotoNombre,
-                    foto_cartilla_mime: fotoMime,
-                    vacunas: []
-                };
+                    let inputFoto = document.getElementById(`foto_cartilla_${pId}`);
+                    let fotoB64 = null, fotoNombre = null, fotoMime = null;
+                    if (inputFoto && inputFoto.files && inputFoto.files.length > 0) {
+                        try {
+                            fotoB64 = await leerArchivoBase64(inputFoto.files[0]);
+                            fotoNombre = inputFoto.files[0].name;
+                            fotoMime = inputFoto.files[0].type;
+                        } catch (errFoto) {
+                            console.warn("Error al procesar la foto:", errFoto);
+                        }
+                    }
 
-                document.querySelectorAll(`.vacuna-de-p${pId}`).forEach(s => { 
-                    const vId = s.id.split('_').pop(); 
-                    if(s.value) { 
-                        paciente.vacunas.push({
-                            id_dosis: generarUUID(),
-                            vacuna_aplicada: s.value,
-                            vacuna_especificar: s.value === 'Otra vacuna' ? getVal(`otra_vacuna_txt_${vId}`) : '',
-                            fecha_ingresada: getVal(`fecha_vacuna_${vId}`)
-                        });
-                    } 
-                });
-                payload.pacientes.push(paciente);
+                    let paciente = {
+                        id_paciente: idPaciente,
+                        paterno: getVal(`paterno_${pId}`),
+                        materno: getVal(`materno_${pId}`),
+                        nombres: getVal(`nombre_${pId}`),
+                        curp: getVal(`curp_${pId}`),
+                        nombre_pariente: getVal(`tutor_nombre_${pId}`),
+                        tipo_parentesco: getVal(`tutor_tipo_${pId}`),
+                        otro_parentesco: getVal(`tutor_tipo_otro_${pId}`),
+                        fecha_nac_pariente: getVal(`tutor_fecha_nac_${pId}`),
+                        tipo_vacunacion: getVal(`tipo_vacunacion_${pId}`),
+                        fecha_nacimiento: getVal(`fecha_nacimiento_${pId}`),
+                        edad: getVal(`edad_calculada_${pId}`),
+                        sexo: getVal(`sexo_${pId}`),
+                        derechohabiencia: getVal(`derecho_${pId}`),
+                        otra_derechohabiencia: getVal(`derecho_otra_${pId}`),
+                        estatus_migratorio: getVal(`migra_${pId}`),
+                        entidad_nacimiento: getVal(`estado_nac_${pId}`),
+                        caso_indice: document.getElementById(`caso_indice_${pId}`)?.checked ? "SI" : "NO",
+                        nss_afiliacion: getVal(`nss_afiliacion_${pId}`),
+                        peso_kg: getVal(`peso_kg_${pId}`),
+                        talla_cm: getVal(`talla_cm_${pId}`),
+                        foto_cartilla_base64: fotoB64,
+                        foto_cartilla_nombre: fotoNombre,
+                        foto_cartilla_mime: fotoMime,
+                        vacunas: []
+                    };
+
+                    document.querySelectorAll(`.vacuna-de-p${pId}`).forEach(s => { 
+                        const vId = s.id.split('_').pop(); 
+                        if(s.value) { 
+                            paciente.vacunas.push({
+                                id_dosis: generarUUID(),
+                                vacuna_aplicada: s.value,
+                                vacuna_especificar: s.value === 'Otra vacuna' ? getVal(`otra_vacuna_txt_${vId}`) : '',
+                                fecha_ingresada: getVal(`fecha_vacuna_${vId}`)
+                            });
+                        } 
+                    });
+                    payload.pacientes.push(paciente);
+                }
+            } else {
+                payload.pacientes.push({ id_paciente: generarUUID(), vacunas: [] });
             }
-        } else {
-            payload.pacientes.push({ id_paciente: generarUUID(), vacunas: [] });
-        }
 
-        if (!navigator.onLine) {
-            guardarEnColaLocal(payload, tAct, respCierre, payload.general.domicilio_visitado, payload.general.situacion_domicilio, payload.general.caso_en_domicilio);
-            btnGuardar.innerHTML = textoOriginalBtn;
-            btnGuardar.disabled = false;
-            btnGuardar.style.backgroundColor = "#4f46e5";
-            return;
-        }
+            if (!navigator.onLine) {
+                guardarEnColaLocal(payload, tAct, respCierre, payload.general.domicilio_visitado, payload.general.situacion_domicilio, payload.general.caso_en_domicilio);
+                btnGuardar.innerHTML = textoOriginalBtn;
+                btnGuardar.disabled = false;
+                btnGuardar.style.backgroundColor = "#4f46e5";
+                return;
+            }
 
-        fetch(GOOGLE_SCRIPT_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            body: JSON.stringify(payload),
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' } 
-        })
-        .then(response => {
-            btnGuardar.innerHTML = textoOriginalBtn;
-            btnGuardar.disabled = false;
-            btnGuardar.style.backgroundColor = "#4f46e5";
-            alert("✅ REGISTRO GUARDADO Y ENVIADO CON ÉXITO A GOOGLE SHEETS.");
-            procesarLimpiezaYMemoria(tAct, respCierre, payload.general.domicilio_visitado, payload.general.situacion_domicilio, payload.general.caso_en_domicilio);
-        })
-        .catch(error => {
-            btnGuardar.innerHTML = textoOriginalBtn;
-            btnGuardar.disabled = false;
-            btnGuardar.style.backgroundColor = "#4f46e5";
-            guardarEnColaLocal(payload, tAct, respCierre, payload.general.domicilio_visitado, payload.general.situacion_domicilio, payload.general.caso_en_domicilio);
-        });
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: JSON.stringify(payload),
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' } 
+            })
+            .then(response => {
+                btnGuardar.innerHTML = textoOriginalBtn;
+                btnGuardar.disabled = false;
+                btnGuardar.style.backgroundColor = "#4f46e5";
+                alert("✅ REGISTRO GUARDADO Y ENVIADO CON ÉXITO A GOOGLE SHEETS.");
+                procesarLimpiezaYMemoria(tAct, respCierre, payload.general.domicilio_visitado, payload.general.situacion_domicilio, payload.general.caso_en_domicilio);
+            })
+            .catch(error => {
+                btnGuardar.innerHTML = textoOriginalBtn;
+                btnGuardar.disabled = false;
+                btnGuardar.style.backgroundColor = "#4f46e5";
+                guardarEnColaLocal(payload, tAct, respCierre, payload.general.domicilio_visitado, payload.general.situacion_domicilio, payload.general.caso_en_domicilio);
+            });
+            
+        } catch (errorFatal) {
+            // ALERTA VISIBLE DEL CRASH
+            alert("❌ ERROR INTERNO AL PREPARAR LOS DATOS:\n\n" + errorFatal.message);
+            console.error("Detalle del crash:", errorFatal);
+            const btnGuardar = document.querySelector('.btn-guardar');
+            if (btnGuardar) {
+                btnGuardar.innerHTML = "💾 GUARDAR REGISTRO";
+                btnGuardar.disabled = false;
+                btnGuardar.style.backgroundColor = "#4f46e5";
+            }
+        }
     }
-
+    
     function guardarEnColaLocal(payload, tAct, respCierre, dom, sitDom, casoDom) {
         let cola = JSON.parse(localStorage.getItem('censia_cola_envios') || '[]');
         cola.push(payload);
@@ -1276,7 +1287,6 @@
 
             puntos.forEach(p => {
                 if(p.lat && p.lon) {
-                    // Evaluación Req 1: Caso Índice
                     let esCasoIndice = (p.caso_indice === 'SI');
                     
                     let bgFondo = esCasoIndice ? 'rgba(220, 38, 38, 0.9)' : 'rgba(100, 116, 139, 0.45)'; 
@@ -1289,15 +1299,21 @@
                     let etiquetaEstatus = p.situacion || 'N/D';
 
                     if (!esCasoIndice) {
-                        if (sit === 'CN' || sit === 'CN_NR' || sit.includes('CON NIÑOS')) {
+                        // NUEVA REGLA: MÓDULO FIJO
+                        if (dom === 'MF' || dom.includes('MODULO') || dom.includes('MÓDULO')) {
+                            bgFondo = 'rgba(59, 130, 246, 0.45)'; colorBorde = 'rgba(59, 130, 246, 0.8)';
+                            etiquetaEstatus = "Módulo Fijo";
+                        }
+                        // REGLAS ORIGINALES RESTAURADAS EXACTAMENTE
+                        else if (sit === 'CN' || sit === 'CN_NR' || sit.includes('CON NIÑOS')) {
                             bgFondo = 'rgba(34, 197, 94, 0.45)'; colorBorde = 'rgba(34, 197, 94, 0.8)';
-                            etiquetaEstatus = (sit === 'CN_NR' || sit.includes('NO')) ? "Con niños (Sin registro)" : "Con niños (Con registro)";
+                            etiquetaEstatus = (sit === 'CN_NR' || sit.includes('NO SE REGISTRAN')) ? "Con niños (Sin registro)" : "Con niños (Con registro)";
                         } else if (sit === 'SN_REG' || sit === 'SN_NO' || sit.includes('SIN NIÑOS')) {
                             bgFondo = 'rgba(34, 197, 94, 0.45)'; colorBorde = 'rgba(34, 197, 94, 0.8)';
-                            etiquetaEstatus = (sit === 'SN_NO') ? "Sin niños (Sin registro)" : "Sin niños (Con registro)";
+                            etiquetaEstatus = (sit === 'SN_NO' || sit.includes('NO SE REGISTRA')) ? "Sin niños (Sin registro)" : "Sin niños (Con registro)";
                         } else if (sit.includes('N_') || dom.includes('NEGOCIO') || dom.includes('(N)')) {
                             bgFondo = 'rgba(59, 130, 246, 0.45)'; colorBorde = 'rgba(59, 130, 246, 0.8)';
-                            etiquetaEstatus = (sit === 'N_SIN') ? "Negocio (Sin personas por vacunar)" : "Negocio (Con personas por vacunar)";
+                            etiquetaEstatus = (sit === 'N_SIN' || sit.includes('SIN PERSONAS')) ? "Negocio (Sin personas por vacunar)" : "Negocio (Con personas por vacunar)";
                         } else if (sit === 'A' || sit.includes('AUSENTE') || sit.includes('(A)')) {
                             bgFondo = 'rgba(234, 179, 8, 0.45)'; colorBorde = 'rgba(234, 179, 8, 0.8)';
                             etiquetaEstatus = "Familia Ausente";
@@ -1317,18 +1333,17 @@
                         iconAnchor: [tamanio/2, tamanio/2]
                     });
 
-                    // GENERADOR DE FECHA CORTA (DD/MM/YY)
+                    // GENERADOR DE FECHA CORTA
                     let fechaCorta = "S/D";
                     if (p.fecha_actividad) {
                         let partesFecha = p.fecha_actividad.split('/');
                         if (partesFecha.length === 3) {
                             fechaCorta = `${partesFecha[0]}/${partesFecha[1]}/${partesFecha[2].slice(-2)}`;
                         } else {
-                            fechaCorta = p.fecha_actividad; // Fallback
+                            fechaCorta = p.fecha_actividad;
                         }
                     }
 
-                    // Req 6: Fecha de Actividad inyectada
                     L.marker([p.lat, p.lon], { icon: iconoHistoricoDinamico, zIndexOffset: zIndexOffset })
                      .addTo(mapaInteractivo)
                      .bindPopup(`<b style="color: ${esCasoIndice ? '#dc2626' : '#0f172a'}; font-size: 1.1em; border-bottom: 1px solid #cbd5e1; display:block; padding-bottom:3px; margin-bottom:5px;">${esCasoIndice ? '🚨 CASO ÍNDICE' : 'Acciones realizadas'}</b>
