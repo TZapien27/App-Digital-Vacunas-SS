@@ -86,7 +86,11 @@
     <div class="tarjeta">
         <!-- INYECCIÓN: DATOS DEL REGISTRADOR Y MÓDULO (REQ 2 y 3) -->
         <fieldset style="border: 1px solid #cbd5e1; padding: 15px; margin-bottom: 15px; border-radius: 6px; background-color: #f8fafc;">
-            <h2>1. Datos Generales de la Jornada <span style="color: #ef4444; font-size: 0.8rem; background: #fee2e2; padding: 2px 6px; border-radius: 4px; float: right;">v15.6</span></h2>
+            <div class="tarjeta">
+        <h2>1. Datos Generales de la Jornada <span style="color: #ef4444; font-size: 0.8rem; background: #fee2e2; padding: 2px 6px; border-radius: 4px; float: right;">v15.6</span></h2>
+        
+        <fieldset style="border: 1px solid #cbd5e1; padding: 15px; margin-bottom: 15px; border-radius: 6px; background-color: #f8fafc;">
+            <legend style="font-weight: bold; color: #0f172a; padding: 0 5px;">Datos del Registrador</legend>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                 <div class="form-group">
                     <label>Nombre de quien registra *</label>
@@ -102,14 +106,19 @@
                     </select>
                 </div>
             </div>
-            <!-- REEMPLAZAR ESTE BLOQUE EN INDEX.HTML -->
-        <div class="form-group oculto" id="grupo_ref_modulo_fijo">
-            <label>Referencia del Módulo Fijo (si aplica)</label>
-            <input type="text" id="lugar_fijo" class="guardar-cache" placeholder="Ej. Centro de Salud Madero">
-        </div>
+            <div class="form-group oculto" id="grupo_ref_modulo_fijo">
+                <label>Referencia del Módulo Fijo (si aplica)</label>
+                <input type="text" id="lugar_fijo" class="guardar-cache" placeholder="Ej. Centro de Salud Madero">
+            </div>
         </fieldset>
 
         <div class="form-group"><label>Fecha de la Actividad *</label><input type="text" inputmode="numeric" autocomplete="off" id="fecha_actividad" class="guardar-cache" placeholder="DD/MM/AAAA" maxlength="10" oninput="aplicarMascaraFecha(event)" required></div>
+        
+        <!-- BLOQUE RESTAURADO: NOMBRES DE VACUNADORES CON PERSISTENCIA -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div class="form-group"><label>Vacunador 1 *</label><input type="text" id="nombre_vacunador" class="guardar-cache" required></div>
+            <div class="form-group"><label>Vacunador 2</label><input type="text" id="nombre_vacunador_2" class="guardar-cache"></div>
+        </div>
 
         <div class="form-group"><label>Entidad de Residencia *</label><select id="entidad" class="guardar-cache select-buscable" placeholder="Busca entidad..."></select></div>
         <div class="form-group"><label>Jurisdicción Sanitaria *</label><select id="jurisdiccion" class="guardar-cache select-buscable" placeholder="Busca jurisdicción..."></select></div>
@@ -1320,30 +1329,36 @@
                     let etiquetaEstatus = p.situacion || 'N/D';
 
                     if (!esCasoIndice) {
-                        // NUEVA REGLA: MÓDULO FIJO
                         if (dom === 'MF' || dom.includes('MODULO') || dom.includes('MÓDULO')) {
                             bgFondo = 'rgba(59, 130, 246, 0.45)'; colorBorde = 'rgba(59, 130, 246, 0.8)';
                             etiquetaEstatus = "Módulo Fijo";
-                        }
-                        // REGLAS ORIGINALES RESTAURADAS EXACTAMENTE
+                        } 
                         else if (sit === 'CN' || sit === 'CN_NR' || sit.includes('CON NIÑOS')) {
                             bgFondo = 'rgba(34, 197, 94, 0.45)'; colorBorde = 'rgba(34, 197, 94, 0.8)';
-                            etiquetaEstatus = (sit === 'CN_NR' || sit.includes('NO SE REGISTRAN')) ? "Con niños (Sin registro)" : "Con niños (Con registro)";
-                        } else if (sit === 'SN_REG' || sit === 'SN_NO' || sit.includes('SIN NIÑOS')) {
+                            etiquetaEstatus = (sit === 'CN_NR' || sit.includes('NO SE REGISTRAN') || sit.includes('(CN_NR)')) ? "Con niños (Sin registro)" : "Con niños (Con registro)";
+                        } 
+                        else if (sit === 'SN_REG' || sit === 'SN_NO' || sit.includes('SIN NIÑOS')) {
                             bgFondo = 'rgba(34, 197, 94, 0.45)'; colorBorde = 'rgba(34, 197, 94, 0.8)';
-                            etiquetaEstatus = (sit === 'SN_NO' || sit.includes('NO SE REGISTRA')) ? "Sin niños (Sin registro)" : "Sin niños (Con registro)";
-                        } else if (sit.includes('N_') || dom.includes('NEGOCIO') || dom.includes('(N)')) {
+                            etiquetaEstatus = (sit === 'SN_NO' || sit.includes('NO SE REGISTRA') || sit.includes('NINGUNA PERSONA')) ? "Sin niños (Sin registro)" : "Sin niños (Con registro)";
+                        } 
+                        else if (sit.includes('N_') || dom.includes('NEGOCIO') || sit.includes('(N)')) {
                             bgFondo = 'rgba(59, 130, 246, 0.45)'; colorBorde = 'rgba(59, 130, 246, 0.8)';
                             etiquetaEstatus = (sit === 'N_SIN' || sit.includes('SIN PERSONAS')) ? "Negocio (Sin personas por vacunar)" : "Negocio (Con personas por vacunar)";
-                        } else if (sit === 'A' || sit.includes('AUSENTE') || sit.includes('(A)')) {
+                        } 
+                        else if (sit === 'A' || sit.includes('AUSENTE') || sit.includes('(A)')) {
                             bgFondo = 'rgba(234, 179, 8, 0.45)'; colorBorde = 'rgba(234, 179, 8, 0.8)';
                             etiquetaEstatus = "Familia Ausente";
-                        } else if (sit === 'R' || sit.includes('RENUENTE') || sit.includes('(R)')) {
+                        } 
+                        else if (sit === 'R' || sit.includes('RENUENTE') || sit.includes('(R)')) {
                             bgFondo = 'rgba(239, 68, 68, 0.45)'; colorBorde = 'rgba(239, 68, 68, 0.8)';
                             etiquetaEstatus = "Familia Renuente";
-                        } else if (dom.includes('DESHABITADA') || dom.includes('BALDIO') || dom.includes('BALDÍO') || dom.includes('DH')) {
+                        } 
+                        else if (dom.includes('DESHABITADA') || dom.includes('BALDIO') || dom.includes('BALDÍO') || dom.includes('DH')) {
                             bgFondo = 'rgba(15, 23, 42, 0.45)'; colorBorde = 'rgba(15, 23, 42, 0.8)';
                             etiquetaEstatus = "Deshabitado / Baldío";
+                        } 
+                        else {
+                            etiquetaEstatus = `Estatus desconocido`; // Fallback visual
                         }
                     }
 
@@ -1354,14 +1369,14 @@
                         iconAnchor: [tamanio/2, tamanio/2]
                     });
 
-                    // GENERADOR DE FECHA CORTA
+                    // CÁLCULO DE FECHA CORTA
                     let fechaCorta = "S/D";
                     if (p.fecha_actividad) {
                         let partesFecha = p.fecha_actividad.split('/');
                         if (partesFecha.length === 3) {
                             fechaCorta = `${partesFecha[0]}/${partesFecha[1]}/${partesFecha[2].slice(-2)}`;
                         } else {
-                            fechaCorta = p.fecha_actividad;
+                            fechaCorta = p.fecha_actividad; 
                         }
                     }
 
@@ -1415,11 +1430,38 @@
         }
     }
 
+    // REEMPLAZO TOTAL: Motor de compresión de imágenes antes del Base64
     const leerArchivoBase64 = (file) => new Promise((resolve, reject) => {
         const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = error => reject(error);
         reader.readAsDataURL(file);
+        reader.onload = (event) => {
+            const img = new Image();
+            img.src = event.target.result;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                // Máximo 800px para mantener legibilidad de la cartilla sin pesar Megabytes
+                const MAX_WIDTH = 800; 
+                const MAX_HEIGHT = 800;
+                let width = img.width;
+                let height = img.height;
+
+                if (width > height) {
+                    if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+                } else {
+                    if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                // Comprime el archivo a JPEG con calidad al 60%
+                resolve(canvas.toDataURL('image/jpeg', 0.6));
+            };
+            img.onerror = (e) => reject(e);
+        };
+        reader.onerror = (e) => reject(e);
     });
 </script>
 </body>
