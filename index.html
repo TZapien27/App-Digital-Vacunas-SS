@@ -73,20 +73,18 @@
 <body>
 
 <div class="contenedor" id="formulario_maestro">
-    <!-- INYECCIÓN: MÓDULO DE BÚSQUEDA DE PACIENTES -->
-        <div class="tarjeta" id="bloque_buscador" style="background-color: #f8fafc; border-left: 4px solid #3b82f6;">
-            <h2 style="color: #1e293b; margin-top: 0; font-size: 1.2em;">🔍 Búsqueda Rápida de Pacientes</h2>
-            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                <input type="text" id="input_busqueda" placeholder="Buscar por Apellido, CURP o Calle..." style="flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 5px; font-family: inherit;">
-                <button type="button" class="btn" onclick="ejecutarBusqueda()" style="width: auto; margin: 0; background-color: #3b82f6; padding: 10px 20px;">Buscar</button>
-            </div>
-            <div id="resultados_busqueda" style="font-size: 0.9em; color: #475569;"></div>
+    <!-- MÓDULO DE BÚSQUEDA DE PACIENTES -->
+    <div class="tarjeta" id="bloque_buscador" style="background-color: #f8fafc; border-left: 4px solid #3b82f6;">
+        <h2 style="color: #1e293b; margin-top: 0; font-size: 1.2em;">🔍 Búsqueda Rápida de Pacientes</h2>
+        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+            <input type="text" id="input_busqueda" placeholder="Buscar por Apellido, CURP o Calle..." style="flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 5px; font-family: inherit;">
+            <button type="button" class="btn" onclick="ejecutarBusqueda()" style="width: auto; margin: 0; background-color: #3b82f6; padding: 10px 20px;">Buscar</button>
         </div>
-        <!-- FIN INYECCIÓN -->
-    <div class="tarjeta">
-        <!-- INYECCIÓN: DATOS DEL REGISTRADOR Y MÓDULO (REQ 2 y 3) -->
-        <fieldset style="border: 1px solid #cbd5e1; padding: 15px; margin-bottom: 15px; border-radius: 6px; background-color: #f8fafc;">
-            <div class="tarjeta">
+        <div id="resultados_busqueda" style="font-size: 0.9em; color: #475569;"></div>
+    </div>
+    
+    <!-- 1. DATOS GENERALES DE LA JORNADA -->
+    <div class="tarjeta" id="bloque_datos_generales">
         <h2>1. Datos Generales de la Jornada <span style="color: #ef4444; font-size: 0.8rem; background: #fee2e2; padding: 2px 6px; border-radius: 4px; float: right;">v15.7</span></h2>
         
         <fieldset style="border: 1px solid #cbd5e1; padding: 15px; margin-bottom: 15px; border-radius: 6px; background-color: #f8fafc;">
@@ -94,7 +92,7 @@
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                 <div class="form-group">
                     <label>Nombre de quien registra *</label>
-                    <input type="text" id="registrador_nombre" class="guardar-cache" required placeholder="Nombre completo del brigadista">
+                    <input type="text" id="registrador_nombre" class="guardar-cache" required placeholder="Nombre completo del registrador">
                 </div>
                 <div class="form-group">
                     <label>Institución a la que pertenece *</label>
@@ -106,15 +104,10 @@
                     </select>
                 </div>
             </div>
-            <div class="form-group oculto" id="grupo_ref_modulo_fijo">
-                <label>Referencia del Módulo Fijo (si aplica)</label>
-                <input type="text" id="lugar_fijo" class="guardar-cache" placeholder="Ej. Centro de Salud Madero">
-            </div>
         </fieldset>
 
         <div class="form-group"><label>Fecha de la Actividad *</label><input type="text" inputmode="numeric" autocomplete="off" id="fecha_actividad" class="guardar-cache" placeholder="DD/MM/AAAA" maxlength="10" oninput="aplicarMascaraFecha(event)" required></div>
         
-        <!-- BLOQUE RESTAURADO: NOMBRES DE VACUNADORES CON PERSISTENCIA -->
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
             <div class="form-group"><label>Vacunador 1 *</label><input type="text" id="nombre_vacunador" class="guardar-cache" required></div>
             <div class="form-group"><label>Vacunador 2</label><input type="text" id="nombre_vacunador_2" class="guardar-cache"></div>
@@ -140,19 +133,19 @@
             </select>
         </div>
 
-        <!-- CAMPO EXCLUSIVO: REFERENCIA MÓDULO FIJO -->
+        <!-- CAMPOS REUBICADOS ENSEGUIDA DEL TIPO DE ACTIVIDAD -->
         <div class="form-group oculto" id="grupo_ref_modulo_fijo">
             <label>Referencia del Módulo Fijo (si aplica)</label>
             <input type="text" id="lugar_fijo" class="guardar-cache" placeholder="Ej. Centro de Salud Madero">
         </div>
 
-        <!-- CAMPO EXCLUSIVO REQUERIDO: IDENTIFICADOR DE BARRIDO -->
         <div class="form-group oculto" id="grupo_identificador_barrido">
             <label>Identificador del Barrido (Opcional)</label>
             <input type="text" id="identificador_barrido" class="guardar-cache" placeholder="Ej. BARRIDO-ZONA-04">
         </div>
     </div>
 
+    <!-- GESTIÓN DE BLOQUEO VACUNAL -->
     <div class="tarjeta tarjeta-bloqueo oculto" id="seccion_bloqueo">
         <h2>🚨 Gestión de Bloqueo Vacunal</h2>
         
@@ -184,12 +177,13 @@
             <input type="text" id="bloqueo_tipo_otro" class="oculto" placeholder="Especifique el tipo de bloqueo" style="margin-bottom:12px;">
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <div class="form-group"><label>Fecha Notificación *</label><input type="text" inputmode="numeric" autocomplete="off" autocomplete="off" id="bloqueo_fecha_notificacion" placeholder="DD/MM/AAAA" maxlength="10" oninput="aplicarMascaraFecha(event)"></div>
+                <div class="form-group"><label>Fecha Notificación *</label><input type="text" inputmode="numeric" autocomplete="off" id="bloqueo_fecha_notificacion" placeholder="DD/MM/AAAA" maxlength="10" oninput="aplicarMascaraFecha(event)"></div>
                 <div class="form-group"><label>Fecha Inicio Act. *</label><input type="text" inputmode="numeric" id="bloqueo_fecha_inicio" placeholder="DD/MM/AAAA" maxlength="10" oninput="aplicarMascaraFecha(event)"></div>
             </div>
         </div>
     </div>
 
+    <!-- 2. DOMICILIO PARTICULAR -->
     <div class="tarjeta oculto" id="bloque_domicilio">
         <h2>2. Domicilio particular de la(s) persona(s)</h2>
         
@@ -247,18 +241,14 @@
                 <option value="Probable">Caso probable (Caso*)</option>
             </select>
         </div>
-        <!-- INYECCIÓN: CAMPO OBSERVACIONES DE BRIGADA -->
+        
         <div class="form-group" id="grupo_observaciones_domicilio">
             <label>Observaciones de la Brigada (Opcional)</label>
             <textarea id="observaciones_domicilio" class="guardar-cache" rows="2" placeholder="Detalles operativos o de las personas, condiciones del domicilio..." style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 5px; font-family: inherit; resize: vertical; box-sizing: border-box;"></textarea>
         </div>
     </div>
 
-    <div id="bloque_censo" class="oculto">
-        <div id="contenedor_personas"></div>
-        <button type="button" class="btn btn-add" onclick="agregarPersona()">➕ Añadir Nueva Persona</button>
-    </div>
-
+    <!-- 3. MAPA (Georreferenciación) -->
     <div class="tarjeta tarjeta-mapa oculto" id="bloque_mapa">
         <h2>📍 Ubicación Geográfica</h2>
         <div class="form-group">
@@ -269,6 +259,13 @@
         </div>
     </div>
 
+    <!-- 4. CENSO DE PERSONAS -->
+    <div id="bloque_censo" class="oculto">
+        <div id="contenedor_personas"></div>
+        <button type="button" class="btn btn-add" onclick="agregarPersona()">➕ Añadir Nueva Persona</button>
+    </div>
+
+    <!-- NODO DE CIERRE DE BLOQUEO -->
     <div class="tarjeta tarjeta-bloqueo oculto" id="nodo_cierre_bloqueo">
         <h2>🛑 Cierre del Brote / Bloqueo</h2>
         <div class="form-group">
@@ -286,6 +283,7 @@
         </div>
     </div>
 
+    <!-- BOTONES DE ACCIÓN -->
     <button type="button" class="btn btn-guardar" onclick="empaquetarYGuardar()">
         💾 GUARDAR REGISTRO
     </button>
@@ -595,7 +593,7 @@
 
         window.scrollTo({ top: scrollY, behavior: 'instant' });
     }
-    
+
     function evaluarCierreBloqueo() {
         const resp = document.getElementById('ultimo_registro_bloqueo').value;
         const divCierre = document.getElementById('campos_cierre_final');
