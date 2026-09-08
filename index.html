@@ -92,10 +92,11 @@
                     </select>
                 </div>
             </div>
-            <div class="form-group">
-                <label>Referencia del Módulo Fijo (si aplica)</label>
-                <input type="text" id="lugar_fijo" class="guardar-cache" placeholder="Ej. Centro de Salud Madero">
-            </div>
+            <!-- REEMPLAZAR ESTE BLOQUE EN INDEX.HTML -->
+        <div class="form-group oculto" id="grupo_ref_modulo_fijo">
+            <label>Referencia del Módulo Fijo (si aplica)</label>
+            <input type="text" id="lugar_fijo" class="guardar-cache" placeholder="Ej. Centro de Salud Madero">
+        </div>
         </fieldset>
 
         <div class="form-group"><label>Fecha de la Actividad *</label><input type="text" inputmode="numeric" autocomplete="off" id="fecha_actividad" class="guardar-cache" placeholder="DD/MM/AAAA" maxlength="10" oninput="aplicarMascaraFecha(event)" required></div>
@@ -459,6 +460,10 @@
             document.getElementById('bloque_domicilio').classList.remove('oculto'); 
             document.getElementById('bloque_censo').classList.remove('oculto'); 
             document.getElementById('bloque_mapa').classList.remove('oculto'); 
+
+            // INYECCIÓN: Mostrar Referencia de Módulo
+            document.getElementById('grupo_ref_modulo_fijo').classList.remove('oculto');
+
             if (document.querySelectorAll('.tarjeta-persona').length === 0) agregarPersona();
             setTimeout(() => { if(mapaInteractivo) mapaInteractivo.invalidateSize(); }, 300);
             window.scrollTo({ top: scrollY, behavior: 'instant' });
@@ -482,6 +487,14 @@
             document.getElementById('grupo_lugar_fijo').classList.remove('oculto');
             document.getElementById('grupo_domicilio_visitado').classList.remove('oculto');
             document.getElementById('bloque_mapa').classList.remove('oculto');
+
+            // INYECCIÓN: Ocultar y limpiar Referencia de Módulo si no es Módulo Fijo
+            document.getElementById('grupo_ref_modulo_fijo').classList.add('oculto');
+            document.getElementById('lugar_fijo').value = ""; 
+            
+            setTimeout(() => { if(mapaInteractivo) mapaInteractivo.invalidateSize(); }, 300); 
+            // ... resto del código ...
+
             setTimeout(() => { if(mapaInteractivo) mapaInteractivo.invalidateSize(); }, 300); 
             
             if (dom === 'casa') {
@@ -949,16 +962,18 @@
                 const pId = t.id.split('_').pop();
                 const idPaciente = generarUUID(); 
                 
-                // Conversión de archivo (REQ 7)
-                let fotoFile = document.getElementById(`foto_cartilla_${pId}`)?.files[0];
+                // BLINDAJE CONTRA CRASH: Lectura segura de imagen (Optional Chaining)
+                let inputFoto = document.getElementById(`foto_cartilla_${pId}`);
                 let fotoB64 = null, fotoNombre = null, fotoMime = null;
-                if(fotoFile) {
+                
+                if (inputFoto && inputFoto.files && inputFoto.files.length > 0) {
                     try {
+                        let fotoFile = inputFoto.files[0];
                         fotoB64 = await leerArchivoBase64(fotoFile);
                         fotoNombre = fotoFile.name;
                         fotoMime = fotoFile.type;
                     } catch(e) {
-                        console.warn("No se pudo procesar la imagen de la cartilla:", e);
+                        console.error("Error aislando foto:", e);
                     }
                 }
 
@@ -980,8 +995,9 @@
                     otra_derechohabiencia: getVal(`derecho_otra_${pId}`),
                     estatus_migratorio: getVal(`migra_${pId}`),
                     entidad_nacimiento: getVal(`estado_nac_${pId}`),
-                    // INYECCIÓN REQ 1, 4 y 7:
-                    caso_indice: document.getElementById(`caso_indice_${pId}`).checked ? "SI" : "NO",
+                    
+                    // Asegurar lectura booleana correcta
+                    caso_indice: document.getElementById(`caso_indice_${pId}`)?.checked ? "SI" : "NO",
                     nss_afiliacion: getVal(`nss_afiliacion_${pId}`),
                     peso_kg: getVal(`peso_kg_${pId}`),
                     talla_cm: getVal(`talla_cm_${pId}`),
@@ -1301,11 +1317,22 @@
                         iconAnchor: [tamanio/2, tamanio/2]
                     });
 
+                    // GENERADOR DE FECHA CORTA (DD/MM/YY)
+                    let fechaCorta = "S/D";
+                    if (p.fecha_actividad) {
+                        let partesFecha = p.fecha_actividad.split('/');
+                        if (partesFecha.length === 3) {
+                            fechaCorta = `${partesFecha[0]}/${partesFecha[1]}/${partesFecha[2].slice(-2)}`;
+                        } else {
+                            fechaCorta = p.fecha_actividad; // Fallback
+                        }
+                    }
+
                     // Req 6: Fecha de Actividad inyectada
                     L.marker([p.lat, p.lon], { icon: iconoHistoricoDinamico, zIndexOffset: zIndexOffset })
                      .addTo(mapaInteractivo)
                      .bindPopup(`<b style="color: ${esCasoIndice ? '#dc2626' : '#0f172a'}; font-size: 1.1em; border-bottom: 1px solid #cbd5e1; display:block; padding-bottom:3px; margin-bottom:5px;">${esCasoIndice ? '🚨 CASO ÍNDICE' : 'Acciones realizadas'}</b>
-                                 <span style="color: #2563eb; font-weight: bold; font-size: 0.9em; display:block; margin-bottom:4px;">📅 Fecha: ${p.fecha_actividad || 'S/D'}</span>
+                                 <span style="color: #2563eb; font-weight: bold; font-size: 0.9em; display:block; margin-bottom:4px;">📅 Fecha: ${fechaCorta}</span>
                                  <span style="color: #475569; font-size: 0.9em;"><b>Dirección:</b> ${p.calle || 'S/D'}, Col. ${p.colonia || 'S/D'}</span><br>
                                  <span style="color: #334155; font-size: 0.9em; display:block; margin-top:4px;"><b>Tipo:</b> ${p.domicilio || 'N/D'}</span>
                                  <span style="color: #475569; font-size: 0.85em; display:block; margin-top:4px;">👤 Registró: ${p.registrador_nombre || 'N/D'} (${p.registrador_institucion || '-'})</span>
