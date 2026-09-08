@@ -469,12 +469,17 @@
         const bMapa = document.getElementById('bloque_mapa');
         const bCierre = document.getElementById('nodo_cierre_bloqueo');
 
-        if (tAct === 'modulo_fijo') {
-            if (maestro && bCenso && bDom) maestro.insertBefore(bCenso, bDom);
-            if (maestro && bMapa && bCierre) maestro.insertBefore(bMapa, bCierre);
-        } else {
-            if (maestro && bDom && bCenso) maestro.insertBefore(bDom, bCenso);
-            if (maestro && bMapa && bCenso) maestro.insertBefore(bMapa, bCenso);
+        // Blindaje de reordenamiento DOM para evitar excepciones de nodos huérfanos
+        try {
+            if (tAct === 'modulo_fijo') {
+                if (maestro && bCenso && bDom && bCenso.parentNode === maestro && bDom.parentNode === maestro) maestro.insertBefore(bCenso, bDom);
+                if (maestro && bMapa && bCierre && bMapa.parentNode === maestro && bCierre.parentNode === maestro) maestro.insertBefore(bMapa, bCierre);
+            } else {
+                if (maestro && bDom && bCenso && bDom.parentNode === maestro && bCenso.parentNode === maestro) maestro.insertBefore(bDom, bCenso);
+                if (maestro && bMapa && bCenso && bMapa.parentNode === maestro && bCenso.parentNode === maestro) maestro.insertBefore(bMapa, bCenso);
+            }
+        } catch(e) {
+            console.warn("Advertencia en reordenamiento DOM:", e);
         }
 
         if (!tAct) { window.scrollTo({ top: scrollY, behavior: 'instant' }); return; }
