@@ -819,40 +819,18 @@
 
         hist.forEach(p => {
             let color = 'radar-gris'; let letra = p.sit || p.dom || '';
-            let etiquetaEstatus = "N/D";
             
-            if(letra === 'Caso') { color = 'radar-rojo'; etiquetaEstatus = "Caso Sospechoso/Probable"; }
-            else if(letra === 'MF') { color = 'radar-azul'; etiquetaEstatus = "Módulo Fijo"; }
-            else if(letra === 'CN') { color = 'radar-verde'; etiquetaEstatus = "Con niños (Con registro)"; }
-            else if(letra === 'CN_NR') { color = 'radar-verde'; etiquetaEstatus = "Con niños (Sin registro)"; }
-            else if(letra === 'V' || letra === 'SN_REG') { color = 'radar-verde'; letra = 'SN'; etiquetaEstatus = "Sin niños (Con registro)"; }
-            else if(letra === 'A' || letra === 'SN' || letra === 'SN_NO') { color = 'radar-amarillo'; etiquetaEstatus = letra === 'A' ? "Familia Ausente" : "Sin niños (Sin registro)"; }
-            else if(letra === 'R') { color = 'radar-rojo'; etiquetaEstatus = "Familia Renuente"; }
-            else if(letra === 'N_CON' || letra === 'N_SIN' || letra === 'negocio') { color = 'radar-azul'; letra = 'N'; etiquetaEstatus = (letra === 'N_SIN') ? "Negocio (Sin personas)" : "Negocio (Con personas)"; }
-            else if(letra === 'lote_baldio' || letra === 'deshabitada') { color = 'radar-gris'; letra = 'DH'; etiquetaEstatus = "Deshabitado / Baldío"; }
+            if(letra === 'Caso') color = 'radar-rojo';
+            else if(letra === 'MF') color = 'radar-azul'; 
+            else if(letra === 'CN') color = 'radar-verde';
+            else if(letra === 'V' || letra === 'SN_REG') { color = 'radar-verde'; letra = 'SN'; }
+            else if(letra === 'A' || letra === 'SN' || letra === 'SN_NO') color = 'radar-amarillo';
+            else if(letra === 'R') color = 'radar-rojo';
+            else if(letra === 'N_CON' || letra === 'N_SIN' || letra === 'negocio') { color = 'radar-azul'; letra = 'N'; }
+            else if(letra === 'lote_baldio' || letra === 'deshabitada') { color = 'radar-gris'; letra = 'DH'; }
             
-            const esCasoIndice = (p.caso_indice === 'SI' || p.sit === 'Caso');
             const iconHtml = `<div class="pin-radar ${color}">${letra}</div>`;
-            
-            // FORMATEADOR ROBUSTO DE FECHA CORTA (REGEX)
-            let fechaCorta = "S/D";
-            if (p.fecha_actividad) {
-                const fStr = p.fecha_actividad.split('T')[0]; 
-                const partes = fStr.split(/[\/\-]/); 
-                if (partes.length >= 3) {
-                    if (partes[0].length === 4) fechaCorta = `${partes[2]}/${partes[1]}/${partes[0].slice(-2)}`;
-                    else fechaCorta = `${partes[0]}/${partes[1]}/${partes[2].slice(-2)}`;
-                } else fechaCorta = p.fecha_actividad;
-            }
-
-            L.marker([p.lat, p.lon], { icon: L.divIcon({ html: iconHtml, className: '', iconSize:[22,22], iconAnchor:[11,11] }) })
-             .addTo(mapaInteractivo)
-             .bindPopup(`<b style="color: ${esCasoIndice ? '#dc2626' : '#0f172a'}; font-size: 1.1em; border-bottom: 1px solid #cbd5e1; display:block; padding-bottom:3px; margin-bottom:5px;">${esCasoIndice ? '🚨 CASO ÍNDICE (HOY)' : 'Acción de la Jornada Actual'}</b>
-                         <span style="color: #2563eb; font-weight: bold; font-size: 0.9em; display:block; margin-bottom:4px;">📅 Fecha: ${fechaCorta}</span>
-                         <span style="color: #475569; font-size: 0.9em;"><b>Dirección:</b> ${p.calle || 'S/D'}, Col. ${p.colonia || 'S/D'}</span><br>
-                         <span style="color: #334155; font-size: 0.9em; display:block; margin-top:4px;"><b>Tipo:</b> ${p.dom || 'N/D'}</span>
-                         <span style="color: #475569; font-size: 0.85em; display:block; margin-top:4px;">👤 Registró: ${p.registrador_nombre || 'Tú'} (${p.registrador_institucion || '-'})</span>
-                         <span style="color: #0f172a; font-size: 0.95em; font-weight: bold; background-color: ${esCasoIndice ? '#fee2e2' : '#f1f5f9'}; padding: 2px 4px; border-radius: 3px; display:inline-block; margin-top:4px;">Estatus: ${etiquetaEstatus}</span>`);
+            L.marker([p.lat, p.lon], { icon: L.divIcon({ html: iconHtml, className: '', iconSize:[22,22], iconAnchor:[11,11] }) }).bindTooltip(`<b>${etiquetasDom[p.dom] || 'Ubicación'}</b><br>Sit: ${letra}`, { direction: 'top', offset: [0, -10] }).addTo(mapaInteractivo);
         });
     }
 
@@ -1235,33 +1213,13 @@
             const hist = JSON.parse(localStorage.getItem('censia_radar_mapa') || '[]');
             let sitGuardada = (casoDom === 'Sospechoso' || casoDom === 'Probable') ? 'Caso' : (sitDom || dom || (tAct === 'modulo_fijo' ? 'MF' : ''));
             let tPers = 0; let tDos = 0;
-            let esCasoIndiceLocal = false; // Evaluador para el popup
-
             if(!document.getElementById('bloque_censo').classList.contains('oculto')) {
                 document.querySelectorAll('.tarjeta-persona').forEach(t => {
                     tPers++; const pId = t.id.split('_').pop();
                     document.querySelectorAll(`.vacuna-de-p${pId}`).forEach(s => { if(s.value) tDos++; });
-                    
-                    const chkIndice = document.getElementById(`caso_indice_${pId}`);
-                    if (chkIndice && chkIndice.checked) esCasoIndiceLocal = true;
                 });
             }
-
-            // GUARDADO SIMÉTRICO: Almacenamos metadata completa para el popup local
-            hist.push({ 
-                lat: document.getElementById('latitud').value, 
-                lon: document.getElementById('longitud').value, 
-                dom: (tAct === 'modulo_fijo' ? 'MF' : dom), 
-                sit: sitGuardada, 
-                total_personas: tPers, 
-                total_dosis: tDos,
-                fecha_actividad: document.getElementById('fecha_actividad') ? document.getElementById('fecha_actividad').value : "",
-                calle: document.getElementById('calle_numero') ? document.getElementById('calle_numero').value : "",
-                colonia: document.getElementById('colonia') ? document.getElementById('colonia').value : "",
-                registrador_nombre: document.getElementById('registrador_nombre') ? document.getElementById('registrador_nombre').value : "",
-                registrador_institucion: document.getElementById('registrador_institucion') ? document.getElementById('registrador_institucion').value : "",
-                caso_indice: esCasoIndiceLocal ? 'SI' : 'NO'
-            });
+            hist.push({ lat: document.getElementById('latitud').value, lon: document.getElementById('longitud').value, dom: (tAct === 'modulo_fijo' ? 'MF' : dom), sit: sitGuardada, total_personas: tPers, total_dosis: tDos });
             localStorage.setItem('censia_radar_mapa', JSON.stringify(hist));
         }
 
@@ -1456,17 +1414,12 @@
                         iconAnchor: [tamanio/2, tamanio/2]
                     });
 
-                    // GENERADOR DE FECHA CORTA ROBUSTO (Ignora formato ISO de Google)
+                    // GENERADOR DE FECHA CORTA (DD/MM/YY)
                     let fechaCorta = "S/D";
                     if (p.fecha_actividad) {
-                        const fStr = p.fecha_actividad.split('T')[0]; // Elimina marca de tiempo si existe
-                        const partes = fStr.split(/[\/\-]/); // Parte por diagonal o guión medio
-                        if (partes.length >= 3) {
-                            if (partes[0].length === 4) { // Formato YYYY-MM-DD
-                                fechaCorta = `${partes[2]}/${partes[1]}/${partes[0].slice(-2)}`;
-                            } else { // Formato DD-MM-YYYY
-                                fechaCorta = `${partes[0]}/${partes[1]}/${partes[2].slice(-2)}`;
-                            }
+                        let partesFecha = p.fecha_actividad.split('/');
+                        if (partesFecha.length === 3) {
+                            fechaCorta = `${partesFecha[0]}/${partesFecha[1]}/${partesFecha[2].slice(-2)}`;
                         } else {
                             fechaCorta = p.fecha_actividad;
                         }
