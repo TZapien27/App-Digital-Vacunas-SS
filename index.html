@@ -1473,15 +1473,22 @@
                     }
 
                     // ETIQUETA esHistoricoRemoto: true PARA EVITAR QUE SE BORRE
-                    L.marker([p.lat, p.lon], { icon: iconoHistoricoDinamico, zIndexOffset: zIndexOffset, esHistoricoRemoto: true })
+                    L.marker([p.lat, p.lon], { icon: L.divIcon({ html: iconHtml, className: '', iconSize:[22,22], iconAnchor:[11,11] }) })
                      .addTo(mapaInteractivo)
-                     .bindPopup(`<b style="color: ${esCasoIndice ? '#dc2626' : '#0f172a'}; font-size: 1.1em; border-bottom: 1px solid #cbd5e1; display:block; padding-bottom:3px; margin-bottom:5px;">${esCasoIndice ? '🚨 CASO ÍNDICE' : 'Acciones realizadas'}</b>
+                     .bindPopup(`<b style="color: ${esCasoIndice ? '#dc2626' : '#0f172a'}; font-size: 1.1em; border-bottom: 1px solid #cbd5e1; display:block; padding-bottom:3px; margin-bottom:5px;">${esCasoIndice ? '🚨 CASO ÍNDICE (HOY)' : 'Acción de la Jornada Actual'}</b>
                                  <span style="color: #2563eb; font-weight: bold; font-size: 0.9em; display:block; margin-bottom:4px;">📅 Fecha: ${fechaCorta}</span>
                                  <span style="color: #475569; font-size: 0.9em;"><b>Dirección:</b> ${p.calle || 'S/D'}, Col. ${p.colonia || 'S/D'}</span><br>
-                                 <span style="color: #334155; font-size: 0.9em; display:block; margin-top:4px;"><b>Tipo:</b> ${p.domicilio || 'N/D'}</span>
-                                 <span style="color: #475569; font-size: 0.85em; display:block; margin-top:4px;">👤 Registró: ${p.registrador_nombre || 'N/D'} (${p.registrador_institucion || '-'})</span>
+                                 <span style="color: #334155; font-size: 0.9em; display:block; margin-top:4px;"><b>Tipo:</b> ${p.dom || 'N/D'}</span>
+                                 <span style="color: #475569; font-size: 0.85em; display:block; margin-top:4px;">👤 Registró: ${p.registrador_nombre || 'S/D'} (${p.registrador_institucion || '-'})</span>
                                  <span style="color: #0f172a; font-size: 0.95em; font-weight: bold; background-color: ${esCasoIndice ? '#fee2e2' : '#f1f5f9'}; padding: 2px 4px; border-radius: 3px; display:inline-block; margin-top:4px;">Estatus: ${etiquetaEstatus}</span>`);
-                }
+                                 .addTo(mapaInteractivo)
+                                 .bindPopup(`<b style="color: ${esCasoIndice ? '#dc2626' : '#0f172a'}; font-size: 1.1em; border-bottom: 1px solid #cbd5e1; display:block; padding-bottom:3px; margin-bottom:5px;">${esCasoIndice ? '🚨 CASO ÍNDICE' : 'Acciones realizadas'}</b>
+                                             <span style="color: #2563eb; font-weight: bold; font-size: 0.9em; display:block; margin-bottom:4px;">📅 Fecha: ${fechaCorta}</span>
+                                             <span style="color: #475569; font-size: 0.9em;"><b>Dirección:</b> ${p.calle || 'S/D'}, Col. ${p.colonia || 'S/D'}</span><br>
+                                             <span style="color: #334155; font-size: 0.9em; display:block; margin-top:4px;"><b>Tipo:</b> ${p.domicilio || 'N/D'}</span>
+                                             <span style="color: #475569; font-size: 0.85em; display:block; margin-top:4px;">👤 Registró: ${p.registrador_nombre || 'N/D'} (${p.registrador_institucion || '-'})</span>
+                                             <span style="color: #0f172a; font-size: 0.95em; font-weight: bold; background-color: ${esCasoIndice ? '#fee2e2' : '#f1f5f9'}; padding: 2px 4px; border-radius: 3px; display:inline-block; margin-top:4px;">Estatus: ${etiquetaEstatus}</span>`);
+                            }
             });
 
         } catch (error) {
