@@ -481,6 +481,18 @@
         const bMapa = document.getElementById('bloque_mapa');
         const bCierre = document.getElementById('nodo_cierre_bloqueo');
 
+        // REEMPLAZAR EN index.html: Control de visibilidad del Caso Índice en tarjetas de persona
+        const idBloqActual = document.getElementById('id_bloqueo') ? document.getElementById('id_bloqueo').value : "";
+        const permiteCasoIndice = validarCasoIndiceUnico(idBloqActual);
+
+        if (esBloqueoActivo && permiteCasoIndice) {
+            divCaso.classList.remove('oculto');
+        } else {
+            divCaso.classList.add('oculto');
+            const chk = document.getElementById(`caso_indice_${pId}`);
+            if (chk) chk.checked = false;
+        }
+
         // Blindaje de reordenamiento DOM: 
         // - Módulo Fijo: Datos Generales -> Censo (Personas) -> Domicilio -> Mapa
         // - Barrido / Bloqueo: Datos Generales -> Domicilio -> Mapa -> Censo (Personas)
@@ -524,8 +536,21 @@
             if (elIdBarrido) elIdBarrido.classList.remove('oculto');
         }
 
+        // REEMPLAZAR EN index.html: Dentro de evaluarFlujoLogico(), sección de bloqueo
         if (tAct === 'bloqueo') {
             document.getElementById('seccion_bloqueo').classList.remove('oculto');
+            
+            // LIMPIEZA TOTAL DE IDENTIFICADORES PARA BLOQUEO
+            const elRef = document.getElementById('grupo_ref_modulo_fijo');
+            if (elRef) elRef.classList.add('oculto');
+            const elIdBarrido = document.getElementById('grupo_identificador_barrido');
+            if (elIdBarrido) elIdBarrido.classList.add('oculto');
+            
+            const campoLugarFijo = document.getElementById('lugar_fijo');
+            if (campoLugarFijo) campoLugarFijo.value = "";
+            const campoIdBarrido = document.getElementById('identificador_barrido');
+            if (campoIdBarrido) campoIdBarrido.value = "";
+
             if (listaPendientes.length === 0 && document.getElementById('estado_bloqueo').value === "") {
                 document.getElementById('estado_bloqueo').value = 'nuevo';
                 if (typeof gestionarEstadoBloqueo === 'function') gestionarEstadoBloqueo();
@@ -1072,8 +1097,8 @@
                     id_bloqueo: getVal('id_bloqueo'),
                     registrador_nombre: getVal('registrador_nombre'),
                     registrador_institucion: getVal('registrador_institucion'),
-                    lugar_fijo: getVal('lugar_fijo')|| getVal('identificador_barrido')
-                },
+                    // REEMPLAZAR EN index.html: Dentro del objeto payload.general en empaquetarYGuardar()
+                    lugar_fijo: (getVal('tipo_actividad') === 'bloqueo') ? "" : (getVal('lugar_fijo') || getVal('identificador_barrido'))                },
                 pacientes: []
             };
 
@@ -1333,6 +1358,15 @@
         
         if(mapaInteractivo) pintarRadarHistorial();
         window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // AÑADIR/REEMPLAZAR EN index.html: Validación para restringir el caso índice a una sola vez por bloqueo
+    function validarCasoIndiceUnico(idBloqueoActual) {
+        if (!idBloqueoActual) return true;
+        const historiales = JSON.parse(localStorage.getItem('censia_radar_mapa') || '[]');
+        // Revisa si ya existe un registro con caso_indice == 'SI' asociado al mismo id_bloqueo
+        const yaExiste = historiales.some(h => h.id_bloqueo === idBloqueoActual && h.caso_indice === 'SI');
+        return !yaExiste;
     }
 
     // Iniciar PWA
