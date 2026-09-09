@@ -491,14 +491,16 @@
         const bMapa = document.getElementById('bloque_mapa');
         const bCierre = document.getElementById('nodo_cierre_bloqueo');
 
-        // Reordenamiento DOM estricto protegido
+        // Reordenamiento DOM estricto y seguro
         try {
-            if (tAct === 'modulo_fijo') {
-                if (maestro && bCenso && bDom && censoPosicionValida(bCenso, bDom, maestro)) maestro.insertBefore(bCenso, bDom);
-                if (maestro && bDom && bMapa && domPosicionValida(bDom, bMapa, maestro)) maestro.insertBefore(bMapa, null);
-            } else {
-                if (maestro && bDom && bMapa && domPosicionValida(bDom, bMapa, maestro)) maestro.insertBefore(bDom, bMapa);
-                if (maestro && bMapa && bCenso && mapaPosicionValida(bMapa, bCenso, maestro)) maestro.insertBefore(bMapa, bCenso);
+            if (maestro && bCenso && bDom && bMapa && bCierre) {
+                if (tAct === 'modulo_fijo') {
+                    if (bCenso.parentNode === maestro && bDom.parentNode === maestro) maestro.insertBefore(bCenso, bDom);
+                    if (bDom.parentNode === maestro && bMapa.parentNode === maestro) maestro.insertBefore(bMapa, null);
+                } else {
+                    if (bDom.parentNode === maestro && bMapa.parentNode === maestro) maestro.insertBefore(bDom, bMapa);
+                    if (bMapa.parentNode === maestro && bCenso.parentNode === maestro) maestro.insertBefore(bMapa, bCenso);
+                }
             }
         } catch(e) {
             console.warn("⚠️ [DEBUG ERROR DOM] Excepción en reordenamiento:", e);
