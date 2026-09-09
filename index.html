@@ -540,7 +540,7 @@
         if (tAct === 'bloqueo') {
             document.getElementById('seccion_bloqueo').classList.remove('oculto');
             
-            // LIMPIEZA TOTAL DE IDENTIFICADORES PARA BLOQUEO
+            // CORRECCIÓN QUIRÚRGICA: Limpieza estricta de identificadores para bloqueo
             const elRef = document.getElementById('grupo_ref_modulo_fijo');
             if (elRef) elRef.classList.add('oculto');
             const elIdBarrido = document.getElementById('grupo_identificador_barrido');
@@ -550,6 +550,7 @@
             if (campoLugarFijo) campoLugarFijo.value = "";
             const campoIdBarrido = document.getElementById('identificador_barrido');
             if (campoIdBarrido) campoIdBarrido.value = "";
+            // Fin de la corrección quirúrgica
 
             if (listaPendientes.length === 0 && document.getElementById('estado_bloqueo').value === "") {
                 document.getElementById('estado_bloqueo').value = 'nuevo';
@@ -605,15 +606,19 @@
         }
 
         const esBloqueoActivo = (tAct === 'bloqueo');
+        const idBloqActual = document.getElementById('id_bloqueo') ? document.getElementById('id_bloqueo').value : "";
+        const permiteCasoIndice = validarCasoIndiceUnico(idBloqActual);
+
         document.querySelectorAll('.tarjeta-persona').forEach(t => {
             const pId = t.id.split('_').pop();
             const divCaso = document.getElementById(`contenedor_caso_indice_${pId}`);
             if (divCaso) {
-                if (esBloqueoActivo) divCaso.classList.remove('oculto');
-                else {
+                if (esBloqueoActivo && permiteCasoIndice) {
+                    divCaso.classList.remove('oculto');
+                } else {
                     divCaso.classList.add('oculto');
                     const chk = document.getElementById(`caso_indice_${pId}`);
-                    if (chk) chk.checked = false; // Limpia la selección si cambia de actividad
+                    if (chk) chk.checked = false; // Limpia la selección si ya existe un caso índice registrado
                 }
             }
         });
@@ -1312,6 +1317,7 @@
                 tipo_actividad: tipoActVal,
                 identificador_actividad: identActVal,
                 ageb: document.getElementById('ageb') ? document.getElementById('ageb').value : ""
+                id_bloqueo: document.getElementById('id_bloqueo') ? document.getElementById('id_bloqueo').value : "" 
             });
             localStorage.setItem('censia_radar_mapa', JSON.stringify(hist));
         }
@@ -1627,7 +1633,20 @@
             img.onerror = (e) => reject(e);
         };
         reader.onerror = (e) => reject(e);
+    }
+
+    // Validación para restringir el caso índice a una sola vez por bloqueo
+    function validarCasoIndiceUnico(idBloqueoActual) {
+        if (!idBloqueoActual) return true;
+        const historiales = JSON.parse(localStorage.getItem('censia_radar_mapa') || '[]');
+        const yaExisteEnHistorial = historiales.some(h => h.id_bloqueo === idBloqueoActual && h.caso_indice === 'SI');
+        if (yaExisteEnHistorial) return false;
+
+        const cola = JSON.parse(localStorage.getItem('censia_cola_envios') || '[]');
+        const yaExisteEnCola = cola.some(item => item.general && item.general.id_bloqueo === idBloqueoActual && item.pacientes && item.pacientes.some(p => p.caso_indice === 'SI'));
+        return !yaExisteEnCola;
     });
+
 </script>
 </body>
 </html>
