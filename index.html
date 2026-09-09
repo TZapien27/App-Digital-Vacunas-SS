@@ -453,152 +453,103 @@
     function evaluarFlujoLogico() {
         const scrollY = window.scrollY;
 
-        // --- TRAZABILIDAD DE DIAGNÓSTICO (DEBUGGER DE FLUJO) ---
-        const tActElement = document.getElementById('tipo_actividad');
-        const domElement = document.getElementById('domicilio_visitado');
-        const sDomElement = document.getElementById('situacion_domicilio');
-        const sNegElement = document.getElementById('situacion_negocio');
+        // 1. Obtención de valores principales
+        const tActEl = document.getElementById('tipo_actividad');
+        const domEl = document.getElementById('domicilio_visitado');
+        const sDomEl = document.getElementById('situacion_domicilio');
+        const sNegEl = document.getElementById('situacion_negocio');
 
-        console.log("🛠️ [DEBUG 1] Evaluando flujo lógico. Elemento tipo_actividad existe:", !!tActElement);
-        console.log("🛠️ [DEBUG 2] Valor actual de tipo_actividad:", tActElement ? tActElement.value : "N/A");
-        console.log("🛠️ [DEBUG 3] Valor actual de domicilio_visitado:", domElement ? domElement.value : "N/A");
-        console.log("🛠️ [DEBUG 4] Valor actual de situacion_domicilio:", sDomElement ? sDomElement.value : "N/A");
-        // -------------------------------------------------------
+        const tAct = tActEl ? tActEl.value : "";
+        const dom = domEl ? domEl.value : "";
+        const sDom = sDomEl ? sDomEl.value : "";
+        const sNeg = sNegEl ? sNegEl.value : "";
 
-        const listaPendientes = JSON.parse(localStorage.getItem('censia_bloqueos_pendientes') || '[]');
-        const selectEstado = document.getElementById('estado_bloqueo');
-        if (selectEstado) {
-            const optPendiente = selectEstado.querySelector('option[value="pendiente"]');
-            if (listaPendientes.length === 0) {
-                if(optPendiente) optPendiente.disabled = true;
-                if(selectEstado.value === 'pendiente') selectEstado.value = '';
-            } else {
-                if(optPendiente) optPendiente.disabled = false;
-            }
-        }
+        // 2. Ocultar todos los bloques dependientes por defecto
+        const ids = [
+            'bloque_domicilio', 'bloque_censo', 'bloque_mapa', 
+            'seccion_bloqueo', 'metadatos_bloqueo', 'selector_bloqueos_pendientes', 
+            'grupo_pregunta_estado_bloqueo', 'grupo_lugar_fijo', 'grupo_domicilio_visitado', 
+            'grupo_situacion_domicilio', 'grupo_situacion_negocio', 'grupo_caso_domicilio', 
+            'nodo_cierre_bloqueo', 'campos_cierre_final', 'grupo_ref_modulo_fijo', 
+            'grupo_identificador_barrido'
+        ];
+        ids.forEach(id => { 
+            const el = document.getElementById(id); 
+            if (el) el.classList.add('oculto'); 
+        });
 
-        const tAct = tActElement ? tActElement.value : "";
-        const dom = domElement ? domElement.value : "";
-        const sDom = sDomElement ? sDomElement.value : "";
-        const sNeg = sNegElement ? sNegElement.value : "";
-
-        const ids = ['bloque_domicilio', 'bloque_censo', 'bloque_mapa', 'seccion_bloqueo', 'metadatos_bloqueo', 'selector_bloqueos_pendientes', 'grupo_pregunta_estado_bloqueo', 'grupo_lugar_fijo', 'grupo_domicilio_visitado', 'grupo_situacion_domicilio', 'grupo_situacion_negocio', 'grupo_caso_domicilio', 'nodo_cierre_bloqueo', 'campos_cierre_final', 'grupo_ref_modulo_fijo', 'grupo_identificador_barrido'];
-        ids.forEach(id => { const el = document.getElementById(id); if (el) el.classList.add('oculto'); });
-
-        const maestro = document.getElementById('formulario_maestro');
-        const bCenso = document.getElementById('bloque_censo');
-        const bDom = document.getElementById('bloque_domicilio');
-        const bMapa = document.getElementById('bloque_mapa');
-        const bCierre = document.getElementById('nodo_cierre_bloqueo');
-
-        // Reordenamiento DOM estricto y seguro
-        try {
-            if (maestro && bCenso && bDom && bMapa && bCierre) {
-                if (tAct === 'modulo_fijo') {
-                    if (bCenso.parentNode === maestro && bDom.parentNode === maestro) maestro.insertBefore(bCenso, bDom);
-                    if (bDom.parentNode === maestro && bMapa.parentNode === maestro) maestro.insertBefore(bMapa, null);
-                } else {
-                    if (bDom.parentNode === maestro && bMapa.parentNode === maestro) maestro.insertBefore(bDom, bMapa);
-                    if (bMapa.parentNode === maestro && bCenso.parentNode === maestro) maestro.insertBefore(bMapa, bCenso);
-                }
-            }
-        } catch(e) {
-            console.warn("⚠️ [DEBUG ERROR DOM] Excepción en reordenamiento:", e);
-        }
-
+        // Si no hay tipo de actividad seleccionado, detenemos aquí sin romper nada
         if (!tAct) { 
-            console.log("🛑 [DEBUG STOP] El flujo se detiene porque 'tAct' está vacío.");
             window.scrollTo({ top: scrollY, behavior: 'instant' }); 
             return; 
         }
 
-        console.log("✅ [DEBUG PASS] Pasó la validación inicial. Tipo de actividad detectado:", tAct);
-
-        // Control de campos exclusivos post Tipo de Actividad
-        const elRef = document.getElementById('grupo_ref_modulo_fijo');
-        const elIdBarrido = document.getElementById('grupo_identificador_barrido');
-
-        if (elRef) elRef.classList.add('oculto');
-        if (elIdBarrido) elIdBarrido.classList.add('oculto');
-
+        // 3. Despliegue condicional por tipo de actividad
         if (tAct === 'modulo_fijo') {
-            console.log("➡️ [DEBUG BRANCH] Ejecutando ruta: Módulo Fijo");
+            const elRef = document.getElementById('grupo_ref_modulo_fijo');
             if (elRef) elRef.classList.remove('oculto');
+
+            const bDom = document.getElementById('bloque_domicilio');
+            const bCenso = document.getElementById('bloque_censo');
+            const bMapa = document.getElementById('bloque_mapa');
+
             if (bDom) bDom.classList.remove('oculto');
             if (bCenso) bCenso.classList.remove('oculto');
             if (bMapa) bMapa.classList.remove('oculto');
 
-            if (document.querySelectorAll('.tarjeta-persona').length === 0 && typeof agregarPersona === 'function') agregarPersona();
-            setTimeout(() => {
-                if(typeof mapaInteractivo !== 'undefined' && mapaInteractivo) {
-                    mapaInteractivo.invalidateSize();
-                } else if (typeof inicializarMapaDefecto === 'function') {
-                    inicializarMapaDefecto();
-                }
-            }, 200);
-            window.scrollTo({ top: scrollY, behavior: 'instant' });
-            return;
-        }
-
-        if (tAct === 'barrido') {
-            console.log("➡️ [DEBUG BRANCH] Ejecutando ruta: Barrido");
-            if (elIdBarrido) elIdBarrido.classList.remove('oculto');
-        }
-
-        if (tAct === 'bloqueo') {
-            console.log("➡️ [DEBUG BRANCH] Ejecutando ruta: Bloqueo");
-            const secBloqueo = document.getElementById('seccion_bloqueo');
-            if (secBloqueo) secBloqueo.classList.remove('oculto');
-            
-            if (listaPendientes.length === 0 && selectEstado && selectEstado.value === "") {
-                selectEstado.value = 'nuevo';
-                if (typeof gestionarEstadoBloqueo === 'function') gestionarEstadoBloqueo();
-            } else if (listaPendientes.length > 0 && document.getElementById('id_bloqueo') && document.getElementById('id_bloqueo').value === "") {
-                const gPregunta = document.getElementById('grupo_pregunta_estado_bloqueo');
-                if (gPregunta) gPregunta.classList.remove('oculto');
-            } else if (document.getElementById('id_bloqueo') && document.getElementById('id_bloqueo').value !== "") {
-                const metaB = document.getElementById('metadatos_bloqueo');
-                if (metaB) metaB.classList.remove('oculto');
+            if (document.querySelectorAll('.tarjeta-persona').length === 0 && typeof agregarPersona === 'function') {
+                agregarPersona();
             }
-        }
-
-        if (tAct === 'barrido' || tAct === 'bloqueo') {
-            if (bDom) bDom.classList.remove('oculto');
+        } 
+        else if (tAct === 'barrido' || tAct === 'bloqueo') {
+            const bDom = document.getElementById('bloque_domicilio');
             const gLugarFijo = document.getElementById('grupo_lugar_fijo');
             const gDomVis = document.getElementById('grupo_domicilio_visitado');
+            const bMapa = document.getElementById('bloque_mapa');
+
+            if (bDom) bDom.classList.remove('oculto');
             if (gLugarFijo) gLugarFijo.classList.remove('oculto');
             if (gDomVis) gDomVis.classList.remove('oculto');
             if (bMapa) bMapa.classList.remove('oculto');
 
-            console.log("🔓 [DEBUG UNLOCK] Bloques de Domicilio y Mapa expuestos para Barrido/Bloqueo.");
+            if (tAct === 'barrido') {
+                const elIdBarrido = document.getElementById('grupo_identificador_barrido');
+                if (elIdBarrido) elIdBarrido.classList.remove('oculto');
+            }
 
-            setTimeout(() => {
-                if(typeof mapaInteractivo !== 'undefined' && mapaInteractivo) {
-                    mapaInteractivo.invalidateSize();
-                } else if (typeof inicializarMapaDefecto === 'function') {
-                    inicializarMapaDefecto();
+            if (tAct === 'bloqueo') {
+                const secBloqueo = document.getElementById('seccion_bloqueo');
+                if (secBloqueo) secBloqueo.classList.remove('oculto');
+                
+                const selectEstado = document.getElementById('estado_bloqueo');
+                if (selectEstado && selectEstado.value === "") {
+                    selectEstado.value = 'nuevo';
+                    if (typeof gestionarEstadoBloqueo === 'function') gestionarEstadoBloqueo();
                 }
-            }, 200);
 
+                const gCasoDom = document.getElementById('grupo_caso_domicilio');
+                if (dom === 'casa' && gCasoDom) gCasoDom.classList.remove('oculto');
+            }
+
+            // Evaluación de sub-niveles de domicilio
             if (dom === 'casa') {
                 const gSitDom = document.getElementById('grupo_situacion_domicilio');
                 if (gSitDom) gSitDom.classList.remove('oculto');
-                if (tAct === 'bloqueo') {
-                    const gCasoDom = document.getElementById('grupo_caso_domicilio');
-                    if (gCasoDom) gCasoDom.classList.remove('oculto');
-                }
             } else if (dom === 'negocio') {
                 const gSitNeg = document.getElementById('grupo_situacion_negocio');
                 if (gSitNeg) gSitNeg.classList.remove('oculto');
             }
         }
 
-        let censo = (sDom === 'CN' || sDom === 'SN_REG' || sNeg === 'N_CON');
-        console.log("📊 [DEBUG CENSO EVALUACIÓN] Estado de apertura de censo:", censo, "(sDom:", sDom, ", sNeg:", sNeg, ")");
-
-        if (censo) {
+        // 4. Validación de apertura del censo de personas
+        let censoHabilitado = (sDom === 'CN' || sDom === 'SN_REG' || sNeg === 'N_CON' || tAct === 'modulo_fijo');
+        const bCenso = document.getElementById('bloque_censo');
+        
+        if (censoHabilitado) {
             if (bCenso) bCenso.classList.remove('oculto');
-            if (document.querySelectorAll('.tarjeta-persona').length === 0 && typeof agregarPersona === 'function') agregarPersona();
+            if (document.querySelectorAll('.tarjeta-persona').length === 0 && typeof agregarPersona === 'function') {
+                agregarPersona();
+            }
         } else {
             if (bCenso) bCenso.classList.add('oculto');
             const contPer = document.getElementById('contenedor_personas');
@@ -606,23 +557,36 @@
             if (typeof personaId !== 'undefined') personaId = 0;
         }
 
+        // 5. Nodo de cierre para bloqueos
         if (tAct === 'bloqueo' && dom !== "") {
+            const bCierre = document.getElementById('nodo_cierre_bloqueo');
             if (bCierre) bCierre.classList.remove('oculto');
         }
 
+        // 6. Restricción de Caso Índice exclusivamente para Bloqueos
         const esBloqueoActivo = (tAct === 'bloqueo');
         document.querySelectorAll('.tarjeta-persona').forEach(t => {
             const pId = t.id.split('_').pop();
             const divCaso = document.getElementById(`contenedor_caso_indice_${pId}`);
             if (divCaso) {
-                if (esBloqueoActivo) divCaso.classList.remove('oculto');
-                else {
+                if (esBloqueoActivo) {
+                    divCaso.classList.remove('oculto');
+                } else {
                     divCaso.classList.add('oculto');
                     const chk = document.getElementById(`caso_indice_${pId}`);
                     if (chk) chk.checked = false;
                 }
             }
         });
+
+        // 7. Refresco seguro del mapa si está visible
+        setTimeout(() => {
+            if (typeof mapaInteractivo !== 'undefined' && mapaInteractivo !== null) {
+                mapaInteractivo.invalidateSize();
+            } else if (typeof inicializarMapaDefecto === 'function') {
+                inicializarMapaDefecto();
+            }
+        }, 200);
 
         window.scrollTo({ top: scrollY, behavior: 'instant' });
     }
