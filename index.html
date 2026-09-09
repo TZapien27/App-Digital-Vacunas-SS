@@ -465,10 +465,17 @@
             }
         }
 
-        const tAct = document.getElementById('tipo_actividad') ? document.getElementById('tipo_actividad').value : "";
-        const dom = document.getElementById('domicilio_visitado') ? document.getElementById('domicilio_visitado').value : "";
-        const sDom = document.getElementById('situacion_domicilio') ? document.getElementById('situacion_domicilio').value : "";
-        const sNeg = document.getElementById('situacion_negocio') ? document.getElementById('situacion_negocio').value : "";
+        const tActEl = document.getElementById('tipo_actividad');
+        const tAct = tActEl ? tActEl.value : "";
+        
+        const domEl = document.getElementById('domicilio_visitado');
+        const dom = domEl ? domEl.value : "";
+        
+        const sDomEl = document.getElementById('situacion_domicilio');
+        const sDom = sDomEl ? sDomEl.value : "";
+        
+        const sNegEl = document.getElementById('situacion_negocio');
+        const sNeg = sNegEl ? sNegEl.value : "";
 
         const ids = ['bloque_domicilio', 'bloque_censo', 'bloque_mapa', 'seccion_bloqueo', 'metadatos_bloqueo', 'selector_bloqueos_pendientes', 'grupo_pregunta_estado_bloqueo', 'grupo_lugar_fijo', 'grupo_domicilio_visitado', 'grupo_situacion_domicilio', 'grupo_situacion_negocio', 'grupo_caso_domicilio', 'nodo_cierre_bloqueo', 'campos_cierre_final', 'grupo_ref_modulo_fijo', 'grupo_identificador_barrido'];
         ids.forEach(id => { const el = document.getElementById(id); if (el) el.classList.add('oculto'); });
@@ -479,16 +486,14 @@
         const bMapa = document.getElementById('bloque_mapa');
         const bCierre = document.getElementById('nodo_cierre_bloqueo');
 
-        // Blindaje de reordenamiento DOM: 
-        // - Módulo Fijo: Datos Generales -> Censo (Personas) -> Domicilio -> Mapa
-        // - Barrido / Bloqueo: Datos Generales -> Domicilio -> Mapa -> Censo (Personas)
+        // Reordenamiento DOM estricto blindado contra referencias nulas
         try {
             if (tAct === 'modulo_fijo') {
-                if (maestro && bCenso && bDom && bCenso.parentNode === maestro && bDom.parentNode === maestro) maestro.insertBefore(bCenso, bDom);
-                if (maestro && bDom && bMapa && bDom.parentNode === maestro && bMapa.parentNode === maestro) maestro.insertBefore(bMapa, null); // Manda el mapa al final o después del domicilio
+                if (maestro && bCenso && bDom && censoPosicionValida(bCenso, bDom, maestro)) maestro.insertBefore(bCenso, bDom);
+                if (maestro && bDom && bMapa && domPosicionValida(bDom, bMapa, maestro)) maestro.insertBefore(bMapa, null);
             } else {
-                if (maestro && bDom && bCenso && bDom.parentNode === maestro && bCenso.parentNode === maestro) maestro.insertBefore(bDom, bCenso);
-                if (maestro && bMapa && bCenso && bMapa.parentNode === maestro && bCenso.parentNode === maestro) maestro.insertBefore(bMapa, bCenso);
+                if (maestro && bDom && bMapa && domPosicionValida(bDom, bMapa, maestro)) maestro.insertBefore(bDom, bMapa);
+                if (maestro && bMapa && bCenso && mapaPosicionValida(bMapa, bCenso, maestro)) maestro.insertBefore(bMapa, bCenso);
             }
         } catch(e) {
             console.warn("Advertencia en reordenamiento DOM:", e);
@@ -496,18 +501,21 @@
 
         if (!tAct) { window.scrollTo({ top: scrollY, behavior: 'instant' }); return; }
 
-        // Control de visibilidad para campos exclusivos post Tipo de Actividad
+        const elRef = document.getElementById('grupo_ref_modulo_fijo');
+        const elIdBarrido = document.getElementById('grupo_identificador_barrido');
+
+        if (elRef) elRef.classList.add('oculto');
+        if (elIdBarrido) elIdBarrido.classList.add('oculto');
+
         if (tAct === 'modulo_fijo') {
-            const elRef = document.getElementById('grupo_ref_modulo_fijo');
             if (elRef) elRef.classList.remove('oculto');
+            if (bDom) bDom.classList.remove('oculto');
+            if (bCenso) bCenso.classList.remove('oculto');
+            if (bMapa) bMapa.classList.remove('oculto');
 
-            document.getElementById('bloque_domicilio').classList.remove('oculto');
-            document.getElementById('bloque_censo').classList.remove('oculto');
-            document.getElementById('bloque_mapa').classList.remove('oculto');
-
-            if (document.querySelectorAll('.tarjeta-persona').length === 0) agregarPersona();
+            if (document.querySelectorAll('.tarjeta-persona').length === 0 && typeof agregarPersona === 'function') agregarPersona();
             setTimeout(() => {
-                if(mapaInteractivo) {
+                if(typeof mapaInteractivo !== 'undefined' && mapaInteractivo) {
                     mapaInteractivo.invalidateSize();
                 } else if (typeof inicializarMapaDefecto === 'function') {
                     inicializarMapaDefecto();
@@ -518,35 +526,35 @@
         }
 
         if (tAct === 'barrido') {
-            const elIdBarrido = document.getElementById('grupo_identificador_barrido');
             if (elIdBarrido) elIdBarrido.classList.remove('oculto');
         }
 
         if (tAct === 'bloqueo') {
-            document.getElementById('seccion_bloqueo').classList.remove('oculto');
-            if (listaPendientes.length === 0 && document.getElementById('estado_bloqueo').value === "") {
-                document.getElementById('estado_bloqueo').value = 'nuevo';
+            const secBloqueo = document.getElementById('seccion_bloqueo');
+            if (secBloqueo) secBloqueo.classList.remove('oculto');
+            
+            if (listaPendientes.length === 0 && selectEstado && selectEstado.value === "") {
+                selectEstado.value = 'nuevo';
                 if (typeof gestionarEstadoBloqueo === 'function') gestionarEstadoBloqueo();
-            } else if (listaPendientes.length > 0 && document.getElementById('id_bloqueo').value === "") {
-                document.getElementById('grupo_pregunta_estado_bloqueo').classList.remove('oculto');
-            } else if (document.getElementById('id_bloqueo').value !== "") {
-                document.getElementById('metadatos_bloqueo').classList.remove('oculto');
+            } else if (listaPendientes.length > 0 && document.getElementById('id_bloqueo') && document.getElementById('id_bloqueo').value === "") {
+                const gPregunta = document.getElementById('grupo_pregunta_estado_bloqueo');
+                if (gPregunta) gPregunta.classList.remove('oculto');
+            } else if (document.getElementById('id_bloqueo') && document.getElementById('id_bloqueo').value !== "") {
+                const metaB = document.getElementById('metadatos_bloqueo');
+                if (metaB) metaB.classList.remove('oculto');
             }
         }
 
         if (tAct === 'barrido' || tAct === 'bloqueo') {
-            document.getElementById('bloque_domicilio').classList.remove('oculto');
-            document.getElementById('grupo_lugar_fijo').classList.remove('oculto');
-            document.getElementById('grupo_domicilio_visitado').classList.remove('oculto');
-            document.getElementById('bloque_mapa').classList.remove('oculto'); // El mapa se muestra enseguida del domicilio
-
-            const elRef = document.getElementById('grupo_ref_modulo_fijo');
-            if (elRef) elRef.classList.add('oculto');
-            const elLugarFijo = document.getElementById('lugar_fijo');
-            if (elLugarFijo) elLugarFijo.value = "";
+            if (bDom) bDom.classList.remove('oculto');
+            const gLugarFijo = document.getElementById('grupo_lugar_fijo');
+            const gDomVis = document.getElementById('grupo_domicilio_visitado');
+            if (gLugarFijo) gLugarFijo.classList.remove('oculto');
+            if (gDomVis) gDomVis.classList.remove('oculto');
+            if (bMapa) bMapa.classList.remove('oculto');
 
             setTimeout(() => {
-                if(mapaInteractivo) {
+                if(typeof mapaInteractivo !== 'undefined' && mapaInteractivo) {
                     mapaInteractivo.invalidateSize();
                 } else if (typeof inicializarMapaDefecto === 'function') {
                     inicializarMapaDefecto();
@@ -554,26 +562,30 @@
             }, 200);
 
             if (dom === 'casa') {
-                document.getElementById('grupo_situacion_domicilio').classList.remove('oculto');
-                if (tAct === 'bloqueo') document.getElementById('grupo_caso_domicilio').classList.remove('oculto');
+                const gSitDom = document.getElementById('grupo_situacion_domicilio');
+                if (gSitDom) gSitDom.classList.remove('oculto');
+                if (tAct === 'bloqueo') {
+                    const gCasoDom = document.getElementById('grupo_caso_domicilio');
+                    if (getCasoDom) gCasoDom.classList.remove('oculto');
+                }
             } else if (dom === 'negocio') {
-                document.getElementById('grupo_situacion_negocio').classList.remove('oculto');
+                const gSitNeg = document.getElementById('grupo_situacion_negocio');
+                if (gSitNeg) gSitNeg.classList.remove('oculto');
             }
         }
 
         let censo = (sDom === 'CN' || sDom === 'SN_REG' || sNeg === 'N_CON');
         if (censo) {
-            document.getElementById('bloque_censo').classList.remove('oculto');
-            if (document.querySelectorAll('.tarjeta-persona').length === 0) agregarPersona();
+            if (bCenso) bCenso.classList.remove('oculto');
+            if (document.querySelectorAll('.tarjeta-persona').length === 0 && typeof agregarPersona === 'function') agregarPersona();
         } else {
-            document.getElementById('bloque_censo').classList.add('oculto');
+            if (bCenso) bCenso.classList.add('oculto');
             const contPer = document.getElementById('contenedor_personas');
             if (contPer) contPer.innerHTML = '';
-            personaId = 0;
+            if (typeof personaId !== 'undefined') personaId = 0;
         }
 
         if (tAct === 'bloqueo' && dom !== "") {
-            const bCierre = document.getElementById('nodo_cierre_bloqueo');
             if (bCierre) bCierre.classList.remove('oculto');
         }
 
@@ -586,7 +598,7 @@
                 else {
                     divCaso.classList.add('oculto');
                     const chk = document.getElementById(`caso_indice_${pId}`);
-                    if (chk) chk.checked = false; // Limpia la selección si cambia de actividad
+                    if (chk) chk.checked = false;
                 }
             }
         });
