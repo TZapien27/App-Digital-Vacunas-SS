@@ -450,7 +450,7 @@
         }
     }
 
-    
+
 
     function evaluarFlujoLogico() {
         const scrollY = window.scrollY;
@@ -847,13 +847,27 @@
                 } else fechaCorta = p.fecha_actividad;
             }
 
+            let tipoActLocal = p.tipo_actividad || document.getElementById('tipo_actividad')?.value || '';
+            let esBloqLocal = tipoActLocal.toLowerCase() === 'bloqueo';
+            let identLocal = p.identificador_actividad || p.lugar_fijo || '';
+            let agebLocal = p.ageb || document.getElementById('ageb')?.value || '';
+
+            let htmlIdentificadorLocal = '';
+            if (esBloqLocal && agebLocal) {
+                htmlIdentificadorLocal = `<span style="color: #334155; font-size: 0.9em; display:block; margin-top:2px;"><b>AGEB:</b> ${agebLocal}</span>`;
+            } else if (!esBloqLocal && identLocal) {
+                htmlIdentificadorLocal = `<span style="color: #334155; font-size: 0.9em; display:block; margin-top:2px;"><b>Identificador:</b> ${identLocal}</span>`;
+            }
+
             L.marker([p.lat, p.lon], { icon: L.divIcon({ html: iconHtml, className: '', iconSize:[22,22], iconAnchor:[11,11] }) })
              .addTo(mapaInteractivo)
              .bindPopup(`<b style="color: ${esCasoIndice ? '#dc2626' : '#0f172a'}; font-size: 1.1em; border-bottom: 1px solid #cbd5e1; display:block; padding-bottom:3px; margin-bottom:5px;">${esCasoIndice ? '🚨 CASO ÍNDICE (HOY)' : 'Acción de la Jornada Actual'}</b>
-                         <span style="color: #2563eb; font-weight: bold; font-size: 0.9em; display:block; margin-bottom:4px;">📅 Fecha: ${fechaCorta}</span>
-                         <span style="color: #475569; font-size: 0.9em;"><b>Dirección:</b> ${p.calle || 'S/D'}, Col. ${p.colonia || 'S/D'}</span><br>
-                         <span style="color: #334155; font-size: 0.9em; display:block; margin-top:4px;"><b>Tipo:</b> ${p.dom || 'N/D'}</span>
-                         <span style="color: #475569; font-size: 0.85em; display:block; margin-top:4px;">👤 Registró: ${p.registrador_nombre || 'Tú'} (${p.registrador_institucion || '-'})</span>
+                         <span style="color: #475569; font-size: 0.85em; display:block; margin-bottom:4px;">👤 Registró: ${p.registrador_nombre || 'S/D'}</span>
+                         <span style="color: #334155; font-size: 0.9em; display:block; margin-top:2px;"><b>Tipo de actividad:</b> ${tipoActLocal ? tipoActLocal.toUpperCase() : 'N/D'}</span>
+                         ${htmlIdentificadorLocal}
+                         <span style="color: #475569; font-size: 0.9em; display:block; margin-top:2px;"><b>Dirección:</b> ${p.calle || 'S/D'}, Col. ${p.colonia || 'S/D'}</span>
+                         <span style="color: #334155; font-size: 0.9em; display:block; margin-top:2px;"><b>Tipo:</b> ${p.dom || 'N/D'}</span>
+                         <span style="color: #2563eb; font-weight: bold; font-size: 0.9em; display:block; margin-top:4px;">📅 Fecha: ${fechaCorta}</span>
                          <span style="color: #0f172a; font-size: 0.95em; font-weight: bold; background-color: ${esCasoIndice ? '#fee2e2' : '#f1f5f9'}; padding: 2px 4px; border-radius: 3px; display:inline-block; margin-top:4px;">Estatus: ${etiquetaEstatus}</span>`);
         });
     }
@@ -1249,20 +1263,30 @@
                 });
             }
 
-            // GUARDADO SIMÉTRICO: Almacenamos metadata completa para el popup local
+            const tipoActVal = document.getElementById('tipo_actividad') ? document.getElementById('tipo_actividad').value : "";
+            let identActVal = "";
+            if (tipoActVal === 'modulo_fijo') {
+                identActVal = document.getElementById('lugar_fijo') ? document.getElementById('lugar_fijo').value : "";
+            } else if (tipoActVal === 'barrido') {
+                identActVal = document.getElementById('identificador_barrido') ? document.getElementById('identificador_barrido').value : "";
+            }
+
             hist.push({ 
                 lat: document.getElementById('latitud').value, 
                 lon: document.getElementById('longitud').value, 
-                dom: (tAct === 'modulo_fijo' ? 'MF' : dom), 
+                dom: dom, 
                 sit: sitGuardada, 
                 total_personas: tPers, 
                 total_dosis: tDos,
                 fecha_actividad: document.getElementById('fecha_actividad') ? document.getElementById('fecha_actividad').value : "",
                 calle: document.getElementById('calle_numero') ? document.getElementById('calle_numero').value : "",
                 colonia: document.getElementById('colonia') ? document.getElementById('colonia').value : "",
-                registrador_nombre: document.getElementById('registrador_nombre') ? document.getElementById('registrador_nombre').value : "",
+                registrador_nombre: document.getElementById('registrador_nombre') ? document.getElementById('registrador_nombre').value : "S/D",
                 registrador_institucion: document.getElementById('registrador_institucion') ? document.getElementById('registrador_institucion').value : "",
-                caso_indice: esCasoIndiceLocal ? 'SI' : 'NO'
+                caso_indice: esCasoIndiceLocal ? 'SI' : 'NO',
+                tipo_actividad: tipoActVal,
+                identificador_actividad: identActVal,
+                ageb: document.getElementById('ageb') ? document.getElementById('ageb').value : ""
             });
             localStorage.setItem('censia_radar_mapa', JSON.stringify(hist));
         }
@@ -1474,14 +1498,27 @@
                         }
                     }
 
-                    // ETIQUETA esHistoricoRemoto: true PARA EVITAR QUE SE BORRE
+                    let tipoActRemoto = (p.tipo_actividad || "").toString().trim();
+                    let esBloqRemoto = tipoActRemoto.toLowerCase() === 'bloqueo';
+                    let identRemoto = p.identificador_actividad || p.lugar_fijo || '';
+                    let agebRemoto = p.ageb || '';
+
+                    let htmlIdentificadorRemoto = '';
+                    if (esBloqRemoto && agebRemoto) {
+                        htmlIdentificadorRemoto = `<span style="color: #334155; font-size: 0.9em; display:block; margin-top:2px;"><b>AGEB:</b> ${agebRemoto}</span>`;
+                    } else if (!esBloqRemoto && identRemoto) {
+                        htmlIdentificadorRemoto = `<span style="color: #334155; font-size: 0.9em; display:block; margin-top:2px;"><b>Identificador:</b> ${identRemoto}</span>`;
+                    }
+
                     L.marker([p.lat, p.lon], { icon: iconoHistoricoDinamico, zIndexOffset: zIndexOffset, esHistoricoRemoto: true })
                      .addTo(mapaInteractivo)
                      .bindPopup(`<b style="color: ${esCasoIndice ? '#dc2626' : '#0f172a'}; font-size: 1.1em; border-bottom: 1px solid #cbd5e1; display:block; padding-bottom:3px; margin-bottom:5px;">${esCasoIndice ? '🚨 CASO ÍNDICE' : 'Acciones realizadas'}</b>
-                                 <span style="color: #2563eb; font-weight: bold; font-size: 0.9em; display:block; margin-bottom:4px;">📅 Fecha: ${fechaCorta}</span>
-                                 <span style="color: #475569; font-size: 0.9em;"><b>Dirección:</b> ${p.calle || 'S/D'}, Col. ${p.colonia || 'S/D'}</span><br>
-                                 <span style="color: #334155; font-size: 0.9em; display:block; margin-top:4px;"><b>Tipo:</b> ${p.domicilio || 'N/D'}</span>
-                                 <span style="color: #475569; font-size: 0.85em; display:block; margin-top:4px;">👤 Registró: ${p.registrador_nombre || 'N/D'} (${p.registrador_institucion || '-'})</span>
+                                 <span style="color: #475569; font-size: 0.85em; display:block; margin-bottom:4px;">👤 Registró: ${p.registrador_nombre || 'S/D'}</span>
+                                 <span style="color: #334155; font-size: 0.9em; display:block; margin-top:2px;"><b>Tipo de actividad:</b> ${tipoActRemoto ? tipoActRemoto.toUpperCase() : 'N/D'}</span>
+                                 ${htmlIdentificadorRemoto}
+                                 <span style="color: #475569; font-size: 0.9em; display:block; margin-top:2px;"><b>Dirección:</b> ${p.calle || 'S/D'}, Col. ${p.colonia || 'S/D'}</span>
+                                 <span style="color: #334155; font-size: 0.9em; display:block; margin-top:2px;"><b>Tipo:</b> ${p.domicilio || 'N/D'}</span>
+                                 <span style="color: #2563eb; font-weight: bold; font-size: 0.9em; display:block; margin-top:4px;">📅 Fecha: ${fechaCorta}</span>
                                  <span style="color: #0f172a; font-size: 0.95em; font-weight: bold; background-color: ${esCasoIndice ? '#fee2e2' : '#f1f5f9'}; padding: 2px 4px; border-radius: 3px; display:inline-block; margin-top:4px;">Estatus: ${etiquetaEstatus}</span>`);
                 }
             });
