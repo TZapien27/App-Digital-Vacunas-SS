@@ -341,7 +341,7 @@
     /* ==========================================
        VARIABLES GLOBALES Y CATÁLOGOS COMPLETOS
        ========================================== */
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwgBtg1Cl2CG_KbNChg3DKUO9jVqv4uRkw23qJGui2XTcKw2x1zX2KSsk6idE0DOTv9yQ/exec";
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzuNqALPHbk4zfQYAZHzDV444XPM3vcyQP6hT_UYNNIxnQ8b3pfLoBRWl85_Go9uH1jCg/exec";
     
     let personaId = 0; let vacunaId = 0;  
     let mapaInteractivo = null; let chincheta = null;
@@ -960,6 +960,8 @@
     document.getElementById(`nombre_${pId}`).value = paciente.nombres || '';
     document.getElementById(`curp_${pId}`).value = paciente.curp || '';
     document.getElementById(`sexo_${pId}`).value = paciente.sexo || '';
+    document.getElementById(`derecho_${pId}`).value = paciente.derecho || '';
+    evaluarCascadaIMSS(pId);
     
     if (tomSelectInstances[`estado_nac_${pId}`] && paciente.entidad_nacimiento) {
         tomSelectInstances[`estado_nac_${pId}`].setValue(paciente.entidad_nacimiento);
