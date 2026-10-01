@@ -801,13 +801,13 @@
     if(mapaInteractivo) return;
     mapaInteractivo = L.map('mapa').setView([DEFAULT_LAT, DEFAULT_LON], 16);
     
-    // MAPA BASE: OpenStreetMap (Sin marcas de agua, rápido y no bloquea marcadores de colores)
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
-        maxZoom: 19,
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    // MAPA BASE: Servidor de Google Maps (Estable, sin bloqueos por políticas y sin marcas de agua)
+    L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { 
+        maxZoom: 20,
+        attribution: '&copy; Google Maps'
     }).addTo(mapaInteractivo);
     
-    pintarRadarHistorial(); // Dibuja radares de días anteriores
+    pintarRadarHistorial(); // Dibuja los radares de días anteriores
     
     chincheta = L.marker([DEFAULT_LAT, DEFAULT_LON], { draggable: true }).addTo(mapaInteractivo);
     actualizarCoordenadasPantalla(DEFAULT_LAT, DEFAULT_LON);
@@ -818,11 +818,11 @@
         actualizarCoordenadasPantalla(e.latlng.lat, e.latlng.lng); 
     });
     
-    // Llama a la base de datos para traer los puntos de colores
+    // Esta es la línea que manda a llamar a tus puntos históricos para que se pinten:
     cargarHistorialGpsRemoto();
     
     setTimeout(() => { if(mapaInteractivo) mapaInteractivo.invalidateSize(); }, 500);
-    }
+}
 
     function pintarRadarHistorial() { /* Historial desactivado temporalmente para simplificar bloque */ }
     function detectarUbicacionGPS() { 
