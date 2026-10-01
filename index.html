@@ -341,7 +341,7 @@
     /* ==========================================
        VARIABLES GLOBALES Y CATÁLOGOS COMPLETOS
        ========================================== */
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzuNqALPHbk4zfQYAZHzDV444XPM3vcyQP6hT_UYNNIxnQ8b3pfLoBRWl85_Go9uH1jCg/exec";
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzFlVtNBcodHyQKhGXU1OA12bz4_c5wFoOMBAJSrQI-ivvZ4RRp8A5i2-ZDMfsLRFtYSg/exec";
     
     let personaId = 0; let vacunaId = 0;  
     let mapaInteractivo = null; let chincheta = null;
@@ -986,18 +986,23 @@
         tomSelectInstances['municipio'].setValue(paciente.municipio);
     }
 
-    // MAPA: Carga las coordenadas reales y mueve el pin
-    if (paciente.ubicacion && paciente.ubicacion.includes(',')) {
-        let parts = paciente.ubicacion.split(',');
-        let lat = parseFloat(parts[0].trim());
-        let lon = parseFloat(parts[1].trim());
-        if (!isNaN(lat) && !isNaN(lon)) {
-            if(mapaInteractivo) {
-                mapaInteractivo.setView([lat, lon], 17);
-                if(chincheta) chincheta.setLatLng([lat, lon]);
-                setTimeout(() => { mapaInteractivo.invalidateSize(); }, 300);
+    // MAPA: Carga las coordenadas reales y mueve el pin a prueba de fallos
+    if (paciente.ubicacion) {
+        // Limpiamos la cadena por si Google Sheets trajo paréntesis o espacios raros
+        let coordsStr = paciente.ubicacion.toString().replace(/[()]/g, ''); 
+        if (coordsStr.includes(',')) {
+            let parts = coordsStr.split(',');
+            let lat = parseFloat(parts[0].trim());
+            let lon = parseFloat(parts[1].trim());
+            
+            if (!isNaN(lat) && !isNaN(lon)) {
+                if(mapaInteractivo) {
+                    mapaInteractivo.setView([lat, lon], 17);
+                    if(chincheta) chincheta.setLatLng([lat, lon]);
+                    setTimeout(() => { mapaInteractivo.invalidateSize(); }, 300);
+                }
+                actualizarCoordenadasPantalla(lat, lon);
             }
-            actualizarCoordenadasPantalla(lat, lon);
         }
     }
 
