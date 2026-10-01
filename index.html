@@ -986,23 +986,32 @@
         tomSelectInstances['municipio'].setValue(paciente.municipio);
     }
 
-    // MAPA: Carga las coordenadas reales y mueve el pin a prueba de fallos
+    // MAPA: Carga las coordenadas reales a prueba de fallos (Regex)
     if (paciente.ubicacion) {
-        // Limpiamos la cadena por si Google Sheets trajo paréntesis o espacios raros
-        let coordsStr = paciente.ubicacion.toString().replace(/[()]/g, ''); 
-        if (coordsStr.includes(',')) {
-            let parts = coordsStr.split(',');
-            let lat = parseFloat(parts[0].trim());
-            let lon = parseFloat(parts[1].trim());
+        // La expresión regular busca exclusivamente dos números con decimales y signo negativo opcional
+        let coincidencias = paciente.ubicacion.toString().match(/-?\d+\.\d+/g);
+        
+        if (coincidencias && coincidencias.length >= 2) {
+            let lat = parseFloat(coincidencias[0]);
+            let lon = parseFloat(coincidencias[1]);
             
-            if (!isNaN(lat) && !isNaN(lon)) {
+            // Validamos que las coordenadas caigan lógicamente en el rango de México/Coahuila (aprox)
+            if (lat > 14 && lat < 33 && lon > -120 && lon < -85) {
                 if(mapaInteractivo) {
                     mapaInteractivo.setView([lat, lon], 17);
                     if(chincheta) chincheta.setLatLng([lat, lon]);
-                    setTimeout(() => { mapaInteractivo.invalidateSize(); }, 300);
+                    
+                    // Forzamos la recarga visual del mapa
+                    setTimeout(() => { 
+                        mapaInteractivo.invalidateSize(); 
+                    }, 400);
                 }
                 actualizarCoordenadasPantalla(lat, lon);
+            } else {
+                console.warn("Las coordenadas extraídas no parecen pertenecer a México:", lat, lon);
             }
+        } else {
+            console.warn("No se detectaron coordenadas válidas en el texto:", paciente.ubicacion);
         }
     }
 
