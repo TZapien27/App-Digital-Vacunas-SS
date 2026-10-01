@@ -106,17 +106,18 @@
             </div>
         </div>
 
+        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+            <input type="text" id="input_busqueda" placeholder="Ingresa al menos 3 caracteres..." style="flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 5px; font-family: inherit;">
+            <button type="button" class="btn" onclick="ejecutarBusqueda(false)" style="width: auto; margin: 0; background-color: #3b82f6; padding: 10px 20px;">Buscar</button>
+        </div>
+        
         <!-- Jurisdicción pasa a ser el paso 2 -->
         <div class="form-group">
             <label>2. Jurisdicción Sanitaria Inicial *</label>
             <select id="busqueda_jurisdiccion" class="select-buscable" placeholder="Selecciona la JS..."></select>
         </div>
 
-        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-            <input type="text" id="input_busqueda" placeholder="Ingresa al menos 3 caracteres..." style="flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 5px; font-family: inherit;">
-            <button type="button" class="btn" onclick="ejecutarBusqueda(false)" style="width: auto; margin: 0; background-color: #3b82f6; padding: 10px 20px;">Buscar</button>
-        </div>
-        
+
         <div id="resultados_busqueda" style="font-size: 0.9em; color: #475569;"></div>
         
         <button type="button" id="btn_nuevo_registro" class="btn btn-add oculto" onclick="iniciarNuevoRegistro()" style="margin-top: 15px;">➕ Generar Nuevo Registro</button>
