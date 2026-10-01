@@ -910,14 +910,13 @@
     // 1. Ocultar el botón de nuevo registro
     document.getElementById('btn_nuevo_registro').classList.add('oculto');
 
-    // 2. Si la base de datos devuelve el tipo de actividad, lo asignamos
+    // 2. Si la BD enviara el tipo de actividad, lo asignamos
     if (paciente.tipo_actividad) {
         document.getElementById('tipo_actividad').value = paciente.tipo_actividad;
     }
     
-    // 3. Evaluamos la lógica base, pero INMEDIATAMENTE DESPUÉS forzamos a que todo sea visible
+    // 3. Forzamos a que todo sea visible
     evaluarFlujoLogico(); 
-    
     document.getElementById('bloque_domicilio').classList.remove('oculto');
     document.getElementById('bloque_mapa').classList.remove('oculto');
     document.getElementById('bloque_censo').classList.remove('oculto');
@@ -954,7 +953,7 @@
     if (!primerTarjeta) return;
     const pId = primerTarjeta.id.split('_').pop();
     
-    // 6. Llenar Datos de la Persona
+    // 6. Llenar Datos de la Persona (Los que tu .gs sí envía y los que enviará)
     document.getElementById(`paterno_${pId}`).value = paciente.paterno || '';
     document.getElementById(`materno_${pId}`).value = paciente.materno || '';
     document.getElementById(`nombre_${pId}`).value = paciente.nombres || '';
@@ -968,19 +967,8 @@
         document.getElementById(`estado_nac_${pId}`).value = paciente.entidad_nacimiento || '';
     }
 
-    // Parentesco
-    if (paciente.nombre_pariente || paciente.tipo_parentesco) {
-        document.getElementById(`tutor_nombre_${pId}`).value = paciente.nombre_pariente || '';
-        document.getElementById(`tutor_tipo_${pId}`).value = paciente.tipo_parentesco || '';
-        document.getElementById(`tutor_fecha_nac_${pId}`).value = paciente.fecha_nac_pariente || '';
-        if (paciente.tipo_parentesco === 'Otro parentesco') {
-            document.getElementById(`tutor_tipo_otro_${pId}`).classList.remove('oculto');
-            document.getElementById(`tutor_tipo_otro_${pId}`).value = paciente.otro_parentesco || '';
-        }
-    }
-
     // 7. Llenar Datos de Domicilio
-    document.getElementById('calle_numero').value = paciente.calle_numero || '';
+    document.getElementById('calle_numero').value = paciente.calle_numero || paciente.domicilio || '';
     document.getElementById('colonia').value = paciente.colonia || '';
     document.getElementById('localidad').value = paciente.localidad || '';
     
@@ -988,16 +976,37 @@
         tomSelectInstances['municipio'].setValue(paciente.municipio);
     }
 
-    // Disparar cálculos de edad (esto habilita la lista de vacunas)
+    // Disparar cálculos de edad (esto habilita la lista de vacunas internamente)
     procesarEdadP(pId);
     
-    // 8. NOTIFICACIÓN Y DESPLAZAMIENTO (UX)
-    alert("✅ BÚSQUEDA EXITOSA:\n\nSe han extraído los datos de la persona y su domicilio.\n\nAl cerrar este mensaje, la pantalla bajará automáticamente para que continúes la captura.");
+    // 8. LLENAR EL HISTORIAL DE VACUNAS
+    const contenedorVacunas = document.getElementById(`contenedor_vacunas_p${pId}`);
+    if (contenedorVacunas) {
+        contenedorVacunas.innerHTML = ''; // Limpiamos la vacuna en blanco inicial
+        
+        if (paciente.vacunas && paciente.vacunas.length > 0) {
+            paciente.vacunas.forEach(vac => {
+                agregarVacunaAPersona(pId); // Agrega un bloque de vacuna nuevo
+                const vId = vacunaId; // Toma el ID que se acaba de generar
+                
+                const selectVacuna = document.getElementById(`select_vacuna_${vId}`);
+                if (selectVacuna) selectVacuna.value = vac.vacuna || '';
+                
+                const inputFecha = document.getElementById(`fecha_vacuna_${vId}`);
+                if (inputFecha && vac.fecha && vac.fecha !== "Sin fecha") inputFecha.value = vac.fecha;
+            });
+        } else {
+            agregarVacunaAPersona(pId); // Si no trae vacunas previas, deja una en blanco
+        }
+    }
+
+    // 9. NOTIFICACIÓN AL USUARIO Y SCROLL AUTOMÁTICO
+    alert("✅ BÚSQUEDA EXITOSA:\n\nSe han extraído los datos de la persona, su domicilio y su historial de vacunas.\n\nAl cerrar este mensaje, la pantalla bajará automáticamente para que continúes.");
     
     setTimeout(() => {
         document.getElementById(`tarjeta_persona_${pId}`).scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 300);
-}
+    }
 
     function iniciarNuevoRegistro() {
         document.getElementById('btn_nuevo_registro').classList.add('oculto');
