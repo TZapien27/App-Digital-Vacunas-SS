@@ -793,10 +793,10 @@
     if(mapaInteractivo) return;
     mapaInteractivo = L.map('mapa').setView([DEFAULT_LAT, DEFAULT_LON], 16);
     
-    // SOLUCIÓN AL MAPA: Cambiamos OSM estándar por CartoDB (basado en OSM pero sin bloqueos)
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { 
+    // CAMBIO A ESRI: Gratuito, sin límite estricto, sin marcas de agua de API Key.
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', { 
         maxZoom: 19,
-        attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+        attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012'
     }).addTo(mapaInteractivo);
     
     pintarRadarHistorial();
@@ -806,7 +806,7 @@
     mapaInteractivo.on('click', e => { chincheta.setLatLng(e.latlng); actualizarCoordenadasPantalla(e.latlng.lat, e.latlng.lng); });
     cargarHistorialGpsRemoto();
     setTimeout(() => { if(mapaInteractivo) mapaInteractivo.invalidateSize(); }, 500);
-    }
+}
 
     function pintarRadarHistorial() { /* Historial desactivado temporalmente para simplificar bloque */ }
     function detectarUbicacionGPS() { 
@@ -910,50 +910,51 @@
     // 1. Ocultar el botón de nuevo registro
     document.getElementById('btn_nuevo_registro').classList.add('oculto');
 
-    // 2. Si la base de datos devuelve el tipo de actividad, lo asignamos y expandimos el formulario
+    // 2. Si la base de datos devuelve el tipo de actividad, lo asignamos
     if (paciente.tipo_actividad) {
         document.getElementById('tipo_actividad').value = paciente.tipo_actividad;
     }
     
-    // Forzamos al sistema a mostrar los recuadros de inmediato sin pedirle nada al usuario
+    // 3. Evaluamos la lógica base, pero INMEDIATAMENTE DESPUÉS forzamos a que todo sea visible
     evaluarFlujoLogico(); 
+    
+    document.getElementById('bloque_domicilio').classList.remove('oculto');
+    document.getElementById('bloque_mapa').classList.remove('oculto');
+    document.getElementById('bloque_censo').classList.remove('oculto');
 
-    // 3. REGLA DE BLOQUEO: Si es un bloqueo, se cargan los datos y SE BLOQUEA SU EDICIÓN
+    // 4. REGLA DE BLOQUEO (Protección de edición)
     if (paciente.tipo_actividad === 'bloqueo' || paciente.id_bloqueo) {
         document.getElementById('estado_bloqueo').value = 'pendiente';
-        
-        // Mostramos la caja de metadatos del bloqueo y ocultamos selectores
         document.getElementById('metadatos_bloqueo').classList.remove('oculto');
         document.getElementById('selector_bloqueos_pendientes').classList.add('oculto');
         document.getElementById('grupo_pregunta_estado_bloqueo').classList.add('oculto');
         
-        // Llenamos y bloqueamos los campos para "casar" al paciente
         document.getElementById('id_bloqueo').value = paciente.id_bloqueo || '';
         
         const cNom = document.getElementById('bloqueo_nombre_caso');
         cNom.value = paciente.bloqueo_nombre_caso || '';
-        cNom.readOnly = true; // No editable
+        cNom.readOnly = true; 
         
         const cTipo = document.getElementById('bloqueo_tipo');
         cTipo.value = paciente.bloqueo_tipo || '';
-        cTipo.disabled = true; // No editable
+        cTipo.disabled = true; 
         
         const cNot = document.getElementById('bloqueo_fecha_notificacion');
         cNot.value = paciente.bloqueo_fecha_notificacion || '';
-        cNot.readOnly = true; // No editable
+        cNot.readOnly = true; 
         
         const cIni = document.getElementById('bloqueo_fecha_inicio');
         cIni.value = paciente.bloqueo_fecha_inicio || '';
-        cIni.readOnly = true; // No editable
+        cIni.readOnly = true; 
     }
 
-    // 4. Asegurarnos de que exista al menos una tarjeta de persona
+    // 5. Asegurarnos de que exista la tarjeta de persona
     if (document.querySelectorAll('.tarjeta-persona').length === 0) agregarPersona();
     const primerTarjeta = document.querySelector('.tarjeta-persona');
     if (!primerTarjeta) return;
     const pId = primerTarjeta.id.split('_').pop();
     
-    // 5. Llenar Datos de la Persona
+    // 6. Llenar Datos de la Persona
     document.getElementById(`paterno_${pId}`).value = paciente.paterno || '';
     document.getElementById(`materno_${pId}`).value = paciente.materno || '';
     document.getElementById(`nombre_${pId}`).value = paciente.nombres || '';
@@ -978,7 +979,7 @@
         }
     }
 
-    // 6. Llenar Datos de Domicilio
+    // 7. Llenar Datos de Domicilio
     document.getElementById('calle_numero').value = paciente.calle_numero || '';
     document.getElementById('colonia').value = paciente.colonia || '';
     document.getElementById('localidad').value = paciente.localidad || '';
@@ -987,11 +988,15 @@
         tomSelectInstances['municipio'].setValue(paciente.municipio);
     }
 
-    // Disparar cálculos de edad dependientes
+    // Disparar cálculos de edad (esto habilita la lista de vacunas)
     procesarEdadP(pId);
     
-    // Eliminamos el 'alert' molesto y hacemos scroll directo a la tarjeta de la persona
-    document.getElementById(`tarjeta_persona_${pId}`).scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // 8. NOTIFICACIÓN Y DESPLAZAMIENTO (UX)
+    alert("✅ BÚSQUEDA EXITOSA:\n\nSe han extraído los datos de la persona y su domicilio.\n\nAl cerrar este mensaje, la pantalla bajará automáticamente para que continúes la captura.");
+    
+    setTimeout(() => {
+        document.getElementById(`tarjeta_persona_${pId}`).scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 300);
 }
 
     function iniciarNuevoRegistro() {
