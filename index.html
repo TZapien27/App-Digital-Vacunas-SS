@@ -127,7 +127,7 @@
         
         <button type="button" id="btn_nuevo_registro" class="btn btn-add oculto" onclick="iniciarNuevoRegistro()" style="margin-top: 15px;">➕ Generar Nuevo Registro</button>
     </div>
-        
+
     <!-- 1. DATOS GENERALES DE LA JORNADA -->
     <div class="tarjeta" id="bloque_datos_generales">
         <h2>1. Datos Generales de la Jornada <span style="color: #ef4444; font-size: 0.8rem; background: #fee2e2; padding: 2px 6px; border-radius: 4px; float: right;">v15.9</span></h2>
@@ -801,20 +801,28 @@
     if(mapaInteractivo) return;
     mapaInteractivo = L.map('mapa').setView([DEFAULT_LAT, DEFAULT_LON], 16);
     
-    // CAMBIO A ESRI: Gratuito, sin límite estricto, sin marcas de agua de API Key.
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', { 
+    // MAPA BASE: OpenStreetMap (Sin marcas de agua, rápido y no bloquea marcadores de colores)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
         maxZoom: 19,
-        attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012'
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(mapaInteractivo);
     
-    pintarRadarHistorial();
+    pintarRadarHistorial(); // Dibuja radares de días anteriores
+    
     chincheta = L.marker([DEFAULT_LAT, DEFAULT_LON], { draggable: true }).addTo(mapaInteractivo);
     actualizarCoordenadasPantalla(DEFAULT_LAT, DEFAULT_LON);
+    
     chincheta.on('dragend', e => actualizarCoordenadasPantalla(e.target.getLatLng().lat, e.target.getLatLng().lng));
-    mapaInteractivo.on('click', e => { chincheta.setLatLng(e.latlng); actualizarCoordenadasPantalla(e.latlng.lat, e.latlng.lng); });
+    mapaInteractivo.on('click', e => { 
+        chincheta.setLatLng(e.latlng); 
+        actualizarCoordenadasPantalla(e.latlng.lat, e.latlng.lng); 
+    });
+    
+    // Llama a la base de datos para traer los puntos de colores
     cargarHistorialGpsRemoto();
+    
     setTimeout(() => { if(mapaInteractivo) mapaInteractivo.invalidateSize(); }, 500);
-}
+    }
 
     function pintarRadarHistorial() { /* Historial desactivado temporalmente para simplificar bloque */ }
     function detectarUbicacionGPS() { 
@@ -1005,13 +1013,17 @@
         tomSelectInstances['municipio'].setValue(paciente.municipio);
     }
 
-    if (paciente.ubicacion) {
-        let coordsStr = paciente.ubicacion.toString().replace(/[()]/g, ''); 
-        if (coordsStr.includes(',')) {
-            let parts = coordsStr.split(',');
-            let lat = parseFloat(parts[0].trim());
-            let lon = parseFloat(parts[1].trim());
+    // MAPA: Carga las coordenadas reales a prueba de formatos sucios
+    if (paciente.ubicacion && paciente.ubicacion.includes(',')) {
+        // Limpiamos todo lo que no sean números, comas, puntos o signos de menos
+        let limpia = paciente.ubicacion.toString().replace(/[^\d.,-]/g, '').trim(); 
+        let partes = limpia.split(',');
+        
+        if (partes.length >= 2) {
+            let lat = parseFloat(partes[0]);
+            let lon = parseFloat(partes[1]);
             
+            // Validar que realmente sean números
             if (!isNaN(lat) && !isNaN(lon)) {
                 if(mapaInteractivo) {
                     mapaInteractivo.setView([lat, lon], 17);
