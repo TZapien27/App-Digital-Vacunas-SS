@@ -93,10 +93,11 @@
     </div>
 
     <!-- MÓDULO DE BÚSQUEDA INTELIGENTE -->
+    <!-- MÓDULO DE BÚSQUEDA INTELIGENTE -->
     <div class="tarjeta" id="bloque_buscador" style="background-color: #f8fafc; border-left: 4px solid #3b82f6;">
         <h2 style="color: #1e293b; margin-top: 0; font-size: 1.2em;">🔍 Búsqueda Inteligente</h2>
         
-        <!-- Criterios de búsqueda primero, con nuevo orden y Apellido Paterno por defecto -->
+        <!-- 1. CRITERIOS (Nuevo orden) -->
         <div class="form-group">
             <label>1. Criterio de Búsqueda *</label>
             <div style="display: flex; gap: 15px; flex-wrap: wrap; background: #fff; padding: 10px; border: 1px solid #cbd5e1; border-radius: 5px;">
@@ -106,18 +107,21 @@
             </div>
         </div>
 
-        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-            <input type="text" id="input_busqueda" placeholder="Ingresa al menos 3 caracteres..." style="flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 5px; font-family: inherit;">
-            <button type="button" class="btn" onclick="ejecutarBusqueda(false)" style="width: auto; margin: 0; background-color: #3b82f6; padding: 10px 20px;">Buscar</button>
-        </div>
-        
-        <!-- Jurisdicción pasa a ser el paso 2 -->
+        <!-- 2. JURISDICCIÓN -->
         <div class="form-group">
             <label>2. Jurisdicción Sanitaria Inicial *</label>
             <select id="busqueda_jurisdiccion" class="select-buscable" placeholder="Selecciona la JS..."></select>
         </div>
 
-
+        <!-- 3. INPUT Y BOTÓN -->
+        <div class="form-group">
+            <label>3. Texto a buscar *</label>
+            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                <input type="text" id="input_busqueda" placeholder="Ingresa al menos 3 caracteres..." style="flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 5px; font-family: inherit;">
+                <button type="button" class="btn" onclick="ejecutarBusqueda(false)" style="width: auto; margin: 0; background-color: #3b82f6; padding: 10px 20px;">Buscar</button>
+            </div>
+        </div>
+        
         <div id="resultados_busqueda" style="font-size: 0.9em; color: #475569;"></div>
         
         <button type="button" id="btn_nuevo_registro" class="btn btn-add oculto" onclick="iniciarNuevoRegistro()" style="margin-top: 15px;">➕ Generar Nuevo Registro</button>
@@ -337,7 +341,7 @@
     /* ==========================================
        VARIABLES GLOBALES Y CATÁLOGOS COMPLETOS
        ========================================== */
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyjKIXoNE6wV7hj77IMfeJF2-8gOPE68DDsJsEGBCeoqA7azHL4laZ48oIpWFLPY3mW0w/exec";
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwgBtg1Cl2CG_KbNChg3DKUO9jVqv4uRkw23qJGui2XTcKw2x1zX2KSsk6idE0DOTv9yQ/exec";
     
     let personaId = 0; let vacunaId = 0;  
     let mapaInteractivo = null; let chincheta = null;
