@@ -96,18 +96,20 @@
     <div class="tarjeta" id="bloque_buscador" style="background-color: #f8fafc; border-left: 4px solid #3b82f6;">
         <h2 style="color: #1e293b; margin-top: 0; font-size: 1.2em;">🔍 Búsqueda Inteligente</h2>
         
+        <!-- Criterios de búsqueda primero, con nuevo orden y Apellido Paterno por defecto -->
         <div class="form-group">
-            <label>1. Jurisdicción Sanitaria Inicial *</label>
-            <select id="busqueda_jurisdiccion" class="select-buscable" placeholder="Selecciona la JS..."></select>
+            <label>1. Criterio de Búsqueda *</label>
+            <div style="display: flex; gap: 15px; flex-wrap: wrap; background: #fff; padding: 10px; border: 1px solid #cbd5e1; border-radius: 5px;">
+                <label style="font-weight: normal; margin: 0; cursor: pointer;"><input type="radio" name="criterio_busqueda" value="apellido" checked> Apellido Paterno</label>
+                <label style="font-weight: normal; margin: 0; cursor: pointer;"><input type="radio" name="criterio_busqueda" value="domicilio"> Calle</label>
+                <label style="font-weight: normal; margin: 0; cursor: pointer;"><input type="radio" name="criterio_busqueda" value="curp"> CURP</label>
+            </div>
         </div>
 
+        <!-- Jurisdicción pasa a ser el paso 2 -->
         <div class="form-group">
-            <label>2. Criterio de Búsqueda *</label>
-            <div style="display: flex; gap: 15px; flex-wrap: wrap; background: #fff; padding: 10px; border: 1px solid #cbd5e1; border-radius: 5px;">
-                <label style="font-weight: normal; margin: 0; cursor: pointer;"><input type="radio" name="criterio_busqueda" value="curp" checked> CURP</label>
-                <label style="font-weight: normal; margin: 0; cursor: pointer;"><input type="radio" name="criterio_busqueda" value="apellido"> Apellido Paterno</label>
-                <label style="font-weight: normal; margin: 0; cursor: pointer;"><input type="radio" name="criterio_busqueda" value="domicilio"> Domicilio</label>
-            </div>
+            <label>2. Jurisdicción Sanitaria Inicial *</label>
+            <select id="busqueda_jurisdiccion" class="select-buscable" placeholder="Selecciona la JS..."></select>
         </div>
 
         <div style="display: flex; gap: 10px; margin-bottom: 10px;">
