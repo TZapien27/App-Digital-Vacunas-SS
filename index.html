@@ -93,11 +93,10 @@
     </div>
 
     <!-- MÓDULO DE BÚSQUEDA INTELIGENTE -->
-    <!-- MÓDULO DE BÚSQUEDA INTELIGENTE -->
     <div class="tarjeta" id="bloque_buscador" style="background-color: #f8fafc; border-left: 4px solid #3b82f6;">
         <h2 style="color: #1e293b; margin-top: 0; font-size: 1.2em;">🔍 Búsqueda Inteligente</h2>
         
-        <!-- 1. CRITERIOS (Nuevo orden) -->
+        <!-- 1. CRITERIOS -->
         <div class="form-group">
             <label>1. Criterio de Búsqueda *</label>
             <div style="display: flex; gap: 15px; flex-wrap: wrap; background: #fff; padding: 10px; border: 1px solid #cbd5e1; border-radius: 5px;">
@@ -107,18 +106,20 @@
             </div>
         </div>
 
-        <!-- 2. JURISDICCIÓN -->
+        <!-- 2. CAMPO DE TEXTO -->
         <div class="form-group">
-            <label>2. Jurisdicción Sanitaria Inicial *</label>
-            <select id="busqueda_jurisdiccion" class="select-buscable" placeholder="Selecciona la JS..."></select>
+            <label>2. Texto a buscar *</label>
+            <input type="text" id="input_busqueda" placeholder="Ingresa al menos 3 caracteres..." style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 5px; font-family: inherit; box-sizing: border-box;">
         </div>
 
-        <!-- 3. INPUT Y BOTÓN -->
+        <!-- 3. JURISDICCIÓN + BOTÓN BUSCAR EN EL MISMO RENGLÓN -->
         <div class="form-group">
-            <label>3. Texto a buscar *</label>
-            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                <input type="text" id="input_busqueda" placeholder="Ingresa al menos 3 caracteres..." style="flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 5px; font-family: inherit;">
-                <button type="button" class="btn" onclick="ejecutarBusqueda(false)" style="width: auto; margin: 0; background-color: #3b82f6; padding: 10px 20px;">Buscar</button>
+            <label>3. Jurisdicción Sanitaria Inicial *</label>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <div style="flex: 1;">
+                    <select id="busqueda_jurisdiccion" class="select-buscable" placeholder="Selecciona la JS..."></select>
+                </div>
+                <button type="button" class="btn" onclick="ejecutarBusqueda(false)" style="margin: 0; background-color: #3b82f6; padding: 10px 20px; white-space: nowrap;">Buscar</button>
             </div>
         </div>
         
@@ -126,7 +127,7 @@
         
         <button type="button" id="btn_nuevo_registro" class="btn btn-add oculto" onclick="iniciarNuevoRegistro()" style="margin-top: 15px;">➕ Generar Nuevo Registro</button>
     </div>
-    
+        
     <!-- 1. DATOS GENERALES DE LA JORNADA -->
     <div class="tarjeta" id="bloque_datos_generales">
         <h2>1. Datos Generales de la Jornada <span style="color: #ef4444; font-size: 0.8rem; background: #fee2e2; padding: 2px 6px; border-radius: 4px; float: right;">v15.9</span></h2>
