@@ -960,6 +960,9 @@
     document.getElementById(`nombre_${pId}`).value = paciente.nombres || '';
     document.getElementById(`curp_${pId}`).value = paciente.curp || '';
     document.getElementById(`sexo_${pId}`).value = paciente.sexo || '';
+    // Inyectar Derechohabiencia y disparar la validación del IMSS
+    document.getElementById(`derecho_${pId}`).value = paciente.derecho || '';
+    evaluarCascadaIMSS(pId);
     
     // CORRECCIÓN ENTIDAD NACIMIENTO: Asegurarnos de usar 2 dígitos (ej. "05") 
     // sin importar lo que mande la base de datos (ej. "5", "05", o "05 Coahuila")
