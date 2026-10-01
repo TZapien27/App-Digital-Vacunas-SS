@@ -341,7 +341,7 @@
     /* ==========================================
        VARIABLES GLOBALES Y CATÁLOGOS COMPLETOS
        ========================================== */
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzFlVtNBcodHyQKhGXU1OA12bz4_c5wFoOMBAJSrQI-ivvZ4RRp8A5i2-ZDMfsLRFtYSg/exec";
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw5QSEzFTceYsD8MTAxj8kNatbD4TqnGROt7MRtT8nOLFqf1g_rEfh2Q2DjbqOIkg8COA/exec";
     
     let personaId = 0; let vacunaId = 0;  
     let mapaInteractivo = null; let chincheta = null;
@@ -960,18 +960,33 @@
     document.getElementById(`nombre_${pId}`).value = paciente.nombres || '';
     document.getElementById(`curp_${pId}`).value = paciente.curp || '';
     document.getElementById(`sexo_${pId}`).value = paciente.sexo || '';
-    document.getElementById(`derecho_${pId}`).value = paciente.derecho || '';
-    evaluarCascadaIMSS(pId);
     
-    if (tomSelectInstances[`estado_nac_${pId}`] && paciente.entidad_nacimiento) {
-        tomSelectInstances[`estado_nac_${pId}`].setValue(paciente.entidad_nacimiento);
+    // CORRECCIÓN ENTIDAD NACIMIENTO: Asegurarnos de usar 2 dígitos (ej. "05") 
+    // sin importar lo que mande la base de datos (ej. "5", "05", o "05 Coahuila")
+    let entidadDB = paciente.entidad_nacimiento ? paciente.entidad_nacimiento.toString().trim() : '';
+    let valorEntidad = '';
+    if (entidadDB) {
+        // Extraemos solo los números iniciales
+        let coincidenciaNumeros = entidadDB.match(/^\d+/);
+        if (coincidenciaNumeros) {
+            valorEntidad = coincidenciaNumeros[0].padStart(2, '0'); // Convierte "5" a "05"
+        }
+    }
+    
+    if (tomSelectInstances[`estado_nac_${pId}`] && valorEntidad) {
+        tomSelectInstances[`estado_nac_${pId}`].setValue(valorEntidad);
     } else {
-        document.getElementById(`estado_nac_${pId}`).value = paciente.entidad_nacimiento || '';
+        document.getElementById(`estado_nac_${pId}`).value = valorEntidad;
     }
 
+    // CORRECCIÓN DATOS DEL PARIENTE Y FECHA DE NACIMIENTO PARIENTE
     if (paciente.nombre_pariente || paciente.tipo_parentesco) {
         document.getElementById(`tutor_nombre_${pId}`).value = paciente.nombre_pariente || '';
         document.getElementById(`tutor_tipo_${pId}`).value = paciente.tipo_parentesco || '';
+        
+        // ¡Línea faltante inyectada aquí!
+        document.getElementById(`tutor_fecha_nac_${pId}`).value = paciente.fecha_nac_pariente || '';
+        
         if (paciente.tipo_parentesco === 'Otro parentesco') {
             document.getElementById(`tutor_tipo_otro_${pId}`).classList.remove('oculto');
             document.getElementById(`tutor_tipo_otro_${pId}`).value = paciente.otro_parentesco || '';
@@ -986,36 +1001,24 @@
         tomSelectInstances['municipio'].setValue(paciente.municipio);
     }
 
-    // MAPA: Carga las coordenadas reales a prueba de fallos (Regex)
     if (paciente.ubicacion) {
-        // La expresión regular busca exclusivamente dos números con decimales y signo negativo opcional
-        let coincidencias = paciente.ubicacion.toString().match(/-?\d+\.\d+/g);
-        
-        if (coincidencias && coincidencias.length >= 2) {
-            let lat = parseFloat(coincidencias[0]);
-            let lon = parseFloat(coincidencias[1]);
+        let coordsStr = paciente.ubicacion.toString().replace(/[()]/g, ''); 
+        if (coordsStr.includes(',')) {
+            let parts = coordsStr.split(',');
+            let lat = parseFloat(parts[0].trim());
+            let lon = parseFloat(parts[1].trim());
             
-            // Validamos que las coordenadas caigan lógicamente en el rango de México/Coahuila (aprox)
-            if (lat > 14 && lat < 33 && lon > -120 && lon < -85) {
+            if (!isNaN(lat) && !isNaN(lon)) {
                 if(mapaInteractivo) {
                     mapaInteractivo.setView([lat, lon], 17);
                     if(chincheta) chincheta.setLatLng([lat, lon]);
-                    
-                    // Forzamos la recarga visual del mapa
-                    setTimeout(() => { 
-                        mapaInteractivo.invalidateSize(); 
-                    }, 400);
+                    setTimeout(() => { mapaInteractivo.invalidateSize(); }, 300);
                 }
                 actualizarCoordenadasPantalla(lat, lon);
-            } else {
-                console.warn("Las coordenadas extraídas no parecen pertenecer a México:", lat, lon);
             }
-        } else {
-            console.warn("No se detectaron coordenadas válidas en el texto:", paciente.ubicacion);
         }
     }
 
-    // INYECCIÓN DIRECTA SIN RECÁLCULOS
     document.getElementById(`fecha_nacimiento_${pId}`).value = paciente.fecha_nacimiento || '';
     document.getElementById(`edad_calculada_${pId}`).value = paciente.edad || '';
     document.getElementById(`tipo_vacunacion_${pId}`).value = paciente.tipo_vacunacion || '';
@@ -1028,7 +1031,6 @@
         bloqueTutor.classList.add('oculto');
     }
 
-    // HISTORIAL DE VACUNAS
     const contenedorVacunas = document.getElementById(`contenedor_vacunas_p${pId}`);
     if (contenedorVacunas) {
         contenedorVacunas.innerHTML = ''; 
@@ -1052,13 +1054,12 @@
         }
     }
 
-    alert("✅ DATOS RECUPERADOS\n\nEl mapa, edad y vacunas se han cargado desde la base de datos.");
+    alert("✅ DATOS RECUPERADOS\n\nEl expediente completo del paciente y su domicilio se han cargado desde la base de datos.");
     
     setTimeout(() => {
         document.getElementById(`tarjeta_persona_${pId}`).scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 300);
-    }
-
+}
     function iniciarNuevoRegistro() {
         document.getElementById('btn_nuevo_registro').classList.add('oculto');
         document.getElementById('tipo_actividad').focus();
