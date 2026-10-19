@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>App Digital Vacunación SNSP-SS - V15.7</title>
+    <title>MiVacuna Digital Coahuila - V15.85</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0056b3">
@@ -72,16 +72,21 @@
 </head>
 <body>
 
-    <div style="background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 15px; text-align: center;">
-        <div class="header-logos">
-            <img src="img/logo-ss-fed.jpg" alt="SS Federal">
-            <img src="img/logo-ss-coahuila.jpg" alt="SS Coahuila">
-            <img src="img/logo-coahuila.jpg" alt="Identidad Coahuila">
-            <img src="img/logo-snsp.jpg" alt="SNSP">
+    <!-- ENCABEZADO CON LOGOS INSTITUCIONALES -->
+    <header class="header-app" style="background-color: white; padding: 10px; border-bottom: 2px solid #e2e8f0;">
+        <!-- Contenedor de logos institucionales -->
+        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 800px; margin: 0 auto; margin-bottom: 10px;">
+            <img src="img/logo-ss-fed.jpg" alt="Salud Federal" style="height: 40px; width: auto;">
+            <img src="img/logo-ss-coahuila.jpg" alt="Salud Coahuila" style="height: 40px; width: auto;">
+            <img src="img/logo-coahuila.jpg" alt="Gobierno Coahuila" style="height: 40px; width: auto;">
+            <img src="img/logo-snsp.jpg" alt="SNSP" style="height: 40px; width: auto;">
         </div>
-        <h1 style="color: #2c3e50; font-size: 1.3rem; margin: 10px 0 0 0; text-transform: uppercase;">
-            MiVacuna Digital Coahuila <br><span style="color: #ef4444; font-weight: bold; font-size: 1.1rem;">v-15.7</span>
-        </h1>    </div>     
+        
+        <!-- Logo principal de la aplicación centrado -->
+        <div style="text-align: center;">
+            <img src="img/logo MVDC.jpeg" alt="MiVacuna Digital Coahuila" style="height: 60px; width: auto;">
+        </div>
+    </header>
 
     <div class="contenedor" id="formulario_maestro">
     <!-- MÓDULO DE BÚSQUEDA DE PACIENTES -->
@@ -96,7 +101,7 @@
     
     <!-- 1. DATOS GENERALES DE LA JORNADA -->
     <div class="tarjeta" id="bloque_datos_generales">
-        <h2>1. Datos Generales de la Jornada <span style="color: #ef4444; font-size: 0.8rem; background: #fee2e2; padding: 2px 6px; border-radius: 4px; float: right;">v15.7</span></h2>
+        <h2>1. Datos Generales de la Jornada <span style="color: #ef4444; font-size: 0.8rem; background: #fee2e2; padding: 2px 6px; border-radius: 4px; float: right;">v15.85</span></h2>
         
         <fieldset style="border: 1px solid #cbd5e1; padding: 15px; margin-bottom: 15px; border-radius: 6px; background-color: #f8fafc;">
             <legend style="font-weight: bold; color: #0f172a; padding: 0 5px;">Datos del Registrador</legend>
@@ -307,7 +312,7 @@
     /* ==========================================
        VARIABLES GLOBALES Y CATÁLOGOS COMPLETOS
        ========================================== */
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyjKIXoNE6wV7hj77IMfeJF2-8gOPE68DDsJsEGBCeoqA7azHL4laZ48oIpWFLPY3mW0w/exec";
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzIkuxFpMJB7rZ-bf0hoWcYoJ3enrsCZjk8By7fRQSIXEpRbYVgFbtDtwLpqOT7Z9iL/exec";
     
     let personaId = 0; let vacunaId = 0;  
     let mapaInteractivo = null; let chincheta = null;
@@ -800,7 +805,10 @@
     function inicializarMapaDefecto() {
         if(mapaInteractivo) return;
         mapaInteractivo = L.map('mapa').setView([DEFAULT_LAT, DEFAULT_LON], 16);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(mapaInteractivo);
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+            maxZoom: 19,
+            attribution: '&copy; Esri'
+        }).addTo(mapaInteractivo);
         pintarRadarHistorial();
         chincheta = L.marker([DEFAULT_LAT, DEFAULT_LON], { draggable: true }).addTo(mapaInteractivo);
         actualizarCoordenadasPantalla(DEFAULT_LAT, DEFAULT_LON);
@@ -1368,6 +1376,10 @@
     async function cargarHistorialGpsRemoto() {
         if (!mapaInteractivo) return;
 
+        // 1. OBTENEMOS LA JURISDICCIÓN SELECCIONADA ACTUALMENTE EN EL MENÚ
+        const selectJurisdiccion = document.getElementById('jurisdiccion');
+        const jurisSeleccionada = selectJurisdiccion ? selectJurisdiccion.value.trim().toUpperCase() : "";
+
         try {
             const url = `${GOOGLE_SCRIPT_URL}?action=historial_gps`;
             const respuesta = await fetch(url, { method: 'GET', redirect: 'follow' });
@@ -1376,6 +1388,14 @@
             if (!puntos || puntos.length === 0) return;
 
             puntos.forEach(p => {
+                // 2. EL FILTRO: Si el punto tiene jurisdicción y no coincide con la elegida, lo ignoramos por completo
+                if (p.jurisdiccion) {
+                    const jurisPunto = p.jurisdiccion.toString().trim().toUpperCase();
+                    if (jurisSeleccionada !== "" && jurisPunto !== jurisSeleccionada) {
+                        return; // Salta al siguiente punto sin dibujarlo (ahorra muchísima memoria RAM)
+                    }
+                }
+
                 if(p.lat && p.lon) {
                     let esCasoIndice = (p.caso_indice === 'SI');
                     
@@ -1433,29 +1453,26 @@
                         }
                     }
 
-                    // ETIQUETA esHistoricoRemoto: true PARA EVITAR QUE SE BORRE
-                    L.marker([p.lat, p.lon], { icon: L.divIcon({ html: iconHtml, className: '', iconSize:[22,22], iconAnchor:[11,11] }) })
-                     .addTo(mapaInteractivo)
-                     .bindPopup(`<b style="color: ${esCasoIndice ? '#dc2626' : '#0f172a'}; font-size: 1.1em; border-bottom: 1px solid #cbd5e1; display:block; padding-bottom:3px; margin-bottom:5px;">${esCasoIndice ? '🚨 CASO ÍNDICE (HOY)' : 'Acción de la Jornada Actual'}</b>
-                                 <span style="color: #2563eb; font-weight: bold; font-size: 0.9em; display:block; margin-bottom:4px;">📅 Fecha: ${fechaCorta}</span>
-                                 <span style="color: #475569; font-size: 0.9em;"><b>Dirección:</b> ${p.calle || 'S/D'}, Col. ${p.colonia || 'S/D'}</span><br>
-                                 <span style="color: #334155; font-size: 0.9em; display:block; margin-top:4px;"><b>Tipo:</b> ${p.dom || 'N/D'}</span>
-                                 <span style="color: #475569; font-size: 0.85em; display:block; margin-top:4px;">👤 Registró: ${p.registrador_nombre || 'S/D'} (${p.registrador_institucion || '-'})</span>
-                                 <span style="color: #0f172a; font-size: 0.95em; font-weight: bold; background-color: ${esCasoIndice ? '#fee2e2' : '#f1f5f9'}; padding: 2px 4px; border-radius: 3px; display:inline-block; margin-top:4px;">Estatus: ${etiquetaEstatus}</span>`);
-                                 .addTo(mapaInteractivo)
-                                 .bindPopup(`<b style="color: ${esCasoIndice ? '#dc2626' : '#0f172a'}; font-size: 1.1em; border-bottom: 1px solid #cbd5e1; display:block; padding-bottom:3px; margin-bottom:5px;">${esCasoIndice ? '🚨 CASO ÍNDICE' : 'Acciones realizadas'}</b>
-                                             <span style="color: #2563eb; font-weight: bold; font-size: 0.9em; display:block; margin-bottom:4px;">📅 Fecha: ${fechaCorta}</span>
-                                             <span style="color: #475569; font-size: 0.9em;"><b>Dirección:</b> ${p.calle || 'S/D'}, Col. ${p.colonia || 'S/D'}</span><br>
-                                             <span style="color: #334155; font-size: 0.9em; display:block; margin-top:4px;"><b>Tipo:</b> ${p.domicilio || 'N/D'}</span>
-                                             <span style="color: #475569; font-size: 0.85em; display:block; margin-top:4px;">👤 Registró: ${p.registrador_nombre || 'N/D'} (${p.registrador_institucion || '-'})</span>
-                                             <span style="color: #0f172a; font-size: 0.95em; font-weight: bold; background-color: ${esCasoIndice ? '#fee2e2' : '#f1f5f9'}; padding: 2px 4px; border-radius: 3px; display:inline-block; margin-top:4px;">Estatus: ${etiquetaEstatus}</span>`);
-                            }
+                    // CORRECCIÓN DEL BUG: Usamos iconoHistoricoDinamico y quitamos el duplicado de popups
+                    L.marker([p.lat, p.lon], { 
+                        icon: iconoHistoricoDinamico,
+                        esHistoricoRemoto: true // Etiqueta para evitar que el radar local lo borre
+                    })
+                    .bindPopup(`<b style="color: ${esCasoIndice ? '#dc2626' : '#0f172a'}; font-size: 1.1em; border-bottom: 1px solid #cbd5e1; display:block; padding-bottom:3px; margin-bottom:5px;">${esCasoIndice ? '🚨 CASO ÍNDICE' : 'Acciones realizadas'}</b>
+                                <span style="color: #2563eb; font-weight: bold; font-size: 0.9em; display:block; margin-bottom:4px;">📅 Fecha: ${fechaCorta}</span>
+                                <span style="color: #475569; font-size: 0.9em;"><b>Dirección:</b> ${p.calle || 'S/D'}, Col. ${p.colonia || 'S/D'}</span><br>
+                                <span style="color: #334155; font-size: 0.9em; display:block; margin-top:4px;"><b>Tipo:</b> ${p.domicilio || 'N/D'}</span>
+                                <span style="color: #475569; font-size: 0.85em; display:block; margin-top:4px;">👤 Registró: ${p.registrador_nombre || 'N/D'} (${p.registrador_institucion || '-'})</span>
+                                <span style="color: #0f172a; font-size: 0.95em; font-weight: bold; background-color: ${esCasoIndice ? '#fee2e2' : '#f1f5f9'}; padding: 2px 4px; border-radius: 3px; display:inline-block; margin-top:4px;">Estatus: ${etiquetaEstatus}</span>`)
+                    .addTo(mapaInteractivo);
+                }
             });
 
         } catch (error) {
             console.error("Fallo de sincronización de la capa vectorial histórica:", error);
         }
     }
+
     /* ==========================================
        LÓGICA V15.6: CASCADAS IMSS Y BASE64
        ========================================== */
@@ -1523,6 +1540,92 @@
         };
         reader.onerror = (e) => reject(e);
     });
+
+    /* =======================================================
+   SISTEMA DE SANITIZACIÓN AUTOMÁTICA (MAYÚSCULAS Y SIN ACENTOS)
+    ======================================================= */
+    function limpiarTexto(texto) {
+        // Quita acentos (normalize NFD), caracteres diacríticos y convierte a mayúsculas
+        return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+    }
+
+    // Escuchamos cada vez que el usuario teclea en cualquier input de texto o textarea
+    document.addEventListener('input', function(e) {
+        // Validamos que sea un campo de texto (excluyendo fechas, números o emails si los hubiera)
+        if ((e.target.tagName === 'INPUT' && e.target.type === 'text') || e.target.tagName === 'TEXTAREA') {
+            
+            // Guardamos la posición del cursor para que no salte al final al escribir rápido
+            let inicioCursor = e.target.selectionStart;
+            let finCursor = e.target.selectionEnd;
+            
+            // Aplicamos la limpieza
+            e.target.value = limpiarTexto(e.target.value);
+            
+            // Restauramos el cursor a donde estaba
+            e.target.setSelectionRange(inicioCursor, finCursor);
+        }
+    });
+
+    /* =======================================================
+   GENERADOR EN TIEMPO REAL DEL IDENTIFICADOR (Bloqueado)
+    ======================================================= */
+    function autoGenerarIdentificadorLugarFijo() {
+        const getV = (id) => { 
+            const el = document.getElementById(id); 
+            return el ? el.value.toUpperCase().trim() : ""; 
+        };
+        
+        let fecha = getV('fecha_actividad');
+        let fecha_str = "00000000";
+        if(fecha && fecha.length === 10) {
+            let p = fecha.split('/'); // Asume DD/MM/YYYY
+            fecha_str = p[0] + p[1] + p[2];
+        }
+        
+        let tAct = getV('tipo_actividad');
+        let tipo = "OTRO";
+        if (tAct === "BARRIDO") tipo = "BARR";
+        else if (tAct === "BLOQUEO") tipo = "BLOQ";
+        else if (tAct === "MODULO_FIJO" || tAct === "MÓDULO FIJO") tipo = "MF";
+        else if (tAct === "CAMPAÑA") tipo = "CAMP";
+        
+        let inst = getV('registrador_institucion') || "ND";
+        let juris = getV('jurisdiccion') || "ND";
+        
+        let ageb = getV('ageb');
+        if (ageb === "OTRO" || ageb === "") {
+            ageb = getV('otro_ageb_texto');
+            if(!ageb) ageb = getV('colonia') || "ND";
+        }
+        
+        // Armado final y limpieza de espacios dobles
+        let idGenerado = `${fecha_str}-${tipo}-${inst}-${juris}-${ageb}`;
+        idGenerado = idGenerado.replace(/\s+/g, ' '); 
+
+        // Buscar los inputs donde se muestra al usuario y bloquearlos
+        let inps = [document.getElementById('lugar_fijo'), document.getElementById('identificador_barrido')];
+        
+        inps.forEach(inp => {
+            if(inp) {
+                inp.value = idGenerado;
+                inp.readOnly = true; 
+                inp.style.backgroundColor = '#e2e8f0'; // Fondo grisáceo
+                inp.style.color = '#475569';
+                inp.style.cursor = 'not-allowed';
+                inp.style.fontWeight = 'bold';
+            }
+        });
+    }
+
+    // Escuchar cambios en los campos que componen el ID para actualizarlo en vivo
+    ['fecha_actividad', 'tipo_actividad', 'registrador_institucion', 'jurisdiccion', 'ageb', 'otro_ageb_texto', 'colonia'].forEach(id => {
+        let el = document.getElementById(id);
+        if(el) {
+            el.addEventListener('change', autoGenerarIdentificadorLugarFijo);
+            el.addEventListener('input', autoGenerarIdentificadorLugarFijo);
+        }
+    });
+
 </script>
 </body>
 </html>
