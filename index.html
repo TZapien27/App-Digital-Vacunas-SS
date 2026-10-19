@@ -329,6 +329,7 @@
         </div>
     </div>
 
+    <input type="hidden" id="id_registro_oculto" value="">
     <!-- BOTONES DE ACCIÓN -->
     <button type="button" class="btn btn-guardar" onclick="empaquetarYGuardar()">
         💾 GUARDAR REGISTRO
@@ -1068,6 +1069,16 @@
             agregarVacunaAPersona(pId); 
             if (paciente.tipo_vacunacion) llenarUnSelect(`select_vacuna_${vacunaId}`, paciente.tipo_vacunacion);
         }
+    }
+
+    // Guardamos el ID en secreto y cambiamos el botón a Modo Edición
+    document.getElementById('id_registro_oculto').value = paciente.id_registro || '';
+    
+    // Cambia el ID 'btn_guardar' por el nombre real de tu botón de guardar si es distinto
+    const btnGuardar = document.getElementById('btn_guardar'); 
+    if (btnGuardar) {
+        btnGuardar.innerHTML = '💾 ACTUALIZAR REGISTRO';
+        btnGuardar.style.backgroundColor = '#16a34a'; // Lo pintamos de verde para que note el cambio
     }
 
     alert("✅ DATOS RECUPERADOS\n\nEl expediente completo del paciente y su domicilio se han cargado desde la base de datos.");
