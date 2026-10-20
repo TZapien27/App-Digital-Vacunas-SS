@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Censo Vacunación CENSIA - V15.3</title>
+    <title>MiVacuna Digital Coahuila - V15.85</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0056b3">
@@ -37,7 +37,17 @@
         .btn-guardar { background-color: #4f46e5; color: white; padding: 15px; font-size: 1.1rem; margin-top: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .btn-sincronizar { background-color: #f59e0b; color: white; padding: 15px; font-size: 1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 10px; }
         
-        #mapa { height: 250px; width: 100%; border-radius: 5px; border: 1px solid #cbd5e1; position: relative; overflow: hidden; z-index: 1; margin-bottom:10px; }
+        #mapa   { 
+                   height: 280px !important; 
+                   width: 100% !important; 
+                   border-radius: 5px; 
+                   border: 1px solid #cbd5e1; 
+                   position: relative; 
+                   overflow: hidden; 
+                   z-index: 1; 
+                   margin-bottom: 10px; 
+                   display: block !important;
+                }
         .btn-eliminar { position: absolute; top: 10px; right: 10px; background: #ef4444; color: white; border: none; border-radius: 3px; padding: 5px 10px; font-size: 0.8rem; cursor: pointer; }
         
         .bloque-vacuna { background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px; border-radius: 5px; margin-bottom: 8px; position: relative;}
@@ -62,9 +72,57 @@
 </head>
 <body>
 
-<div class="contenedor" id="formulario_maestro">
-    <div class="tarjeta">
-<h2>1. Datos Generales de la Jornada <span style="color: #ef4444; font-size: 0.8rem; background: #fee2e2; padding: 2px 6px; border-radius: 4px; float: right;">v15.3</span></h2>        <div class="form-group"><label>Fecha de la Actividad *</label><input type="text" inputmode="numeric" autocomplete="off" id="fecha_actividad" class="guardar-cache" placeholder="DD/MM/AAAA" maxlength="10" oninput="aplicarMascaraFecha(event)" required></div>
+    <!-- ENCABEZADO CON LOGOS INSTITUCIONALES -->
+    <header class="header-app" style="background-color: white; padding: 10px; border-bottom: 2px solid #e2e8f0;">
+        <!-- Contenedor de logos institucionales -->
+        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 800px; margin: 0 auto; margin-bottom: 10px;">
+            <img src="img/logo-ss-fed.jpg" alt="Salud Federal" style="height: 40px; width: auto;">
+            <img src="img/logo-ss-coahuila.jpg" alt="Salud Coahuila" style="height: 40px; width: auto;">
+            <img src="img/logo-coahuila.jpg" alt="Gobierno Coahuila" style="height: 40px; width: auto;">
+            <img src="img/logo-snsp.jpg" alt="SNSP" style="height: 40px; width: auto;">
+        </div>
+        
+        <!-- Logo principal de la aplicación centrado -->
+        <div style="text-align: center;">
+            <img src="img/logo MVDC.jpeg" alt="MiVacuna Digital Coahuila" style="height: 60px; width: auto;">
+        </div>
+    </header>
+
+    <div class="contenedor" id="formulario_maestro">
+    <!-- MÓDULO DE BÚSQUEDA DE PACIENTES -->
+    <div class="tarjeta" id="bloque_buscador" style="background-color: #f8fafc; border-left: 4px solid #3b82f6;">
+        <h2 style="color: #1e293b; margin-top: 0; font-size: 1.2em;">🔍 Búsqueda Rápida de Pacientes</h2>
+        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+            <input type="text" id="input_busqueda" placeholder="Buscar por Apellido, CURP o Calle..." style="flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 5px; font-family: inherit;">
+            <button type="button" class="btn" onclick="ejecutarBusqueda()" style="width: auto; margin: 0; background-color: #3b82f6; padding: 10px 20px;">Buscar</button>
+        </div>
+        <div id="resultados_busqueda" style="font-size: 0.9em; color: #475569;"></div>
+    </div>
+    
+    <!-- 1. DATOS GENERALES DE LA JORNADA -->
+    <div class="tarjeta" id="bloque_datos_generales">
+        <h2>1. Datos Generales de la Jornada <span style="color: #ef4444; font-size: 0.8rem; background: #fee2e2; padding: 2px 6px; border-radius: 4px; float: right;">v15.85</span></h2>
+        
+        <fieldset style="border: 1px solid #cbd5e1; padding: 15px; margin-bottom: 15px; border-radius: 6px; background-color: #f8fafc;">
+            <legend style="font-weight: bold; color: #0f172a; padding: 0 5px;">Datos del Registrador</legend>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                <div class="form-group">
+                    <label>Nombre de quien registra *</label>
+                    <input type="text" id="registrador_nombre" class="guardar-cache" required placeholder="Nombre completo del registrador">
+                </div>
+                <div class="form-group">
+                    <label>Institución a la que pertenece *</label>
+                    <select id="registrador_institucion" class="guardar-cache" onchange="evaluarCascadaGlobal()" required>
+                        <option value="">-- Seleccione --</option>
+                        <option value="IMSS">IMSS / IMSS Bienestar</option>
+                        <option value="SSA">Secretaría de Salud (SSA)</option>
+                        <option value="OTRA">Otra Institución</option>
+                    </select>
+                </div>
+            </div>
+        </fieldset>
+
+        <div class="form-group"><label>Fecha de la Actividad *</label><input type="text" inputmode="numeric" autocomplete="off" id="fecha_actividad" class="guardar-cache" placeholder="DD/MM/AAAA" maxlength="10" oninput="aplicarMascaraFecha(event)" required></div>
         
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
             <div class="form-group"><label>Vacunador 1 *</label><input type="text" id="nombre_vacunador" class="guardar-cache" required></div>
@@ -90,8 +148,20 @@
                 <option value="modulo_fijo">Módulo fijo</option>
             </select>
         </div>
+
+        <!-- CAMPOS REUBICADOS ENSEGUIDA DEL TIPO DE ACTIVIDAD -->
+        <div class="form-group oculto" id="grupo_ref_modulo_fijo">
+            <label>Referencia del Módulo Fijo (si aplica)</label>
+            <input type="text" id="lugar_fijo" class="guardar-cache" placeholder="Ej. Centro de Salud Madero">
+        </div>
+
+        <div class="form-group oculto" id="grupo_identificador_barrido">
+            <label>Identificador del Barrido (Opcional)</label>
+            <input type="text" id="identificador_barrido" class="guardar-cache" placeholder="Ej. BARRIDO-ZONA-04">
+        </div>
     </div>
 
+    <!-- GESTIÓN DE BLOQUEO VACUNAL -->
     <div class="tarjeta tarjeta-bloqueo oculto" id="seccion_bloqueo">
         <h2>🚨 Gestión de Bloqueo Vacunal</h2>
         
@@ -123,12 +193,13 @@
             <input type="text" id="bloqueo_tipo_otro" class="oculto" placeholder="Especifique el tipo de bloqueo" style="margin-bottom:12px;">
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <div class="form-group"><label>Fecha Notificación *</label><input type="text" inputmode="numeric" autocomplete="off" autocomplete="off" id="bloqueo_fecha_notificacion" placeholder="DD/MM/AAAA" maxlength="10" oninput="aplicarMascaraFecha(event)"></div>
+                <div class="form-group"><label>Fecha Notificación *</label><input type="text" inputmode="numeric" autocomplete="off" id="bloqueo_fecha_notificacion" placeholder="DD/MM/AAAA" maxlength="10" oninput="aplicarMascaraFecha(event)"></div>
                 <div class="form-group"><label>Fecha Inicio Act. *</label><input type="text" inputmode="numeric" id="bloqueo_fecha_inicio" placeholder="DD/MM/AAAA" maxlength="10" oninput="aplicarMascaraFecha(event)"></div>
             </div>
         </div>
     </div>
 
+    <!-- 2. DOMICILIO PARTICULAR -->
     <div class="tarjeta oculto" id="bloque_domicilio">
         <h2>2. Domicilio particular de la(s) persona(s)</h2>
         
@@ -186,13 +257,14 @@
                 <option value="Probable">Caso probable (Caso*)</option>
             </select>
         </div>
+        
+        <div class="form-group" id="grupo_observaciones_domicilio">
+            <label>Observaciones de la Brigada (Opcional)</label>
+            <textarea id="observaciones_domicilio" class="guardar-cache" rows="2" placeholder="Detalles operativos o de las personas, condiciones del domicilio..." style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 5px; font-family: inherit; resize: vertical; box-sizing: border-box;"></textarea>
+        </div>
     </div>
 
-    <div id="bloque_censo" class="oculto">
-        <div id="contenedor_personas"></div>
-        <button type="button" class="btn btn-add" onclick="agregarPersona()">➕ Añadir Nueva Persona</button>
-    </div>
-
+    <!-- 3. MAPA (Georreferenciación) -->
     <div class="tarjeta tarjeta-mapa oculto" id="bloque_mapa">
         <h2>📍 Ubicación Geográfica</h2>
         <div class="form-group">
@@ -203,6 +275,13 @@
         </div>
     </div>
 
+    <!-- 4. CENSO DE PERSONAS -->
+    <div id="bloque_censo" class="oculto">
+        <div id="contenedor_personas"></div>
+        <button type="button" class="btn btn-add" onclick="agregarPersona()">➕ Añadir Nueva Persona</button>
+    </div>
+
+    <!-- NODO DE CIERRE DE BLOQUEO -->
     <div class="tarjeta tarjeta-bloqueo oculto" id="nodo_cierre_bloqueo">
         <h2>🛑 Cierre del Brote / Bloqueo</h2>
         <div class="form-group">
@@ -220,6 +299,7 @@
         </div>
     </div>
 
+    <!-- BOTONES DE ACCIÓN -->
     <button type="button" class="btn btn-guardar" onclick="empaquetarYGuardar()">
         💾 GUARDAR REGISTRO
     </button>
@@ -232,7 +312,7 @@
     /* ==========================================
        VARIABLES GLOBALES Y CATÁLOGOS COMPLETOS
        ========================================== */
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxr_gvP13QK8mH-buUBgbtFaYre-3u6DImJwgfs7-O_nIuiOnRUVDOQvqxvZv-LYRDC/exec";
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzIkuxFpMJB7rZ-bf0hoWcYoJ3enrsCZjk8By7fRQSIXEpRbYVgFbtDtwLpqOT7Z9iL/exec";
     
     let personaId = 0; let vacunaId = 0;  
     let mapaInteractivo = null; let chincheta = null;
@@ -241,6 +321,7 @@
 
     const vacunasPorTipo = {
         "Infante. (0 a 9 años)": ["BCG", "Anti Hepatitis B", "Hexavalente acelular (DPat-VIP-HB-Hib) 1 dósis", "Hexavalente acelular (DPat-VIP-HB-Hib) 2 dósis", "Hexavalente acelular (DPat-VIP-HB-Hib) 3 dósis", "Hexavalente acelular (DPat-VIP-HB-Hib) refuerzo dosis", "DPT", "Anti Rotavirus 1a", "Anti Rotavirus 2a", "Anti Neumococica conjugada (13 serotipos) 1a", "Anti Neumococica conjugada (13 serotipos) 2a", "Anti Neumococica conjugada (13 serotipos) 3a", "Anti Influenza 1a", "Anti Influenza 2a", "Anti Influenza refuerzo", "SRP 0", "SRP 1a", "SRP 2ª", "Otra vacuna"],
+        "Infante. (0 a 9 años)": ["BCG", "Anti Hepatitis B", "Hexavalente acelular (DPat-VIP-HB-Hib) 1 dósis", "Hexavalente acelular (DPat-VIP-HB-Hib) 2 dósis", "Hexavalente acelular (DPat-VIP-HB-Hib) 3 dósis", "Hexavalente acelular (DPat-VIP-HB-Hib) refuerzo dosis", "DPT", "Anti Rotavirus 1a", "Anti Rotavirus 2a", "Anti Neumococica conjugada (13 serotipos) 1a", "Anti Neumococica conjugada (13 serotipos) 2a", "Anti Neumococica conjugada (13 serotipos) 3a", "Anti Influenza 1a", "Anti Influenza 2a", "Anti Influenza refuerzo", "SRP 0", "SRP 1a", "SRP 2ª", "VPH Virus del Papiloma Humano", "Otra vacuna"],
         "Adolescente. (10 a 19 años)": ["Anti Hepatitis B 1a", "Anti Hepatitis B 2a", "TD 1a", "TD 2a", "TD 3a", "TD refuerzo", "TDPA 1a", "Influenza", "SR 1a", "SR 2a", "SR refuerzo", "VPH (niñas y niños de 5o de primaria y de 11 años no escolarizados)", "Varicela", "Anti Hepatitis A", "COVID-19", "Anti Neumococica conjugada (refuerzo)", "Neumo 23", "Otra vacuna"],
         "Adulto. (20 a 59 años)": ["Anti Hepatitis B 1a", "Anti Hepatitis B 2a", "TD 1a", "TD 2a", "TD 3a", "TD refuerzo", "TDPA 1a", "Influenza", "SR 1a", "SR 2a", "SR refuerzo", "Varicela", "Anti Hepatitis A", "COVID-19", "Anti Neumococica conjugada (refuerzo)", "Neumo 23", "Otra vacuna"],
         "Adulto Mayor. (60 y más años)": ["Anti Hepatitis B 1a", "Anti Hepatitis B 2a", "TD 1a", "TD 2a", "TD 3a", "TD refuerzo", "TDPA 1a", "Influenza", "SR 1a", "SR 2a", "SR refuerzo", "Varicela", "Anti Hepatitis A", "COVID-19", "Anti Neumococica conjugada (refuerzo)", "Neumo 23", "Otra vacuna"]
@@ -252,8 +333,10 @@
         document.querySelectorAll('.guardar-cache').forEach(el => { el.addEventListener('change', (e) => localStorage.setItem(`censia_${e.target.id}`, e.target.value)); });
         cargarCacheLocal();
         inicializarMapaDefecto();
-        evaluarFlujoLogico(); 
-        
+        setTimeout(() => {
+            evaluarFlujoLogico();
+        }, 100);
+            
         actualizarBotonSincronizacion();
         window.addEventListener('online', sincronizarPendientes);
     };
@@ -386,88 +469,141 @@
     function evaluarFlujoLogico() {
         const scrollY = window.scrollY;
 
-        const listaPendientes = JSON.parse(localStorage.getItem('censia_bloqueos_pendientes') || '[]');
-        const selectEstado = document.getElementById('estado_bloqueo');
-        if (selectEstado) {
-            const optPendiente = selectEstado.querySelector('option[value="pendiente"]');
-            if (listaPendientes.length === 0) {
-                if(optPendiente) optPendiente.disabled = true;
-                if(selectEstado.value === 'pendiente') selectEstado.value = '';
-            } else {
-                if(optPendiente) optPendiente.disabled = false;
-            }
+        // 1. Obtención de valores principales
+        const tActEl = document.getElementById('tipo_actividad');
+        const domEl = document.getElementById('domicilio_visitado');
+        const sDomEl = document.getElementById('situacion_domicilio');
+        const sNegEl = document.getElementById('situacion_negocio');
+
+        const tAct = tActEl ? tActEl.value : "";
+        const dom = domEl ? domEl.value : "";
+        const sDom = sDomEl ? sDomEl.value : "";
+        const sNeg = sNegEl ? sNegEl.value : "";
+
+        // 2. Ocultar todos los bloques dependientes por defecto
+        const ids = [
+            'bloque_domicilio', 'bloque_censo', 'bloque_mapa', 
+            'seccion_bloqueo', 'metadatos_bloqueo', 'selector_bloqueos_pendientes', 
+            'grupo_pregunta_estado_bloqueo', 'grupo_lugar_fijo', 'grupo_domicilio_visitado', 
+            'grupo_situacion_domicilio', 'grupo_situacion_negocio', 'grupo_caso_domicilio', 
+            'nodo_cierre_bloqueo', 'campos_cierre_final', 'grupo_ref_modulo_fijo', 
+            'grupo_identificador_barrido'
+        ];
+        ids.forEach(id => { 
+            const el = document.getElementById(id); 
+            if (el) el.classList.add('oculto'); 
+        });
+
+        // Si no hay tipo de actividad seleccionado, detenemos aquí sin romper nada
+        if (!tAct) { 
+            window.scrollTo({ top: scrollY, behavior: 'instant' }); 
+            return; 
         }
 
-        const tAct = document.getElementById('tipo_actividad').value; 
-        const dom = document.getElementById('domicilio_visitado').value;
-        const sDom = document.getElementById('situacion_domicilio').value; 
-        const sNeg = document.getElementById('situacion_negocio').value;
-
-        const ids = ['bloque_domicilio', 'bloque_censo', 'bloque_mapa', 'seccion_bloqueo', 'metadatos_bloqueo', 'selector_bloqueos_pendientes', 'grupo_pregunta_estado_bloqueo', 'grupo_lugar_fijo', 'grupo_domicilio_visitado', 'grupo_situacion_domicilio', 'grupo_situacion_negocio', 'grupo_caso_domicilio', 'nodo_cierre_bloqueo', 'campos_cierre_final'];
-        ids.forEach(id => { const el = document.getElementById(id); if (el) el.classList.add('oculto'); });
-        
-        const maestro = document.getElementById('formulario_maestro');
-        const bCenso = document.getElementById('bloque_censo');
-        const bDom = document.getElementById('bloque_domicilio');
-        const bMapa = document.getElementById('bloque_mapa');
-        const bCierre = document.getElementById('nodo_cierre_bloqueo');
-
+        // 3. Despliegue condicional por tipo de actividad
         if (tAct === 'modulo_fijo') {
-            maestro.insertBefore(bCenso, bDom); maestro.insertBefore(bMapa, bCierre); 
-        } else {
-            maestro.insertBefore(bDom, bCenso); maestro.insertBefore(bMapa, bCenso); 
-        }
+            const elRef = document.getElementById('grupo_ref_modulo_fijo');
+            if (elRef) elRef.classList.remove('oculto');
 
-        if (!tAct) { window.scrollTo({ top: scrollY, behavior: 'instant' }); return; }
+            const bDom = document.getElementById('bloque_domicilio');
+            const bCenso = document.getElementById('bloque_censo');
+            const bMapa = document.getElementById('bloque_mapa');
 
-        if (tAct === 'modulo_fijo') {
-            document.getElementById('bloque_domicilio').classList.remove('oculto'); 
-            document.getElementById('bloque_censo').classList.remove('oculto'); 
-            document.getElementById('bloque_mapa').classList.remove('oculto'); 
-            if (document.querySelectorAll('.tarjeta-persona').length === 0) agregarPersona();
-            setTimeout(() => { if(mapaInteractivo) mapaInteractivo.invalidateSize(); }, 300);
-            window.scrollTo({ top: scrollY, behavior: 'instant' });
-            return;
-        }
+            if (bDom) bDom.classList.remove('oculto');
+            if (bCenso) bCenso.classList.remove('oculto');
+            if (bMapa) bMapa.classList.remove('oculto');
 
-        if (tAct === 'bloqueo') {
-            document.getElementById('seccion_bloqueo').classList.remove('oculto');
-            if (listaPendientes.length === 0 && document.getElementById('estado_bloqueo').value === "") {
-                document.getElementById('estado_bloqueo').value = 'nuevo';
-                gestionarEstadoBloqueo(); 
-            } else if (listaPendientes.length > 0 && document.getElementById('id_bloqueo').value === "") {
-                document.getElementById('grupo_pregunta_estado_bloqueo').classList.remove('oculto');
-            } else if (document.getElementById('id_bloqueo').value !== "") {
-                document.getElementById('metadatos_bloqueo').classList.remove('oculto');
+            if (document.querySelectorAll('.tarjeta-persona').length === 0 && typeof agregarPersona === 'function') {
+                agregarPersona();
             }
-        }
+        } 
+        else if (tAct === 'barrido' || tAct === 'bloqueo') {
+            const bDom = document.getElementById('bloque_domicilio');
+            const gLugarFijo = document.getElementById('grupo_lugar_fijo');
+            const gDomVis = document.getElementById('grupo_domicilio_visitado');
+            const bMapa = document.getElementById('bloque_mapa');
 
-        if (tAct === 'barrido' || tAct === 'bloqueo') {
-            document.getElementById('bloque_domicilio').classList.remove('oculto');
-            document.getElementById('grupo_lugar_fijo').classList.remove('oculto');
-            document.getElementById('grupo_domicilio_visitado').classList.remove('oculto');
-            document.getElementById('bloque_mapa').classList.remove('oculto');
-            setTimeout(() => { if(mapaInteractivo) mapaInteractivo.invalidateSize(); }, 300); 
-            
+            if (bDom) bDom.classList.remove('oculto');
+            if (gLugarFijo) gLugarFijo.classList.remove('oculto');
+            if (gDomVis) gDomVis.classList.remove('oculto');
+            if (bMapa) bMapa.classList.remove('oculto');
+
+            if (tAct === 'barrido') {
+                const elIdBarrido = document.getElementById('grupo_identificador_barrido');
+                if (elIdBarrido) elIdBarrido.classList.remove('oculto');
+            }
+
+            if (tAct === 'bloqueo') {
+                const secBloqueo = document.getElementById('seccion_bloqueo');
+                if (secBloqueo) secBloqueo.classList.remove('oculto');
+                
+                const selectEstado = document.getElementById('estado_bloqueo');
+                if (selectEstado && selectEstado.value === "") {
+                    selectEstado.value = 'nuevo';
+                    if (typeof gestionarEstadoBloqueo === 'function') gestionarEstadoBloqueo();
+                }
+
+                const gCasoDom = document.getElementById('grupo_caso_domicilio');
+                if (dom === 'casa' && gCasoDom) gCasoDom.classList.remove('oculto');
+            }
+
+            // Evaluación de sub-niveles de domicilio
             if (dom === 'casa') {
-                document.getElementById('grupo_situacion_domicilio').classList.remove('oculto');
-                if (tAct === 'bloqueo') document.getElementById('grupo_caso_domicilio').classList.remove('oculto');
+                const gSitDom = document.getElementById('grupo_situacion_domicilio');
+                if (gSitDom) gSitDom.classList.remove('oculto');
             } else if (dom === 'negocio') {
-                document.getElementById('grupo_situacion_negocio').classList.remove('oculto');
+                const gSitNeg = document.getElementById('grupo_situacion_negocio');
+                if (gSitNeg) gSitNeg.classList.remove('oculto');
             }
         }
 
-        let censo = (sDom === 'CN' || sDom === 'SN_REG' || sNeg === 'N_CON');
-        if (censo) {
-            document.getElementById('bloque_censo').classList.remove('oculto');
-            if (document.querySelectorAll('.tarjeta-persona').length === 0) agregarPersona();
+        // 4. Validación de apertura del censo de personas
+        let censoHabilitado = (sDom === 'CN' || sDom === 'SN_REG' || sNeg === 'N_CON' || tAct === 'modulo_fijo');
+        const bCenso = document.getElementById('bloque_censo');
+        
+        if (censoHabilitado) {
+            if (bCenso) bCenso.classList.remove('oculto');
+            if (document.querySelectorAll('.tarjeta-persona').length === 0 && typeof agregarPersona === 'function') {
+                agregarPersona();
+            }
         } else {
-            document.getElementById('bloque_censo').classList.add('oculto');
-            document.getElementById('contenedor_personas').innerHTML = ''; personaId = 0;
+            if (bCenso) bCenso.classList.add('oculto');
+            const contPer = document.getElementById('contenedor_personas');
+            if (contPer) contPer.innerHTML = '';
+            if (typeof personaId !== 'undefined') personaId = 0;
         }
 
-        if (tAct === 'bloqueo' && dom !== "") document.getElementById('nodo_cierre_bloqueo').classList.remove('oculto');
-        
+        // 5. Nodo de cierre para bloqueos
+        if (tAct === 'bloqueo' && dom !== "") {
+            const bCierre = document.getElementById('nodo_cierre_bloqueo');
+            if (bCierre) bCierre.classList.remove('oculto');
+        }
+
+        // 6. Restricción de Caso Índice exclusivamente para Bloqueos
+        const esBloqueoActivo = (tAct === 'bloqueo');
+        document.querySelectorAll('.tarjeta-persona').forEach(t => {
+            const pId = t.id.split('_').pop();
+            const divCaso = document.getElementById(`contenedor_caso_indice_${pId}`);
+            if (divCaso) {
+                if (esBloqueoActivo) {
+                    divCaso.classList.remove('oculto');
+                } else {
+                    divCaso.classList.add('oculto');
+                    const chk = document.getElementById(`caso_indice_${pId}`);
+                    if (chk) chk.checked = false;
+                }
+            }
+        });
+
+        // 7. Refresco seguro del mapa si está visible
+        setTimeout(() => {
+            if (typeof mapaInteractivo !== 'undefined' && mapaInteractivo !== null) {
+                mapaInteractivo.invalidateSize();
+            } else if (typeof inicializarMapaDefecto === 'function') {
+                inicializarMapaDefecto();
+            }
+        }, 200);
+
         window.scrollTo({ top: scrollY, behavior: 'instant' });
     }
 
@@ -487,6 +623,13 @@
         const html = `
             <div class="tarjeta tarjeta-persona" id="tarjeta_persona_${pId}">
                 <h2>👤 Persona ${pId}</h2><button type="button" class="btn-eliminar" onclick="eliminarPersona(${pId})">X</button>
+                
+                <!-- CASO ÍNDICE EXCLUSIVO PARA BLOQUEOS -->
+                <div class="form-group oculto" id="contenedor_caso_indice_${pId}" style="background: #fee2e2; padding: 8px; border-radius: 4px; margin-bottom: 10px;">
+                    <input type="checkbox" id="caso_indice_${pId}" value="SI">
+                    <label for="caso_indice_${pId}" style="color: #b91c1c; font-weight: bold; margin-left: 5px; display:inline-block;">Marcar como Caso Índice 🚨</label>
+                </div>
+
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                     <div class="form-group"><label>Primer Apellido *</label><input type="text" id="paterno_${pId}" oninput="calcularCurpSugerida(${pId})"></div>
                     <div class="form-group"><label>Segundo Apellido</label><input type="text" id="materno_${pId}" oninput="calcularCurpSugerida(${pId})"></div>
@@ -527,16 +670,36 @@
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                     <div class="form-group">
                         <label>Derechohabiencia *</label>
-                        <select id="derecho_${pId}" onchange="if(this.value==='OTRA'){document.getElementById('derecho_otra_${pId}').classList.remove('oculto')}else{document.getElementById('derecho_otra_${pId}').classList.add('oculto')}">
-                            <option value="">-- Seleccione --</option><option value="IMSS Ordinario">IMSS Ordinario</option><option value="ISSSTE">ISSSTE</option>
+                        <select id="derecho_${pId}" onchange="if(this.value==='OTRA'){document.getElementById('derecho_otra_${pId}').classList.remove('oculto')}else{document.getElementById('derecho_otra_${pId}').classList.add('oculto')}; evaluarCascadaIMSS(${pId});">
+                            <option value="">-- Seleccione --</option><option value="IMSS Ordinario">IMSS Ordinario</option><option value="IMSS Bienestar">IMSS Bienestar</option><option value="ISSSTE">ISSSTE</option>
                             <option value="SSA">SSA</option><option value="Magisterio">Magisterio</option><option value="OTRA">Otra</option><option value="NINGUNA">Ninguna</option>
                         </select>
                         <input type="text" id="derecho_otra_${pId}" class="oculto" placeholder="Especifique dependencia" style="margin-top:5px;">
                     </div>
                     <div class="form-group"><label>Estatus migratorio</label><select id="migra_${pId}"><option value="REGULAR" selected>Regular</option><option value="IRREGULAR">Irregular</option></select></div>
                 </div>
+
+                <!-- INYECCIÓN: BLOQUE IMSS CONDICIONAL (REQ 4) -->
+                <div id="bloque_clinico_imss_${pId}" style="display: none; background: #f0fdf4; padding: 10px; border: 1px dashed #22c55e; margin-bottom: 10px;">
+                    <div class="form-group">
+                        <label id="label_nss_${pId}">NSS + Agregado Médico</label>
+                        <input type="text" id="nss_afiliacion_${pId}">
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 5px;">
+                        <div class="form-group"><label>Peso (Kg)</label><input type="number" step="0.1" id="peso_kg_${pId}"></div>
+                        <div class="form-group"><label>Talla (cm)</label><input type="number" step="0.1" id="talla_cm_${pId}"></div>
+                    </div>
+                </div>
+
                 <div class="form-group"><label>Esquema de Vacunación Aplicado</label><div id="contenedor_vacunas_p${pId}"></div><button type="button" class="btn btn-add-vacuna" onclick="agregarVacunaAPersona(${pId})">💉 Añadir vacuna</button></div>
-            </div>`;
+                
+                <!-- FUNCIÓN DESHABILITADA TEMPORALMENTE: FOTO CARTILLA (REQ 7) -->
+                <div class="form-group oculto" style="display: none; margin-top: 15px; border-top: 1px solid #cbd5e1; padding-top: 10px;">
+                    <label>📷 Fotografía de Cartilla Nacional (Opcional)</label>
+                    <input type="file" id="foto_cartilla_${pId}" accept="image/*" capture="environment" style="background-color: #f8fafc; padding: 8px;" disabled>
+                </div>
+                </div>`;
+
         document.getElementById('contenedor_personas').insertAdjacentHTML('beforeend', html);
         
         const selNac = document.getElementById(`estado_nac_${pId}`);
@@ -544,6 +707,7 @@
         tomSelectInstances[`estado_nac_${pId}`] = new TomSelect(selNac, { create: false }); 
 
         agregarVacunaAPersona(pId);
+        evaluarCascadaIMSS(pId); // Forzar validación inicial
     }
 
     function eliminarPersona(pId) { 
@@ -641,12 +805,21 @@
     function inicializarMapaDefecto() {
         if(mapaInteractivo) return;
         mapaInteractivo = L.map('mapa').setView([DEFAULT_LAT, DEFAULT_LON], 16);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(mapaInteractivo);
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+            maxZoom: 19,
+            attribution: '&copy; Esri'
+        }).addTo(mapaInteractivo);
         pintarRadarHistorial();
         chincheta = L.marker([DEFAULT_LAT, DEFAULT_LON], { draggable: true }).addTo(mapaInteractivo);
         actualizarCoordenadasPantalla(DEFAULT_LAT, DEFAULT_LON);
         chincheta.on('dragend', e => actualizarCoordenadasPantalla(e.target.getLatLng().lat, e.target.getLatLng().lng));
         mapaInteractivo.on('click', e => { chincheta.setLatLng(e.latlng); actualizarCoordenadasPantalla(e.latlng.lat, e.latlng.lng); });
+        cargarHistorialGpsRemoto();
+        
+        // CORRECCIÓN MAPA BLANCO: Forzar recálculo de dimensiones
+        setTimeout(() => {
+            if(mapaInteractivo) mapaInteractivo.invalidateSize();
+        }, 500);
     }
 
     function pintarRadarHistorial() {
@@ -654,7 +827,10 @@
         const etiquetasDom = { 'casa': 'Casa', 'deshabitada': 'Casa deshabitada', 'lote_baldio': 'Lote baldío', 'negocio': 'Negocio', 'MF': 'Módulo Fijo' };
         
         mapaInteractivo.eachLayer(function (layer) {
-            if (layer instanceof L.Marker && layer !== chincheta) { mapaInteractivo.removeLayer(layer); }
+            // BLINDAJE: Evita borrar los puntos remotos transparentes (esHistoricoRemoto)
+            if (layer instanceof L.Marker && layer !== chincheta && !layer.options.esHistoricoRemoto) { 
+                mapaInteractivo.removeLayer(layer); 
+            }
         });
 
         hist.forEach(p => {
@@ -679,37 +855,54 @@
         if (!navigator.geolocation) return alert("❌ GPS no soportado en tu dispositivo.");
         
         const btn = document.querySelector('.btn-gps');
-        const txtOrig = btn.innerHTML;
-        btn.innerHTML = "⏳ Buscando satélites GPS... (sal a cielo abierto)";
-        btn.disabled = true;
-        btn.style.backgroundColor = "#64748b";
+        const txtOrig = btn ? btn.innerHTML : "";
+        if (btn) {
+            btn.innerHTML = "⏳ Buscando satélites GPS... (sal a cielo abierto)";
+            btn.disabled = true;
+            btn.style.backgroundColor = "#64748b";
+        }
 
         const opcionesGPS = { 
             enableHighAccuracy: true, 
             timeout: 15000, 
-            maximumAge: 10000 
+            maximumAge: 0 
         };
 
         navigator.geolocation.getCurrentPosition(pos => {
-            btn.innerHTML = txtOrig;
-            btn.disabled = false;
-            btn.style.backgroundColor = "#0ea5e9";
+            if (btn) {
+                btn.innerHTML = txtOrig;
+                btn.disabled = false;
+                btn.style.backgroundColor = "#0ea5e9";
+            }
             
-            mapaInteractivo.setView([pos.coords.latitude, pos.coords.longitude], 17);
-            chincheta.setLatLng([pos.coords.latitude, pos.coords.longitude]);
-            actualizarCoordenadasPantalla(pos.coords.latitude, pos.coords.longitude);
+            const lat = pos.coords.latitude;
+            const lon = pos.coords.longitude;
+
+            if (mapaInteractivo) {
+                mapaInteractivo.setView([lat, lon], 17);
+                if (chincheta) {
+                    chincheta.setLatLng([lat, lon]);
+                }
+                setTimeout(() => {
+                    mapaInteractivo.invalidateSize();
+                }, 200);
+            }
+            
+            actualizarCoordenadasPantalla(lat, lon);
             alert("📍 Coordenadas detectadas correctamente.");
         }, err => {
-            btn.innerHTML = txtOrig;
-            btn.disabled = false;
-            btn.style.backgroundColor = "#0ea5e9";
+            if (btn) {
+                btn.innerHTML = txtOrig;
+                btn.disabled = false;
+                btn.style.backgroundColor = "#0ea5e9";
+            }
             
             let msg = "⚠️ Error al detectar GPS.\n\n";
             if(err.code === 1) msg += "Permiso de ubicación denegado. Otorga permiso de GPS al navegador.";
             else if(err.code === 2) msg += "Señal inalcanzable. Asegúrate de tener la Ubicación (GPS) encendida en tu celular y no estar bajo un techo de concreto.";
             else if(err.code === 3) msg += "Tiempo de espera agotado. El satélite tardó mucho en responder.";
             
-            alert(msg + "\n\nNOTA: Si no hay señal de satélite, puedes mover el pin rojo manualmente en la pantalla (aunque el mapa se vea gris sin internet, las coordenadas se guardarán bien).");
+            alert(msg + "\n\nNOTA: Si no hay señal de satélite, puedes mover el pin rojo manualmente en la pantalla.");
         }, opcionesGPS);
     }
 
@@ -719,204 +912,256 @@
     /* ==========================================
        MOTOR DE GUARDADO Y SINCRONIZACIÓN OFFLINE
        ========================================== */
-    function empaquetarYGuardar() {
-        const tAct = document.getElementById('tipo_actividad').value;
-        const estadoBloqueo = document.getElementById('estado_bloqueo').value;
-        const listaPendientes = JSON.parse(localStorage.getItem('censia_bloqueos_pendientes') || '[]');
+    async function empaquetarYGuardar() {
+        // BLINDAJE ANTI-CRASH: Capturamos cualquier error antes del fetch
+        try {
+            const tAct = document.getElementById('tipo_actividad').value;
+            const estadoBloqueo = document.getElementById('estado_bloqueo').value;
+            const listaPendientes = JSON.parse(localStorage.getItem('censia_bloqueos_pendientes') || '[]');
 
-        if (tAct === 'bloqueo') {
-            if (estadoBloqueo === 'pendiente' && listaPendientes.length === 0) {
-                alert("⚠️ ERROR: No existen bloqueos pendientes en el dispositivo. Selecciona '➕ Iniciar un Nuevo Bloqueo'.");
-                document.getElementById('estado_bloqueo').classList.add('campo-invalido');
+            if (tAct === 'bloqueo') {
+                if (estadoBloqueo === 'pendiente' && listaPendientes.length === 0) {
+                    alert("⚠️ ERROR: No existen bloqueos pendientes en el dispositivo. Selecciona '➕ Iniciar un Nuevo Bloqueo'.");
+                    document.getElementById('estado_bloqueo').classList.add('campo-invalido');
+                    return;
+                }
+            }
+
+            document.querySelectorAll('.campo-invalido').forEach(el => el.classList.remove('campo-invalido')); let hayErrores = false;
+            
+            const checkReq = (id) => { 
+                const el = document.getElementById(id); 
+                if(el && el.offsetParent !== null) {
+                    if(!el.value && el.required !== false) { el.classList.add('campo-invalido'); hayErrores = true; }
+                    else if(el.placeholder === "DD/MM/AAAA" && el.value.length !== 10) { el.classList.add('campo-invalido'); hayErrores = true; }
+                }
+            };
+
+            ['registrador_nombre', 'registrador_institucion', 'tipo_actividad', 'fecha_actividad', 'entidad', 'jurisdiccion', 'municipio', 'localidad', 'nombre_vacunador'].forEach(checkReq);
+
+            if(tAct === 'barrido' || tAct === 'bloqueo' || tAct === 'modulo_fijo') {
+                ['calle_numero', 'colonia'].forEach(checkReq);
+                if(tAct !== 'modulo_fijo') {
+                    checkReq('latitud'); 
+                    checkReq('domicilio_visitado');
+                    const dom = document.getElementById('domicilio_visitado').value;
+                    if(dom === 'casa') checkReq('situacion_domicilio');
+                    if(dom === 'negocio') checkReq('situacion_negocio');
+                }
+            }
+
+            let respCierre = "";
+            if (tAct === 'bloqueo') {
+                checkReq('estado_bloqueo');
+                if(estadoBloqueo === 'nuevo') { ['bloqueo_tipo', 'bloqueo_nombre_caso', 'bloqueo_fecha_notificacion', 'bloqueo_fecha_inicio'].forEach(checkReq); }
+                else if (estadoBloqueo === 'pendiente') { checkReq('lista_bloqueos_pendientes'); }
+                
+                checkReq('ultimo_registro_bloqueo');
+                respCierre = document.getElementById('ultimo_registro_bloqueo').value;
+                if(respCierre === 'si') { ['manzanas_recorridas', 'fecha_envio_bloqueo'].forEach(checkReq); }
+            }
+
+            const censoVisible = !document.getElementById('bloque_censo').classList.contains('oculto');
+            if(censoVisible) {
+                const tarjetas = document.querySelectorAll('.tarjeta-persona');
+                if(tarjetas.length === 0) { alert("Añada al menos una persona."); hayErrores = true; }
+                tarjetas.forEach(t => {
+                    const pId = t.id.split('_').pop();
+                    [`nombre_${pId}`, `fecha_nacimiento_${pId}`, `estado_nac_${pId}`, `sexo_${pId}`, `derecho_${pId}`].forEach(checkReq);
+                    
+                    if(document.getElementById(`edad_calculada_${pId}`).value === 'Fecha inválida') { document.getElementById(`fecha_nacimiento_${pId}`).classList.add('campo-invalido'); hayErrores = true; }
+
+                    if(document.getElementById(`derecho_${pId}`).value === 'OTRA') checkReq(`derecho_otra_${pId}`);
+                    if(document.getElementById(`tutor_tipo_${pId}`) && document.getElementById(`tutor_tipo_${pId}`).value === 'Otro parentesco') {
+                        checkReq(`tutor_tipo_otro_${pId}`);
+                    }
+                    
+                    if(document.getElementById(`nss_afiliacion_${pId}`) && document.getElementById(`nss_afiliacion_${pId}`).required) {
+                        checkReq(`nss_afiliacion_${pId}`);
+                    }
+
+                    let dosis = 0;
+                    document.querySelectorAll(`.vacuna-de-p${pId}`).forEach(s => { 
+                        const vId = s.id.split('_').pop(); 
+                        if(s.value) { 
+                            dosis++; 
+                            checkReq(`fecha_vacuna_${vId}`); 
+                            if(s.value === 'Otra vacuna') checkReq(`otra_vacuna_txt_${vId}`); 
+                        } 
+                    });
+                    
+                    if(dosis === 0) {
+                        hayErrores = true;
+                        const primerSelect = document.querySelector(`.vacuna-de-p${pId}`);
+                        if(primerSelect) primerSelect.classList.add('campo-invalido');
+                    }
+                });
+            }
+
+            if(hayErrores) {
+                alert("❌ DATOS INCOMPLETOS O INVÁLIDOS.\n\nRevisa los recuadros en ROJO.");
+                const primerError = document.querySelector('.campo-invalido'); if(primerError) primerError.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 return;
             }
-        }
 
-        document.querySelectorAll('.campo-invalido').forEach(el => el.classList.remove('campo-invalido')); let hayErrores = false;
-        
-        // Validador mejorado para fechas en texto
-        const checkReq = (id) => { 
-            const el = document.getElementById(id); 
-            if(el && el.offsetParent !== null) {
-                if(!el.value) { el.classList.add('campo-invalido'); hayErrores = true; }
-                else if(el.placeholder === "DD/MM/AAAA" && el.value.length !== 10) { el.classList.add('campo-invalido'); hayErrores = true; }
-            }
-        };
-
-        ['tipo_actividad', 'fecha_actividad', 'entidad', 'jurisdiccion', 'municipio', 'localidad', 'nombre_vacunador'].forEach(checkReq);
-
-        if(tAct === 'barrido' || tAct === 'bloqueo' || tAct === 'modulo_fijo') {
-            ['calle_numero', 'colonia'].forEach(checkReq);
-            if(tAct !== 'modulo_fijo') {
-                checkReq('latitud'); 
-                checkReq('domicilio_visitado');
-                const dom = document.getElementById('domicilio_visitado').value;
-                if(dom === 'casa') checkReq('situacion_domicilio');
-                if(dom === 'negocio') checkReq('situacion_negocio');
-            }
-        }
-
-        let respCierre = "";
-        if (tAct === 'bloqueo') {
-            checkReq('estado_bloqueo');
-            if(estadoBloqueo === 'nuevo') { ['bloqueo_tipo', 'bloqueo_nombre_caso', 'bloqueo_fecha_notificacion', 'bloqueo_fecha_inicio'].forEach(checkReq); }
-            else if (estadoBloqueo === 'pendiente') { checkReq('lista_bloqueos_pendientes'); }
+            // FUNCIÓN MEJORADA: Tolera nodos inexistentes o con estilos en línea de display: none
+            const getVal = (id) => { 
+                const el = document.getElementById(id); 
+                if (!el) return "";
+                if (el.classList.contains('oculto') || el.style.display === 'none') return "";
+                return el.value; 
+            };
             
-            checkReq('ultimo_registro_bloqueo');
-            respCierre = document.getElementById('ultimo_registro_bloqueo').value;
-            if(respCierre === 'si') { ['manzanas_recorridas', 'fecha_envio_bloqueo'].forEach(checkReq); }
-        }
+            const btnGuardar = document.querySelector('.btn-guardar');
+            const textoOriginalBtn = btnGuardar.innerHTML;
+            btnGuardar.innerHTML = "⏳ PROCESANDO Y ENVIANDO A LA NUBE...";
+            btnGuardar.disabled = true;
+            btnGuardar.style.backgroundColor = "#64748b";
 
-        const censoVisible = !document.getElementById('bloque_censo').classList.contains('oculto');
-        if(censoVisible) {
-            const tarjetas = document.querySelectorAll('.tarjeta-persona');
-            if(tarjetas.length === 0) { alert("Añada al menos una persona."); hayErrores = true; }
-            tarjetas.forEach(t => {
-                const pId = t.id.split('_').pop();
-                [`nombre_${pId}`, `fecha_nacimiento_${pId}`, `estado_nac_${pId}`, `sexo_${pId}`, `derecho_${pId}`].forEach(checkReq);
-                
-                if(document.getElementById(`edad_calculada_${pId}`).value === 'Fecha inválida') { document.getElementById(`fecha_nacimiento_${pId}`).classList.add('campo-invalido'); hayErrores = true; }
+            const payload = {
+                general: {
+                    tipo_actividad: getVal('tipo_actividad'),
+                    bloqueo_tipo: getVal('bloqueo_tipo') === 'OTRO' ? 'OTRO' : getVal('bloqueo_tipo'),
+                    bloqueo_tipo_otro: getVal('bloqueo_tipo') === 'OTRO' ? getVal('bloqueo_tipo_otro') : '',
+                    fecha_actividad: getVal('fecha_actividad'),
+                    bloqueo_nombre_caso: getVal('bloqueo_nombre_caso'),
+                    bloqueo_fecha_notificacion: getVal('bloqueo_fecha_notificacion'),
+                    bloqueo_fecha_inicio: getVal('bloqueo_fecha_inicio'),
+                    fecha_envio_bloqueo: getVal('fecha_envio_bloqueo'),
+                    domicilio_visitado: getVal('domicilio_visitado'),
+                    situacion_domicilio: getVal('situacion_domicilio') || getVal('situacion_negocio'),
+                    caso_en_domicilio: getVal('caso_en_domicilio'),
+                    nombre_vacunador: getVal('nombre_vacunador'),
+                    nombre_vacunador_2: getVal('nombre_vacunador_2'),
+                    entidad: getVal('entidad'),
+                    jurisdiccion: getVal('jurisdiccion'),
+                    municipio: getVal('municipio'),
+                    ageb: getVal('ageb'),
+                    otro_ageb_texto: getVal('otro_ageb_texto'),
+                    localidad: getVal('localidad'),
+                    calle_numero: getVal('calle_numero'),
+                    colonia: getVal('colonia'),
+                    observaciones: getVal('observaciones_domicilio'),
+                    ubicacion_gps: getVal('latitud') && getVal('longitud') ? `${getVal('latitud')}, ${getVal('longitud')}` : "",
+                    resp_cierre: respCierre,
+                    ultimo_registro_bloqueo: getVal('ultimo_registro_bloqueo'),
+                    manzanas_recorridas: getVal('manzanas_recorridas'),
+                    registro_lugar_fijo: getVal('registro_lugar_fijo'),
+                    id_bloqueo: getVal('id_bloqueo'),
+                    registrador_nombre: getVal('registrador_nombre'),
+                    registrador_institucion: getVal('registrador_institucion'),
+                    lugar_fijo: getVal('lugar_fijo')|| getVal('identificador_barrido')
+                },
+                pacientes: []
+            };
 
-                if(document.getElementById(`derecho_${pId}`).value === 'OTRA') checkReq(`derecho_otra_${pId}`);
-                if(document.getElementById(`tutor_tipo_${pId}`) && document.getElementById(`tutor_tipo_${pId}`).value === 'Otro parentesco') {
-                    checkReq(`tutor_tipo_otro_${pId}`);
+            if(censoVisible) {
+                const tarjetas = document.querySelectorAll('.tarjeta-persona');
+                for (let t of tarjetas) {
+                    const pId = t.id.split('_').pop();
+                    const idPaciente = generarUUID(); 
+                    
+                    let fotoB64 = null, fotoNombre = null, fotoMime = null;
+                    /* =======================================================
+                        BLOQUE INACTIVO: Descomentar para reactivar subida de fotos
+                    let inputFoto = document.getElementById(`foto_cartilla_${pId}`);
+                    if (inputFoto && inputFoto.files && inputFoto.files.length > 0) {
+                        try {
+                            fotoB64 = await leerArchivoBase64(inputFoto.files[0]);
+                            fotoNombre = inputFoto.files[0].name;
+                            fotoMime = inputFoto.files[0].type;
+                        } catch (errFoto) {
+                            console.warn("Error al procesar la foto:", errFoto);
+                        }
+                    }
+                    ========================================================== */
+
+                    let paciente = {
+                        id_paciente: idPaciente,
+                        paterno: getVal(`paterno_${pId}`),
+                        materno: getVal(`materno_${pId}`),
+                        nombres: getVal(`nombre_${pId}`),
+                        curp: getVal(`curp_${pId}`),
+                        nombre_pariente: getVal(`tutor_nombre_${pId}`),
+                        tipo_parentesco: getVal(`tutor_tipo_${pId}`),
+                        otro_parentesco: getVal(`tutor_tipo_otro_${pId}`),
+                        fecha_nac_pariente: getVal(`tutor_fecha_nac_${pId}`),
+                        tipo_vacunacion: getVal(`tipo_vacunacion_${pId}`),
+                        fecha_nacimiento: getVal(`fecha_nacimiento_${pId}`),
+                        edad: getVal(`edad_calculada_${pId}`),
+                        sexo: getVal(`sexo_${pId}`),
+                        derechohabiencia: getVal(`derecho_${pId}`),
+                        otra_derechohabiencia: getVal(`derecho_otra_${pId}`),
+                        estatus_migratorio: getVal(`migra_${pId}`),
+                        entidad_nacimiento: getVal(`estado_nac_${pId}`),
+                        caso_indice: document.getElementById(`caso_indice_${pId}`)?.checked ? "SI" : "NO",
+                        nss_afiliacion: getVal(`nss_afiliacion_${pId}`),
+                        peso_kg: getVal(`peso_kg_${pId}`),
+                        talla_cm: getVal(`talla_cm_${pId}`),
+                        foto_cartilla_base64: fotoB64,
+                        foto_cartilla_nombre: fotoNombre,
+                        foto_cartilla_mime: fotoMime,
+                        vacunas: []
+                    };
+
+                    document.querySelectorAll(`.vacuna-de-p${pId}`).forEach(s => { 
+                        const vId = s.id.split('_').pop(); 
+                        if(s.value) { 
+                            paciente.vacunas.push({
+                                id_dosis: generarUUID(),
+                                vacuna_aplicada: s.value,
+                                vacuna_especificar: s.value === 'Otra vacuna' ? getVal(`otra_vacuna_txt_${vId}`) : '',
+                                fecha_ingresada: getVal(`fecha_vacuna_${vId}`)
+                            });
+                        } 
+                    });
+                    payload.pacientes.push(paciente);
                 }
+            } else {
+                payload.pacientes.push({ id_paciente: generarUUID(), vacunas: [] });
+            }
 
-                let dosis = 0;
-                document.querySelectorAll(`.vacuna-de-p${pId}`).forEach(s => { 
-                    const vId = s.id.split('_').pop(); 
-                    if(s.value) { 
-                        dosis++; 
-                        checkReq(`fecha_vacuna_${vId}`); 
-                        if(s.value === 'Otra vacuna') checkReq(`otra_vacuna_txt_${vId}`); 
-                    } 
-                });
-                
-                if(dosis === 0) {
-                    hayErrores = true;
-                    const primerSelect = document.querySelector(`.vacuna-de-p${pId}`);
-                    if(primerSelect) primerSelect.classList.add('campo-invalido');
-                }
+            if (!navigator.onLine) {
+                guardarEnColaLocal(payload, tAct, respCierre, payload.general.domicilio_visitado, payload.general.situacion_domicilio, payload.general.caso_en_domicilio);
+                btnGuardar.innerHTML = textoOriginalBtn;
+                btnGuardar.disabled = false;
+                btnGuardar.style.backgroundColor = "#4f46e5";
+                return;
+            }
+
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: JSON.stringify(payload),
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' } 
+            })
+            .then(response => {
+                btnGuardar.innerHTML = textoOriginalBtn;
+                btnGuardar.disabled = false;
+                btnGuardar.style.backgroundColor = "#4f46e5";
+                alert("✅ REGISTRO GUARDADO Y ENVIADO CON ÉXITO A GOOGLE SHEETS.");
+                procesarLimpiezaYMemoria(tAct, respCierre, payload.general.domicilio_visitado, payload.general.situacion_domicilio, payload.general.caso_en_domicilio);
+            })
+            .catch(error => {
+                btnGuardar.innerHTML = textoOriginalBtn;
+                btnGuardar.disabled = false;
+                btnGuardar.style.backgroundColor = "#4f46e5";
+                guardarEnColaLocal(payload, tAct, respCierre, payload.general.domicilio_visitado, payload.general.situacion_domicilio, payload.general.caso_en_domicilio);
             });
+            
+        } catch (errorFatal) {
+            // ALERTA VISIBLE DEL CRASH
+            alert("❌ ERROR INTERNO AL PREPARAR LOS DATOS:\n\n" + errorFatal.message);
+            console.error("Detalle del crash:", errorFatal);
+            const btnGuardar = document.querySelector('.btn-guardar');
+            if (btnGuardar) {
+                btnGuardar.innerHTML = "💾 GUARDAR REGISTRO";
+                btnGuardar.disabled = false;
+                btnGuardar.style.backgroundColor = "#4f46e5";
+            }
         }
-
-        if(hayErrores) {
-            alert("❌ DATOS INCOMPLETOS O INVÁLIDOS.\n\nRevisa los recuadros en ROJO (Asegúrate de que las fechas tengan formato DD/MM/AAAA y seleccionar al menos una vacuna por persona).");
-            const primerError = document.querySelector('.campo-invalido'); if(primerError) primerError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            return;
-        }
-
-        const getVal = (id) => { const el = document.getElementById(id); return el && !el.classList.contains('oculto') ? el.value : ""; };
-        
-        const payload = {
-            general: {
-                tipo_actividad: getVal('tipo_actividad'),
-                bloqueo_tipo: getVal('bloqueo_tipo') === 'OTRO' ? 'OTRO' : getVal('bloqueo_tipo'),
-                bloqueo_tipo_otro: getVal('bloqueo_tipo') === 'OTRO' ? getVal('bloqueo_tipo_otro') : '',
-                fecha_actividad: getVal('fecha_actividad'),
-                bloqueo_nombre_caso: getVal('bloqueo_nombre_caso'),
-                bloqueo_fecha_notificacion: getVal('bloqueo_fecha_notificacion'),
-                bloqueo_fecha_inicio: getVal('bloqueo_fecha_inicio'),
-                fecha_envio_bloqueo: getVal('fecha_envio_bloqueo'),
-                domicilio_visitado: getVal('domicilio_visitado'),
-                situacion_domicilio: getVal('situacion_domicilio') || getVal('situacion_negocio'),
-                caso_en_domicilio: getVal('caso_en_domicilio'),
-                nombre_vacunador: getVal('nombre_vacunador'),
-                nombre_vacunador_2: getVal('nombre_vacunador_2'),
-                entidad: getVal('entidad'),
-                jurisdiccion: getVal('jurisdiccion'),
-                municipio: getVal('municipio'),
-                ageb: getVal('ageb'),
-                otro_ageb_texto: getVal('otro_ageb_texto'),
-                localidad: getVal('localidad'),
-                calle_numero: getVal('calle_numero'),
-                colonia: getVal('colonia'),
-                ubicacion_gps: getVal('latitud') && getVal('longitud') ? `${getVal('latitud')}, ${getVal('longitud')}` : "",
-                resp_cierre: respCierre,
-                ultimo_registro_bloqueo: getVal('ultimo_registro_bloqueo'),
-                manzanas_recorridas: getVal('manzanas_recorridas'),
-                registro_lugar_fijo: getVal('registro_lugar_fijo'),
-                id_bloqueo: getVal('id_bloqueo')
-            },
-            pacientes: []
-        };
-
-        if(censoVisible) {
-            document.querySelectorAll('.tarjeta-persona').forEach(t => {
-                const pId = t.id.split('_').pop();
-                const idPaciente = generarUUID(); 
-                
-                let paciente = {
-                    id_paciente: idPaciente,
-                    paterno: getVal(`paterno_${pId}`),
-                    materno: getVal(`materno_${pId}`),
-                    nombres: getVal(`nombre_${pId}`),
-                    curp: getVal(`curp_${pId}`),
-                    nombre_pariente: getVal(`tutor_nombre_${pId}`),
-                    tipo_parentesco: getVal(`tutor_tipo_${pId}`),
-                    otro_parentesco: getVal(`tutor_tipo_otro_${pId}`),
-                    fecha_nac_pariente: getVal(`tutor_fecha_nac_${pId}`),
-                    tipo_vacunacion: getVal(`tipo_vacunacion_${pId}`),
-                    fecha_nacimiento: getVal(`fecha_nacimiento_${pId}`),
-                    edad: getVal(`edad_calculada_${pId}`),
-                    sexo: getVal(`sexo_${pId}`),
-                    derechohabiencia: getVal(`derecho_${pId}`),
-                    otra_derechohabiencia: getVal(`derecho_otra_${pId}`),
-                    estatus_migratorio: getVal(`migra_${pId}`),
-                    entidad_nacimiento: getVal(`estado_nac_${pId}`),
-                    vacunas: []
-                };
-
-                document.querySelectorAll(`.vacuna-de-p${pId}`).forEach(s => { 
-                    const vId = s.id.split('_').pop(); 
-                    if(s.value) { 
-                        paciente.vacunas.push({
-                            id_dosis: generarUUID(),
-                            vacuna_aplicada: s.value,
-                            vacuna_especificar: s.value === 'Otra vacuna' ? getVal(`otra_vacuna_txt_${vId}`) : '',
-                            fecha_ingresada: getVal(`fecha_vacuna_${vId}`)
-                        });
-                    } 
-                });
-                payload.pacientes.push(paciente);
-            });
-        } else {
-            payload.pacientes.push({ id_paciente: generarUUID(), vacunas: [] });
-        }
-
-        if (!navigator.onLine) {
-            guardarEnColaLocal(payload, tAct, respCierre, payload.general.domicilio_visitado, payload.general.situacion_domicilio, payload.general.caso_en_domicilio);
-            return;
-        }
-
-        const btnGuardar = document.querySelector('.btn-guardar');
-        const textoOriginalBtn = btnGuardar.innerHTML;
-        btnGuardar.innerHTML = "⏳ ENVIANDO DATOS A LA NUBE...";
-        btnGuardar.disabled = true;
-        btnGuardar.style.backgroundColor = "#64748b";
-
-        fetch(GOOGLE_SCRIPT_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            body: JSON.stringify(payload),
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' } 
-        })
-        .then(response => {
-            btnGuardar.innerHTML = textoOriginalBtn;
-            btnGuardar.disabled = false;
-            btnGuardar.style.backgroundColor = "#4f46e5";
-
-            alert("✅ REGISTRO GUARDADO Y ENVIADO CON ÉXITO A GOOGLE SHEETS.");
-            procesarLimpiezaYMemoria(tAct, respCierre, payload.general.domicilio_visitado, payload.general.situacion_domicilio, payload.general.caso_en_domicilio);
-        })
-        .catch(error => {
-            btnGuardar.innerHTML = textoOriginalBtn;
-            btnGuardar.disabled = false;
-            btnGuardar.style.backgroundColor = "#4f46e5";
-            guardarEnColaLocal(payload, tAct, respCierre, payload.general.domicilio_visitado, payload.general.situacion_domicilio, payload.general.caso_en_domicilio);
-        });
     }
-
+    
     function guardarEnColaLocal(payload, tAct, respCierre, dom, sitDom, casoDom) {
         let cola = JSON.parse(localStorage.getItem('censia_cola_envios') || '[]');
         cola.push(payload);
@@ -1045,6 +1290,342 @@
                 .catch(err => console.error('Error SW', err));
         });
     }
+
+    /* ==========================================
+       MOTOR DE BÚSQUEDA ASÍNCRONA (CORRECCIÓN CORS + RELACIONAL)
+       ========================================== */
+    async function ejecutarBusqueda() {
+        const inputEl = document.getElementById('input_busqueda');
+        const contenedorResultados = document.getElementById('resultados_busqueda');
+
+        if (!inputEl || !contenedorResultados) return;
+
+        const query = inputEl.value.trim();
+
+        if (query.length < 3) {
+            contenedorResultados.innerHTML = "<span style='color: #ef4444; font-weight: bold;'>⚠️ Ingresa al menos 3 caracteres.</span>";
+            return;
+        }
+
+        contenedorResultados.innerHTML = "⏳ Consultando base de datos central y cruzando historiales...";
+
+        try {
+            const url = `${GOOGLE_SCRIPT_URL}?action=buscar&q=${encodeURIComponent(query)}`;
+            
+            const respuesta = await fetch(url, {
+                method: 'GET',
+                redirect: 'follow' 
+            });
+            
+            const datos = await respuesta.json();
+
+            if (!datos || datos.length === 0 || datos.error) {
+                contenedorResultados.innerHTML = "❌ No se encontraron pacientes coincidentes.";
+                return;
+            }
+
+            // Renderizado inmutable respetando maquetación
+            let html = "<ul style='list-style: none; padding: 0; margin: 0;'>";
+            
+            datos.forEach(paciente => {
+                
+                // Mapeo Dinámico de Vacunas (Iteración sobre el arreglo inyectado)
+                let htmlVacunas = "";
+                if (paciente.vacunas && paciente.vacunas.length > 0) {
+                    htmlVacunas = "<ul style='margin: 8px 0 0 15px; padding-left: 10px; font-size: 0.9em; border-left: 2px solid #3b82f6;'>";
+                    paciente.vacunas.forEach(v => {
+                        htmlVacunas += `<li style="margin-bottom: 3px; color: #334155;"><b>${v.vacuna}</b> <span style="color:#64748b;">(Aplicada: ${v.fecha})</span></li>`;
+                    });
+                    htmlVacunas += "</ul>";
+                } else {
+                    htmlVacunas = "<div style='color: #94a3b8; font-size: 0.85em; margin-top: 5px; font-style: italic;'>Sin dosis registradas en sistema.</div>";
+                }
+
+                html += `<li style="background: #ffffff; padding: 12px; margin-top: 10px; border-radius: 6px; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                            <strong style="color: #0f172a; font-size: 1.05em;">${paciente.nombres} ${paciente.paterno} ${paciente.materno}</strong><br>
+                            
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 6px; font-size: 0.9em;">
+                                <div><span style="color: #64748b;">CURP:</span> <span style="font-weight: bold;">${paciente.curp}</span></div>
+                                <div><span style="color: #64748b;">Seguridad Social:</span> <b>${paciente.derecho}</b></div>
+                            </div>
+                            
+                            <div style="font-size: 0.9em; margin-top: 4px;">
+                                <span style="color: #64748b;">Domicilio:</span> ${paciente.domicilio}
+                            </div>
+                            
+                            <div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed #cbd5e1;">
+                                <span style="color: #0f172a; font-weight: 600; font-size: 0.9em;">💉 Historial Vacunal</span>
+                                ${htmlVacunas}
+                            </div>
+                         </li>`;
+            });
+            html += "</ul>";
+            
+            contenedorResultados.innerHTML = html;
+
+        } catch (error) {
+            contenedorResultados.innerHTML = "<span style='color: #ef4444; font-weight: bold;'>❌ Error de conexión al consultar el servidor.</span>";
+            console.error("Detalle del fallo CORS/Red de la búsqueda:", error);
+        }
+    }
+
+
+    /* ==========================================
+       CAPA VECTORIAL REMOTA (MAPEO GRANULAR DE ESTADOS)
+       ========================================== */
+    async function cargarHistorialGpsRemoto() {
+        if (!mapaInteractivo) return;
+
+        // 1. OBTENEMOS LA JURISDICCIÓN SELECCIONADA ACTUALMENTE EN EL MENÚ
+        const selectJurisdiccion = document.getElementById('jurisdiccion');
+        const jurisSeleccionada = selectJurisdiccion ? selectJurisdiccion.value.trim().toUpperCase() : "";
+
+        try {
+            const url = `${GOOGLE_SCRIPT_URL}?action=historial_gps`;
+            const respuesta = await fetch(url, { method: 'GET', redirect: 'follow' });
+            const puntos = await respuesta.json();
+
+            if (!puntos || puntos.length === 0) return;
+
+            puntos.forEach(p => {
+                // 2. EL FILTRO: Si el punto tiene jurisdicción y no coincide con la elegida, lo ignoramos por completo
+                if (p.jurisdiccion) {
+                    const jurisPunto = p.jurisdiccion.toString().trim().toUpperCase();
+                    if (jurisSeleccionada !== "" && jurisPunto !== jurisSeleccionada) {
+                        return; // Salta al siguiente punto sin dibujarlo (ahorra muchísima memoria RAM)
+                    }
+                }
+
+                if(p.lat && p.lon) {
+                    let esCasoIndice = (p.caso_indice === 'SI');
+                    
+                    // TRANSPARENCIAS APLICADAS (0.45 = 45% de opacidad)
+                    let bgFondo = esCasoIndice ? 'rgba(220, 38, 38, 0.9)' : 'rgba(100, 116, 139, 0.45)'; 
+                    let colorBorde = esCasoIndice ? '#7f1d1d' : 'rgba(100, 116, 139, 0.8)';
+                    let tamanio = esCasoIndice ? 18 : 14;
+                    let zIndexOffset = esCasoIndice ? 1000 : 0;
+                    
+                    const sit = (p.situacion || "").toString().trim().toUpperCase();
+                    const dom = (p.domicilio || "").toString().trim().toUpperCase();
+                    let etiquetaEstatus = p.situacion || 'N/D';
+
+                    if (!esCasoIndice) {
+                        if (dom === 'MF' || dom.includes('MODULO') || dom.includes('MÓDULO')) {
+                            bgFondo = 'rgba(59, 130, 246, 0.45)'; colorBorde = 'rgba(59, 130, 246, 0.8)';
+                            etiquetaEstatus = "Módulo Fijo";
+                        }
+                        else if (sit === 'CN' || sit === 'CN_NR' || sit.includes('CON NIÑOS')) {
+                            bgFondo = 'rgba(34, 197, 94, 0.45)'; colorBorde = 'rgba(34, 197, 94, 0.8)';
+                            etiquetaEstatus = (sit === 'CN_NR' || sit.includes('NO SE REGISTRAN')) ? "Con niños (Sin registro)" : "Con niños (Con registro)";
+                        } else if (sit === 'SN_REG' || sit === 'SN_NO' || sit.includes('SIN NIÑOS')) {
+                            bgFondo = 'rgba(34, 197, 94, 0.45)'; colorBorde = 'rgba(34, 197, 94, 0.8)';
+                            etiquetaEstatus = (sit === 'SN_NO' || sit.includes('NO SE REGISTRA')) ? "Sin niños (Sin registro)" : "Sin niños (Con registro)";
+                        } else if (sit.includes('N_') || dom.includes('NEGOCIO') || dom.includes('(N)')) {
+                            bgFondo = 'rgba(59, 130, 246, 0.45)'; colorBorde = 'rgba(59, 130, 246, 0.8)';
+                            etiquetaEstatus = (sit === 'N_SIN' || sit.includes('SIN PERSONAS')) ? "Negocio (Sin personas por vacunar)" : "Negocio (Con personas por vacunar)";
+                        } else if (sit === 'A' || sit.includes('AUSENTE') || sit.includes('(A)')) {
+                            bgFondo = 'rgba(234, 179, 8, 0.45)'; colorBorde = 'rgba(234, 179, 8, 0.8)';
+                            etiquetaEstatus = "Familia Ausente";
+                        } else if (sit === 'R' || sit.includes('RENUENTE') || sit.includes('(R)')) {
+                            bgFondo = 'rgba(239, 68, 68, 0.45)'; colorBorde = 'rgba(239, 68, 68, 0.8)';
+                            etiquetaEstatus = "Familia Renuente";
+                        } else if (dom.includes('DESHABITADA') || dom.includes('BALDIO') || dom.includes('BALDÍO') || dom.includes('DH')) {
+                            bgFondo = 'rgba(15, 23, 42, 0.45)'; colorBorde = 'rgba(15, 23, 42, 0.8)';
+                            etiquetaEstatus = "Deshabitado / Baldío";
+                        }
+                    }
+
+                    const iconoHistoricoDinamico = L.divIcon({
+                        className: 'marcador-historial-dinamico',
+                        html: `<div style="background-color: ${bgFondo}; width: ${tamanio}px; height: ${tamanio}px; border-radius: 50%; border: 2px solid ${colorBorde}; box-shadow: 0 0 ${esCasoIndice ? '8px red' : '2px rgba(0,0,0,0.3)'};"></div>`,
+                        iconSize: [tamanio, tamanio],
+                        iconAnchor: [tamanio/2, tamanio/2]
+                    });
+
+                    // GENERADOR DE FECHA CORTA (DD/MM/YY)
+                    let fechaCorta = "S/D";
+                    if (p.fecha_actividad) {
+                        let partesFecha = p.fecha_actividad.split('/');
+                        if (partesFecha.length === 3) {
+                            fechaCorta = `${partesFecha[0]}/${partesFecha[1]}/${partesFecha[2].slice(-2)}`;
+                        } else {
+                            fechaCorta = p.fecha_actividad;
+                        }
+                    }
+
+                    // CORRECCIÓN DEL BUG: Usamos iconoHistoricoDinamico y quitamos el duplicado de popups
+                    L.marker([p.lat, p.lon], { 
+                        icon: iconoHistoricoDinamico,
+                        esHistoricoRemoto: true // Etiqueta para evitar que el radar local lo borre
+                    })
+                    .bindPopup(`<b style="color: ${esCasoIndice ? '#dc2626' : '#0f172a'}; font-size: 1.1em; border-bottom: 1px solid #cbd5e1; display:block; padding-bottom:3px; margin-bottom:5px;">${esCasoIndice ? '🚨 CASO ÍNDICE' : 'Acciones realizadas'}</b>
+                                <span style="color: #2563eb; font-weight: bold; font-size: 0.9em; display:block; margin-bottom:4px;">📅 Fecha: ${fechaCorta}</span>
+                                <span style="color: #475569; font-size: 0.9em;"><b>Dirección:</b> ${p.calle || 'S/D'}, Col. ${p.colonia || 'S/D'}</span><br>
+                                <span style="color: #334155; font-size: 0.9em; display:block; margin-top:4px;"><b>Tipo:</b> ${p.domicilio || 'N/D'}</span>
+                                <span style="color: #475569; font-size: 0.85em; display:block; margin-top:4px;">👤 Registró: ${p.registrador_nombre || 'N/D'} (${p.registrador_institucion || '-'})</span>
+                                <span style="color: #0f172a; font-size: 0.95em; font-weight: bold; background-color: ${esCasoIndice ? '#fee2e2' : '#f1f5f9'}; padding: 2px 4px; border-radius: 3px; display:inline-block; margin-top:4px;">Estatus: ${etiquetaEstatus}</span>`)
+                    .addTo(mapaInteractivo);
+                }
+            });
+
+        } catch (error) {
+            console.error("Fallo de sincronización de la capa vectorial histórica:", error);
+        }
+    }
+
+    /* ==========================================
+       LÓGICA V15.6: CASCADAS IMSS Y BASE64
+       ========================================== */
+    function evaluarCascadaGlobal() {
+        document.querySelectorAll('.tarjeta-persona').forEach(t => {
+            evaluarCascadaIMSS(t.id.split('_').pop());
+        });
+    }
+
+    function evaluarCascadaIMSS(pId) {
+        const instRegistrador = document.getElementById('registrador_institucion') ? document.getElementById('registrador_institucion').value : "";
+        const derPaciente = document.getElementById(`derecho_${pId}`).value.toUpperCase();
+        const bloqueImss = document.getElementById(`bloque_clinico_imss_${pId}`);
+        const inputNss = document.getElementById(`nss_afiliacion_${pId}`);
+        const labelNss = document.getElementById(`label_nss_${pId}`);
+
+        if (instRegistrador === 'IMSS') {
+            bloqueImss.style.display = 'block';
+            if (derPaciente.includes('IMSS')) {
+                inputNss.required = true;
+                labelNss.innerHTML = 'NSS + Agregado Médico <span style="color:red; font-size:0.8em;">* Oblig.</span>';
+            } else {
+                inputNss.required = false;
+                labelNss.innerHTML = 'NSS + Agregado Médico <span style="color:gray; font-size:0.8em;">(Opcional)</span>';
+            }
+        } else {
+            bloqueImss.style.display = 'none';
+            inputNss.required = false;
+            inputNss.value = "";
+            document.getElementById(`peso_kg_${pId}`).value = "";
+            document.getElementById(`talla_cm_${pId}`).value = "";
+        }
+    }
+
+    // REEMPLAZO TOTAL: Motor de compresión de imágenes antes del Base64
+    const leerArchivoBase64 = (file) => new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (event) => {
+            const img = new Image();
+            img.src = event.target.result;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                // Máximo 800px para mantener legibilidad de la cartilla sin pesar Megabytes
+                const MAX_WIDTH = 800; 
+                const MAX_HEIGHT = 800;
+                let width = img.width;
+                let height = img.height;
+
+                if (width > height) {
+                    if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+                } else {
+                    if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                // Comprime el archivo a JPEG con calidad al 60%
+                resolve(canvas.toDataURL('image/jpeg', 0.6));
+            };
+            img.onerror = (e) => reject(e);
+        };
+        reader.onerror = (e) => reject(e);
+    });
+
+    /* =======================================================
+   SISTEMA DE SANITIZACIÓN AUTOMÁTICA (MAYÚSCULAS Y SIN ACENTOS)
+    ======================================================= */
+    function limpiarTexto(texto) {
+        // Quita acentos (normalize NFD), caracteres diacríticos y convierte a mayúsculas
+        return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+    }
+
+    // Escuchamos cada vez que el usuario teclea en cualquier input de texto o textarea
+    document.addEventListener('input', function(e) {
+        // Validamos que sea un campo de texto (excluyendo fechas, números o emails si los hubiera)
+        if ((e.target.tagName === 'INPUT' && e.target.type === 'text') || e.target.tagName === 'TEXTAREA') {
+            
+            // Guardamos la posición del cursor para que no salte al final al escribir rápido
+            let inicioCursor = e.target.selectionStart;
+            let finCursor = e.target.selectionEnd;
+            
+            // Aplicamos la limpieza
+            e.target.value = limpiarTexto(e.target.value);
+            
+            // Restauramos el cursor a donde estaba
+            e.target.setSelectionRange(inicioCursor, finCursor);
+        }
+    });
+
+    /* =======================================================
+   GENERADOR EN TIEMPO REAL DEL IDENTIFICADOR (Bloqueado)
+    ======================================================= */
+    function autoGenerarIdentificadorLugarFijo() {
+        const getV = (id) => { 
+            const el = document.getElementById(id); 
+            return el ? el.value.toUpperCase().trim() : ""; 
+        };
+        
+        let fecha = getV('fecha_actividad');
+        let fecha_str = "00000000";
+        if(fecha && fecha.length === 10) {
+            let p = fecha.split('/'); // Asume DD/MM/YYYY
+            fecha_str = p[0] + p[1] + p[2];
+        }
+        
+        let tAct = getV('tipo_actividad');
+        let tipo = "OTRO";
+        if (tAct === "BARRIDO") tipo = "BARR";
+        else if (tAct === "BLOQUEO") tipo = "BLOQ";
+        else if (tAct === "MODULO_FIJO" || tAct === "MÓDULO FIJO") tipo = "MF";
+        else if (tAct === "CAMPAÑA") tipo = "CAMP";
+        
+        let inst = getV('registrador_institucion') || "ND";
+        let juris = getV('jurisdiccion') || "ND";
+        
+        let ageb = getV('ageb');
+        if (ageb === "OTRO" || ageb === "") {
+            ageb = getV('otro_ageb_texto');
+            if(!ageb) ageb = getV('colonia') || "ND";
+        }
+        
+        // Armado final y limpieza de espacios dobles
+        let idGenerado = `${fecha_str}-${tipo}-${inst}-${juris}-${ageb}`;
+        idGenerado = idGenerado.replace(/\s+/g, ' '); 
+
+        // Buscar los inputs donde se muestra al usuario y bloquearlos
+        let inps = [document.getElementById('lugar_fijo'), document.getElementById('identificador_barrido')];
+        
+        inps.forEach(inp => {
+            if(inp) {
+                inp.value = idGenerado;
+                inp.readOnly = true; 
+                inp.style.backgroundColor = '#e2e8f0'; // Fondo grisáceo
+                inp.style.color = '#475569';
+                inp.style.cursor = 'not-allowed';
+                inp.style.fontWeight = 'bold';
+            }
+        });
+    }
+
+    // Escuchar cambios en los campos que componen el ID para actualizarlo en vivo
+    ['fecha_actividad', 'tipo_actividad', 'registrador_institucion', 'jurisdiccion', 'ageb', 'otro_ageb_texto', 'colonia'].forEach(id => {
+        let el = document.getElementById(id);
+        if(el) {
+            el.addEventListener('change', autoGenerarIdentificadorLugarFijo);
+            el.addEventListener('input', autoGenerarIdentificadorLugarFijo);
+        }
+    });
+
 </script>
 </body>
 </html>
