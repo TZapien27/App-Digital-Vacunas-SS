@@ -317,6 +317,21 @@
 </div>
 
 <script>
+    /* =======================================================
+       LIMPIEZA AUTOMÁTICA DE CAMBIO DE DÍA
+    ======================================================= */
+    (function limpiarMemoriaSiEsOtroDia() {
+        const hoy = new Date().toLocaleDateString();
+        const diaGuardado = localStorage.getItem('censia_dia_actual');
+        
+        if (diaGuardado !== hoy) {
+            // Si detecta que es un día nuevo, vacía el mapa local y la bitácora
+            localStorage.setItem('censia_radar_mapa', '[]');
+            localStorage.setItem('censia_bitacora_hoy', '[]');
+            localStorage.setItem('censia_dia_actual', hoy);
+        }
+    })();
+    
     /* ==========================================
        VARIABLES GLOBALES Y CATÁLOGOS COMPLETOS
        ========================================== */
@@ -887,19 +902,55 @@
         });
 
         hist.forEach(p => {
-            let color = 'radar-gris'; let letra = p.sit || p.dom || '';
+            let color = 'radar-gris'; 
+            let letra = p.sit || p.dom || '';
+            let sitLarga = p.sit || ''; // Texto extendido para que no se vea solo una letra
             
-            if(letra === 'Caso') color = 'radar-rojo';
-            else if(letra === 'MF') color = 'radar-azul'; 
-            else if(letra === 'CN') color = 'radar-verde';
-            else if(letra === 'V' || letra === 'SN_REG') { color = 'radar-verde'; letra = 'SN'; }
-            else if(letra === 'A' || letra === 'SN' || letra === 'SN_NO') color = 'radar-amarillo';
-            else if(letra === 'R') color = 'radar-rojo';
-            else if(letra === 'N_CON' || letra === 'N_SIN' || letra === 'negocio') { color = 'radar-azul'; letra = 'N'; }
-            else if(letra === 'lote_baldio' || letra === 'deshabitada') { color = 'radar-gris'; letra = 'DH'; }
+            if(letra === 'Caso') { color = 'radar-rojo'; sitLarga = 'Caso Probable/Sospechoso'; }
+            else if(letra === 'MF') { color = 'radar-azul'; sitLarga = 'Módulo Fijo'; } 
+            else if(letra === 'CN') { color = 'radar-verde'; sitLarga = 'Con Niños'; }
+            else if(letra === 'V' || letra === 'SN_REG') { color = 'radar-verde'; letra = 'SN'; sitLarga = 'Sin Niños (Registrados)'; }
+            else if(letra === 'A' || letra === 'SN' || letra === 'SN_NO') { color = 'radar-amarillo'; sitLarga = (letra === 'A' ? 'Ausente' : 'Sin Niños'); letra = (letra === 'A' ? 'A' : 'SN'); }
+            else if(letra === 'R') { color = 'radar-rojo'; sitLarga = 'Renuente'; }
+            else if(letra === 'N_CON' || letra === 'N_SIN' || letra === 'negocio') { color = 'radar-azul'; sitLarga = 'Negocio'; letra = 'N'; }
+            else if(letra === 'lote_baldio' || letra === 'deshabitada') { color = 'radar-gris'; sitLarga = (letra === 'lote_baldio' ? 'Lote Baldío' : 'Deshabitada'); letra = 'DH'; }
             
             const iconHtml = `<div class="pin-radar ${color}">${letra}</div>`;
-            L.marker([p.lat, p.lon], { icon: L.divIcon({ html: iconHtml, className: '', iconSize:[22,22], iconAnchor:[11,11] }) }).bindTooltip(`<b>${etiquetasDom[p.dom] || 'Ubicación'}</b><br>Sit: ${letra}`, { direction: 'top', offset: [0, -10] }).addTo(mapaInteractivo);
+            let titulo = etiquetasDom[p.dom] || 'Ubicación';
+            
+            // Armamos el recuadro EXACTAMENTE con la estructura que pediste
+            let htmlPopup = `
+                <div style="font-family: sans-serif; min-width: 230px;">
+                    <h4 style="margin: 0 0 8px 0; color: #0f172a; border-bottom: 2px solid #3b82f6; padding-bottom: 4px; font-size: 1.1em;">Acciones realizadas</h4>
+                    <div style="font-size: 0.9em; line-height: 1.6; color: #334155;">
+                        <b>ID:</b> ${p.lugar_fijo || 'S/D'}<br>
+                        📅 <b>Fecha:</b> ${p.fecha || 'S/D'}<br>
+                        📍 <b>Dirección:</b> ${p.dir || 'S/D'}<br>
+                        🏠 <b>Tipo:</b> ${titulo}<br>
+                        👤 <b>Registrador:</b> ${p.registrador || 'S/D'}<br>
+                        📋 <b>Estatus:</b> ${sitLarga}
+                    </div>
+            `;
+            
+            // Si hay personas registradas, inyectamos los números al final
+            if (p.total_personas !== undefined && p.total_personas > 0) {
+                htmlPopup += `
+                    <div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed #cbd5e1; font-size: 0.95em; color: #0f172a;">
+                        👥 Personas: <b>${p.total_personas}</b> &nbsp;|&nbsp; 💉 Dosis: <b>${p.total_dosis}</b>
+                    </div>
+                `;
+            }
+            
+            htmlPopup += `</div>`;
+
+            L.marker([p.lat, p.lon], { 
+                icon: L.divIcon({ html: iconHtml, className: '', iconSize:[22,22], iconAnchor:[11,11] }) 
+            })
+            // El Tooltip se muestra al pasar el mouse rápido
+            .bindTooltip(`<b>${titulo}</b><br>${sitLarga}`, { direction: 'top', offset: [0, -10] })
+            // El Popup se muestra al darle clic al marcador (igual que los históricos)
+            .bindPopup(htmlPopup)
+            .addTo(mapaInteractivo);
         });
     }
 
@@ -1292,18 +1343,39 @@
 
     function procesarLimpiezaYMemoria(tAct, respCierre, dom, sitDom, casoDom) {
         if(tAct === 'barrido' || tAct === 'bloqueo' || tAct === 'modulo_fijo') {
-            const hist = JSON.parse(localStorage.getItem('censia_radar_mapa') || '[]');
-            let sitGuardada = (casoDom === 'Sospechoso' || casoDom === 'Probable') ? 'Caso' : (sitDom || dom || (tAct === 'modulo_fijo' ? 'MF' : ''));
-            let tPers = 0; let tDos = 0;
-            if(!document.getElementById('bloque_censo').classList.contains('oculto')) {
-                document.querySelectorAll('.tarjeta-persona').forEach(t => {
-                    tPers++; const pId = t.id.split('_').pop();
-                    document.querySelectorAll(`.vacuna-de-p${pId}`).forEach(s => { if(s.value) tDos++; });
-                });
-            }
-            hist.push({ lat: document.getElementById('latitud').value, lon: document.getElementById('longitud').value, dom: (tAct === 'modulo_fijo' ? 'MF' : dom), sit: sitGuardada, total_personas: tPers, total_dosis: tDos });
-            localStorage.setItem('censia_radar_mapa', JSON.stringify(hist));
+        const hist = JSON.parse(localStorage.getItem('censia_radar_mapa') || '[]');
+        
+        // SOLUCIÓN: Extraemos la información exacta del paquete recién guardado
+        const bitacora = JSON.parse(localStorage.getItem('censia_bitacora_hoy') || '[]');
+        const genGuardado = bitacora.length > 0 ? bitacora[0].general : {};
+
+        let sitGuardada = (casoDom === 'Sospechoso' || casoDom === 'Probable') ? 'Caso' : (sitDom || dom || (tAct === 'modulo_fijo' ? 'MF' : ''));
+        let tPers = 0; let tDos = 0;
+        if(!document.getElementById('bloque_censo').classList.contains('oculto')) {
+            document.querySelectorAll('.tarjeta-persona').forEach(t => {
+                tPers++; const pId = t.id.split('_').pop();
+                document.querySelectorAll(`.vacuna-de-p${pId}`).forEach(s => { if(s.value) tDos++; });
+            });
         }
+
+        let dirGuardada = `${genGuardado.calle_numero || ''} ${genGuardado.colonia || ''}`.trim();
+        if (dirGuardada === '') dirGuardada = 'Sin dirección';
+
+        hist.push({ 
+            lat: document.getElementById('latitud').value, 
+            lon: document.getElementById('longitud').value, 
+            dom: (tAct === 'modulo_fijo' ? 'MF' : dom), 
+            sit: sitGuardada, 
+            total_personas: tPers, 
+            total_dosis: tDos,
+            // Tomamos los datos del paquete seguro
+            fecha: genGuardado.fecha_actividad || 'S/D',
+            dir: dirGuardada,
+            registrador: genGuardado.registrador_nombre || 'S/D',
+            lugar_fijo: genGuardado.lugar_fijo || 'Generado en servidor'
+        });
+        localStorage.setItem('censia_radar_mapa', JSON.stringify(hist));
+    }
 
         if (tAct === 'bloqueo') {
             let listaPendientes = JSON.parse(localStorage.getItem('censia_bloqueos_pendientes') || '[]');
@@ -1527,17 +1599,31 @@
                         }
                     }
 
-                    // CORRECCIÓN DEL BUG: Usamos iconoHistoricoDinamico y quitamos el duplicado de popups
+                    // --- NUEVO RECUADRO UNIFICADO ---
+                    let htmlPopup = `
+                        <div style="font-family: sans-serif; min-width: 230px;">
+                            <h4 style="margin: 0 0 8px 0; color: ${esCasoIndice ? '#dc2626' : '#0f172a'}; border-bottom: 2px solid ${esCasoIndice ? '#dc2626' : '#3b82f6'}; padding-bottom: 4px; font-size: 1.1em;">
+                                ${esCasoIndice ? '🚨 CASO ÍNDICE' : 'Acciones realizadas'}
+                            </h4>
+                            <div style="font-size: 0.9em; line-height: 1.6; color: #334155;">
+                                <b>ID:</b> ${p.lugar_fijo || 'S/D'}<br>
+                                📅 <b>Fecha:</b> ${fechaCorta}<br>
+                                📍 <b>Dirección:</b> ${p.calle || 'S/D'} ${p.colonia ? ', Col. ' + p.colonia : ''}<br>
+                                🏠 <b>Tipo:</b> ${p.domicilio || 'N/D'}<br>
+                                👤 <b>Registró:</b> ${p.registrador_nombre || 'N/D'} (${p.registrador_institucion || '-'})<br>
+                                📋 <b>Estatus:</b> <span style="font-weight: bold; background-color: ${esCasoIndice ? '#fee2e2' : '#f1f5f9'}; padding: 2px 4px; border-radius: 3px; display:inline-block; margin-top:4px;">${etiquetaEstatus}</span>
+                            </div>
+                            <div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed #cbd5e1; font-size: 0.95em; color: #0f172a;">
+                                👥 Personas: <b>${p.total_personas !== undefined ? p.total_personas : 'N/D'}</b> &nbsp;|&nbsp; 💉 Dosis: <b>${p.total_dosis !== undefined ? p.total_dosis : 'N/D'}</b>
+                            </div>
+                        </div>
+                    `;
+
                     L.marker([p.lat, p.lon], { 
                         icon: iconoHistoricoDinamico,
-                        esHistoricoRemoto: true // Etiqueta para evitar que el radar local lo borre
+                        esHistoricoRemoto: true
                     })
-                    .bindPopup(`<b style="color: ${esCasoIndice ? '#dc2626' : '#0f172a'}; font-size: 1.1em; border-bottom: 1px solid #cbd5e1; display:block; padding-bottom:3px; margin-bottom:5px;">${esCasoIndice ? '🚨 CASO ÍNDICE' : 'Acciones realizadas'}</b>
-                                <span style="color: #2563eb; font-weight: bold; font-size: 0.9em; display:block; margin-bottom:4px;">📅 Fecha: ${fechaCorta}</span>
-                                <span style="color: #475569; font-size: 0.9em;"><b>Dirección:</b> ${p.calle || 'S/D'}, Col. ${p.colonia || 'S/D'}</span><br>
-                                <span style="color: #334155; font-size: 0.9em; display:block; margin-top:4px;"><b>Tipo:</b> ${p.domicilio || 'N/D'}</span>
-                                <span style="color: #475569; font-size: 0.85em; display:block; margin-top:4px;">👤 Registró: ${p.registrador_nombre || 'N/D'} (${p.registrador_institucion || '-'})</span>
-                                <span style="color: #0f172a; font-size: 0.95em; font-weight: bold; background-color: ${esCasoIndice ? '#fee2e2' : '#f1f5f9'}; padding: 2px 4px; border-radius: 3px; display:inline-block; margin-top:4px;">Estatus: ${etiquetaEstatus}</span>`)
+                    .bindPopup(htmlPopup)
                     .addTo(mapaInteractivo);
                 }
             });
