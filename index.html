@@ -90,7 +90,7 @@
 
     <div class="contenedor" id="formulario_maestro">
     <!-- MÓDULO DE BÚSQUEDA DE PACIENTES -->
-    <div class="tarjeta" id="bloque_buscador" style="background-color: #f8fafc; border-left: 4px solid #3b82f6;">
+    <div class="tarjeta" id="bloque_buscador" style="background-color: #f8fafc; border-left: 4px solid #3b82f6; display: none !important;">
         <h2 style="color: #1e293b; margin-top: 0; font-size: 1.2em;">🔍 Búsqueda Rápida de Pacientes</h2>
         <div style="display: flex; gap: 10px; margin-bottom: 10px;">
             <input type="text" id="input_busqueda" placeholder="Buscar por Apellido, CURP o Calle..." style="flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 5px; font-family: inherit;">
@@ -114,7 +114,8 @@
                     <label>Institución a la que pertenece *</label>
                     <select id="registrador_institucion" class="guardar-cache" onchange="evaluarCascadaGlobal()" required>
                         <option value="">-- Seleccione --</option>
-                        <option value="IMSS">IMSS / IMSS Bienestar</option>
+                        <option value="IMSS Ordinario">IMSS Ordinario</option>
+                        <option value="IMSS Bienestar">IMSS Bienestar</option>
                         <option value="SSA">Secretaría de Salud (SSA)</option>
                         <option value="OTRA">Otra Institución</option>
                     </select>
