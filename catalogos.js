@@ -85,7 +85,7 @@ const catMunicipios = [
 const catAGEBs = [
     "Acueducto, Los Arcos - 281-2",
     "Aeropuerto - 060-9",
-    "Alfredo B. Bonfil - 236-7",
+    "Alfredo V. Bonfil - 236-7",
     "Altos de Bella Unión - 037-5",
     "América - 148-1",
     "Ampliación María de León - 521-5",
@@ -205,7 +205,7 @@ const catAGEBs = [
     "Fracc. Las Haciendas y Villa Universidad - 287-7",
     "Fracc. La Noria, Villa Vergel, Fracc. Brisas - 314-9",
     "Fracc. Latinoamericana - 204-7",
-    "Fracc. Ocenaía - 210-2",
+    "Fracc. Oceanía - 210-2",
     "Fracc. Oceanía Blvd - 211-7",
     "Fracc. Portal de Aragón - 198-A",
     "Fracc. Priv. Las Palmas, Fracc. Villa Toscana - 548-4",

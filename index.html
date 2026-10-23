@@ -90,7 +90,7 @@
 
     <div class="contenedor" id="formulario_maestro">
     <!-- MÓDULO DE BÚSQUEDA DE PACIENTES -->
-    <div class="tarjeta" id="bloque_buscador" style="background-color: #f8fafc; border-left: 4px solid #3b82f6;">
+    <div class="tarjeta" id="bloque_buscador" style="background-color: #f8fafc; border-left: 4px solid #3b82f6; display: none !important;">
         <h2 style="color: #1e293b; margin-top: 0; font-size: 1.2em;">🔍 Búsqueda Rápida de Pacientes</h2>
         <div style="display: flex; gap: 10px; margin-bottom: 10px;">
             <input type="text" id="input_busqueda" placeholder="Buscar por Apellido, CURP o Calle..." style="flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 5px; font-family: inherit;">
@@ -114,7 +114,8 @@
                     <label>Institución a la que pertenece *</label>
                     <select id="registrador_institucion" class="guardar-cache" onchange="evaluarCascadaGlobal()" required>
                         <option value="">-- Seleccione --</option>
-                        <option value="IMSS">IMSS / IMSS Bienestar</option>
+                        <option value="IMSS Ordinario">IMSS Ordinario</option>
+                        <option value="IMSS Bienestar">IMSS Bienestar</option>
                         <option value="SSA">Secretaría de Salud (SSA)</option>
                         <option value="OTRA">Otra Institución</option>
                     </select>
@@ -127,6 +128,13 @@
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
             <div class="form-group"><label>Vacunador 1 *</label><input type="text" id="nombre_vacunador" class="guardar-cache" required></div>
             <div class="form-group"><label>Vacunador 2</label><input type="text" id="nombre_vacunador_2" class="guardar-cache"></div>
+        </div>
+
+        <!-- BOTÓN DE BITÁCORA DE EDICIÓN -->
+        <div style="text-align: center; margin-bottom: 15px; margin-top: 10px;">
+            <button type="button" onclick="abrirModalBitacora()" style="background-color: #3b82f6; color: white; padding: 12px 24px; border-radius: 8px; font-weight: bold; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 90%; max-width: 400px; font-size: 1.1em;">
+                📋 Mis Registros de Hoy (Editar)
+            </button>
         </div>
 
         <div class="form-group"><label>Entidad de Residencia *</label><select id="entidad" class="guardar-cache select-buscable" placeholder="Busca entidad..."></select></div>
@@ -300,6 +308,7 @@
     </div>
 
     <!-- BOTONES DE ACCIÓN -->
+    <input type="hidden" id="id_registro_edicion_oculto" value="">
     <button type="button" class="btn btn-guardar" onclick="empaquetarYGuardar()">
         💾 GUARDAR REGISTRO
     </button>
@@ -309,10 +318,25 @@
 </div>
 
 <script>
+    /* =======================================================
+       LIMPIEZA AUTOMÁTICA DE CAMBIO DE DÍA
+    ======================================================= */
+    (function limpiarMemoriaSiEsOtroDia() {
+        const hoy = new Date().toLocaleDateString();
+        const diaGuardado = localStorage.getItem('censia_dia_actual');
+        
+        if (diaGuardado !== hoy) {
+            // Si detecta que es un día nuevo, vacía el mapa local y la bitácora
+            localStorage.setItem('censia_radar_mapa', '[]');
+            localStorage.setItem('censia_bitacora_hoy', '[]');
+            localStorage.setItem('censia_dia_actual', hoy);
+        }
+    })();
+    
     /* ==========================================
        VARIABLES GLOBALES Y CATÁLOGOS COMPLETOS
        ========================================== */
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzIkuxFpMJB7rZ-bf0hoWcYoJ3enrsCZjk8By7fRQSIXEpRbYVgFbtDtwLpqOT7Z9iL/exec";
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzge_NciIif4rB9dN61WZbO0NuyXKROApd5SvjT2ofVLaJUc1V1YAj5NS1OoTweWans/exec";
     
     let personaId = 0; let vacunaId = 0;  
     let mapaInteractivo = null; let chincheta = null;
@@ -650,8 +674,16 @@
                 
                 <div id="bloque_parentesco_${pId}" class="bloque-parentesco oculto">
                     <span class="label-parentesco">Datos del Pariente (Menores de edad)</span>
+                    
+                    <!-- NUEVA PREGUNTA: ¿SE VA A VACUNAR EL PARIENTE? -->
+                    <div style="margin-top: 10px; background: #ecfdf5; padding: 10px; border-radius: 5px; border: 1px dashed #10b981; margin-bottom: 15px;">
+                        <label style="cursor: pointer; font-weight: bold; color: #047857; display: flex; align-items: center; gap: 8px;">
+                            <input type="checkbox" id="check_vacunar_tutor_${pId}" onchange="if(this.checked){document.getElementById('grupo_tutor_extendido_${pId}').classList.remove('oculto'); document.getElementById('grupo_tutor_basico_${pId}').classList.add('oculto');} else {document.getElementById('grupo_tutor_extendido_${pId}').classList.add('oculto'); document.getElementById('grupo_tutor_basico_${pId}').classList.remove('oculto');}"> 
+                            ¿El pariente también se va a registrar / vacunar?
+                        </label>
+                    </div>
+
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                        <div class="form-group"><label>Nombre Completo</label><input type="text" id="tutor_nombre_${pId}"></div>
                         <div class="form-group">
                             <label>Parentesco</label>
                             <select id="tutor_tipo_${pId}" onchange="if(this.value==='Otro parentesco'){document.getElementById('tutor_tipo_otro_${pId}').classList.remove('oculto')}else{document.getElementById('tutor_tipo_otro_${pId}').classList.add('oculto')}">
@@ -663,8 +695,30 @@
                             </select>
                             <input type="text" id="tutor_tipo_otro_${pId}" class="oculto" placeholder="Especifique parentesco" style="margin-top:5px;">
                         </div>
+                        <div class="form-group">
+                            <label>Fecha de Nacimiento</label>
+                            <input type="numeric" id="tutor_fecha_nac_${pId}" placeholder="DD/MM/AAAA" maxlength="10" oninput="aplicarMascaraFecha(event)">
+                        </div>
                     </div>
-                    <div class="form-group"><label>Fecha de Nacimiento</label><input type="numeric" id="tutor_fecha_nac_${pId}" placeholder="DD/MM/AAAA" maxlength="10" oninput="aplicarMascaraFecha(event)"></div>
+
+                    <!-- MODO NORMAL: Un solo campo de nombre (Visible por defecto) -->
+                    <div class="form-group" id="grupo_tutor_basico_${pId}">
+                        <label>Nombre Completo del Pariente</label>
+                        <input type="text" id="tutor_nombre_${pId}" placeholder="Ej. LOPEZ PEREZ JUAN ANTONIO">
+                    </div>
+
+                    <!-- MODO EXTENDIDO: Apellidos separados + Botón (Oculto por defecto) -->
+                    <div id="grupo_tutor_extendido_${pId}" class="oculto" style="background: #f8fafc; padding: 10px; border: 1px solid #cbd5e1; border-radius: 5px; margin-top: 10px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div class="form-group"><label>Primer Apellido</label><input type="text" id="tutor_paterno_ext_${pId}"></div>
+                            <div class="form-group"><label>Segundo Apellido</label><input type="text" id="tutor_materno_ext_${pId}"></div>
+                        </div>
+                        <div class="form-group" style="margin-top: 5px;"><label>Nombre(s)</label><input type="text" id="tutor_nombres_ext_${pId}"></div>
+                        
+                        <button type="button" id="btn_clonar_tutor_${pId}" class="btn btn-add" onclick="clonarDatosTutor(${pId})" style="margin-top: 10px; background-color: #10b981; border-color: #059669;">
+                            👨‍👩‍👦 Generar Tarjeta para el Pariente
+                        </button>
+                    </div>
                 </div>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
@@ -772,7 +826,19 @@
     }
 
     function agregarVacunaAPersona(pId) {
-        vacunaId++; const vId = vacunaId; const fBase = document.getElementById('fecha_actividad').value;
+        vacunaId++; const vId = vacunaId; 
+        const fBase = document.getElementById('fecha_actividad').value;
+        
+        // --- LÓGICA INTELIGENTE: FECHAS EN BLANCO PARA MÓDULO FIJO ---
+        const tActActual = document.getElementById('tipo_actividad') ? document.getElementById('tipo_actividad').value : '';
+        const vacunasPrevias = document.querySelectorAll(`.vacuna-de-p${pId}`).length;
+        
+        let atributoFechaDefecto = `value="${fBase}"`; 
+        if (tActActual === 'modulo_fijo' && vacunasPrevias > 0) {
+            atributoFechaDefecto = ""; // A partir de la segunda vacuna, nace en blanco
+        }
+        // -------------------------------------------------------------
+
         const html = `<div class="bloque-vacuna" id="bloque_vacuna_${vId}">
             <div class="vacuna-header">
                 <select id="select_vacuna_${vId}" class="vacuna-de-p${pId}" onchange="actualizarFiltroExcluyente(${pId}); if(this.value==='Otra vacuna'){document.getElementById('otra_vacuna_txt_${vId}').classList.remove('oculto')}else{document.getElementById('otra_vacuna_txt_${vId}').classList.add('oculto')}">
@@ -781,7 +847,10 @@
                 <button type="button" class="btn-eliminar-vacuna" onclick="eliminarVacuna(${vId}, ${pId})">X</button>
             </div>
             <input type="text" id="otra_vacuna_txt_${vId}" class="oculto" placeholder="Especifique la vacuna" style="margin-bottom:8px;">
-            <div class="form-group" style="margin-bottom:0;"><label style="font-size:0.75rem;">Fecha Exacta de Aplicación *</label><input type="numeric" id="fecha_vacuna_${vId}" value="${fBase}" placeholder="DD/MM/AAAA" maxlength="10" oninput="aplicarMascaraFecha(event)"></div>
+            <div class="form-group" style="margin-bottom:0;">
+                <label style="font-size:0.75rem;">Fecha Exacta de Aplicación *</label>
+                <input type="numeric" id="fecha_vacuna_${vId}" ${atributoFechaDefecto} placeholder="DD/MM/AAAA" maxlength="10" oninput="aplicarMascaraFecha(event)">
+            </div>
         </div>`;
         document.getElementById(`contenedor_vacunas_p${pId}`).insertAdjacentHTML('beforeend', html);
         const t = document.getElementById(`tipo_vacunacion_${pId}`).value;
@@ -834,19 +903,55 @@
         });
 
         hist.forEach(p => {
-            let color = 'radar-gris'; let letra = p.sit || p.dom || '';
+            let color = 'radar-gris'; 
+            let letra = p.sit || p.dom || '';
+            let sitLarga = p.sit || ''; // Texto extendido para que no se vea solo una letra
             
-            if(letra === 'Caso') color = 'radar-rojo';
-            else if(letra === 'MF') color = 'radar-azul'; 
-            else if(letra === 'CN') color = 'radar-verde';
-            else if(letra === 'V' || letra === 'SN_REG') { color = 'radar-verde'; letra = 'SN'; }
-            else if(letra === 'A' || letra === 'SN' || letra === 'SN_NO') color = 'radar-amarillo';
-            else if(letra === 'R') color = 'radar-rojo';
-            else if(letra === 'N_CON' || letra === 'N_SIN' || letra === 'negocio') { color = 'radar-azul'; letra = 'N'; }
-            else if(letra === 'lote_baldio' || letra === 'deshabitada') { color = 'radar-gris'; letra = 'DH'; }
+            if(letra === 'Caso') { color = 'radar-rojo'; sitLarga = 'Caso Probable/Sospechoso'; }
+            else if(letra === 'MF') { color = 'radar-azul'; sitLarga = 'Módulo Fijo'; } 
+            else if(letra === 'CN') { color = 'radar-verde'; sitLarga = 'Con Niños'; }
+            else if(letra === 'V' || letra === 'SN_REG') { color = 'radar-verde'; letra = 'SN'; sitLarga = 'Sin Niños (Registrados)'; }
+            else if(letra === 'A' || letra === 'SN' || letra === 'SN_NO') { color = 'radar-amarillo'; sitLarga = (letra === 'A' ? 'Ausente' : 'Sin Niños'); letra = (letra === 'A' ? 'A' : 'SN'); }
+            else if(letra === 'R') { color = 'radar-rojo'; sitLarga = 'Renuente'; }
+            else if(letra === 'N_CON' || letra === 'N_SIN' || letra === 'negocio') { color = 'radar-azul'; sitLarga = 'Negocio'; letra = 'N'; }
+            else if(letra === 'lote_baldio' || letra === 'deshabitada') { color = 'radar-gris'; sitLarga = (letra === 'lote_baldio' ? 'Lote Baldío' : 'Deshabitada'); letra = 'DH'; }
             
             const iconHtml = `<div class="pin-radar ${color}">${letra}</div>`;
-            L.marker([p.lat, p.lon], { icon: L.divIcon({ html: iconHtml, className: '', iconSize:[22,22], iconAnchor:[11,11] }) }).bindTooltip(`<b>${etiquetasDom[p.dom] || 'Ubicación'}</b><br>Sit: ${letra}`, { direction: 'top', offset: [0, -10] }).addTo(mapaInteractivo);
+            let titulo = etiquetasDom[p.dom] || 'Ubicación';
+            
+            // Armamos el recuadro EXACTAMENTE con la estructura que pediste
+            let htmlPopup = `
+                <div style="font-family: sans-serif; min-width: 230px;">
+                    <h4 style="margin: 0 0 8px 0; color: #0f172a; border-bottom: 2px solid #3b82f6; padding-bottom: 4px; font-size: 1.1em;">Acciones realizadas</h4>
+                    <div style="font-size: 0.9em; line-height: 1.6; color: #334155;">
+                        <b>ID:</b> ${p.lugar_fijo || 'S/D'}<br>
+                        📅 <b>Fecha:</b> ${p.fecha || 'S/D'}<br>
+                        📍 <b>Dirección:</b> ${p.dir || 'S/D'}<br>
+                        🏠 <b>Tipo:</b> ${titulo}<br>
+                        👤 <b>Registrador:</b> ${p.registrador || 'S/D'}<br>
+                        📋 <b>Estatus:</b> ${sitLarga}
+                    </div>
+            `;
+            
+            // Si hay personas registradas, inyectamos los números al final
+            if (p.total_personas !== undefined && p.total_personas > 0) {
+                htmlPopup += `
+                    <div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed #cbd5e1; font-size: 0.95em; color: #0f172a;">
+                        👥 Personas: <b>${p.total_personas}</b> &nbsp;|&nbsp; 💉 Dosis: <b>${p.total_dosis}</b>
+                    </div>
+                `;
+            }
+            
+            htmlPopup += `</div>`;
+
+            L.marker([p.lat, p.lon], { 
+                icon: L.divIcon({ html: iconHtml, className: '', iconSize:[22,22], iconAnchor:[11,11] }) 
+            })
+            // El Tooltip se muestra al pasar el mouse rápido
+            .bindTooltip(`<b>${titulo}</b><br>${sitLarga}`, { direction: 'top', offset: [0, -10] })
+            // El Popup se muestra al darle clic al marcador (igual que los históricos)
+            .bindPopup(htmlPopup)
+            .addTo(mapaInteractivo);
         });
     }
 
@@ -1004,7 +1109,6 @@
                 return;
             }
 
-            // FUNCIÓN MEJORADA: Tolera nodos inexistentes o con estilos en línea de display: none
             const getVal = (id) => { 
                 const el = document.getElementById(id); 
                 if (!el) return "";
@@ -1020,6 +1124,7 @@
 
             const payload = {
                 general: {
+                    id_registro_edicion: getVal('id_registro_edicion_oculto'), // <--- ENLACE PARA EDICIÓN
                     tipo_actividad: getVal('tipo_actividad'),
                     bloqueo_tipo: getVal('bloqueo_tipo') === 'OTRO' ? 'OTRO' : getVal('bloqueo_tipo'),
                     bloqueo_tipo_otro: getVal('bloqueo_tipo') === 'OTRO' ? getVal('bloqueo_tipo_otro') : '',
@@ -1059,23 +1164,8 @@
                 const tarjetas = document.querySelectorAll('.tarjeta-persona');
                 for (let t of tarjetas) {
                     const pId = t.id.split('_').pop();
-                    const idPaciente = generarUUID(); 
+                    const idPaciente = getVal(`id_paciente_oculto_${pId}`) || generarUUID(); // <--- ENLACE DE PACIENTE
                     
-                    let fotoB64 = null, fotoNombre = null, fotoMime = null;
-                    /* =======================================================
-                        BLOQUE INACTIVO: Descomentar para reactivar subida de fotos
-                    let inputFoto = document.getElementById(`foto_cartilla_${pId}`);
-                    if (inputFoto && inputFoto.files && inputFoto.files.length > 0) {
-                        try {
-                            fotoB64 = await leerArchivoBase64(inputFoto.files[0]);
-                            fotoNombre = inputFoto.files[0].name;
-                            fotoMime = inputFoto.files[0].type;
-                        } catch (errFoto) {
-                            console.warn("Error al procesar la foto:", errFoto);
-                        }
-                    }
-                    ========================================================== */
-
                     let paciente = {
                         id_paciente: idPaciente,
                         paterno: getVal(`paterno_${pId}`),
@@ -1098,9 +1188,6 @@
                         nss_afiliacion: getVal(`nss_afiliacion_${pId}`),
                         peso_kg: getVal(`peso_kg_${pId}`),
                         talla_cm: getVal(`talla_cm_${pId}`),
-                        foto_cartilla_base64: fotoB64,
-                        foto_cartilla_nombre: fotoNombre,
-                        foto_cartilla_mime: fotoMime,
                         vacunas: []
                     };
 
@@ -1121,11 +1208,32 @@
                 payload.pacientes.push({ id_paciente: generarUUID(), vacunas: [] });
             }
 
+            // ========================================================
+            // NUEVO: GUARDADO EN BITÁCORA LOCAL (MIS REGISTROS DE HOY)
+            // ========================================================
+            let bitacora = JSON.parse(localStorage.getItem('censia_bitacora_hoy') || '[]');
+            if (payload.general.id_registro_edicion) {
+                // Si estamos editando uno existente, borramos el viejo de la lista local
+                bitacora = bitacora.filter(b => b.general.id_registro_edicion !== payload.general.id_registro_edicion);
+            } else {
+                // Si es totalmente nuevo, le damos un ID de formulario
+                payload.general.id_registro_edicion = generarUUID(); 
+            }
+            payload.hora_guardado_local = new Date().toLocaleTimeString();
+            bitacora.unshift(payload); // Lo agregamos al principio de la lista
+            localStorage.setItem('censia_bitacora_hoy', JSON.stringify(bitacora));
+            // ========================================================
+
             if (!navigator.onLine) {
                 guardarEnColaLocal(payload, tAct, respCierre, payload.general.domicilio_visitado, payload.general.situacion_domicilio, payload.general.caso_en_domicilio);
                 btnGuardar.innerHTML = textoOriginalBtn;
                 btnGuardar.disabled = false;
                 btnGuardar.style.backgroundColor = "#4f46e5";
+                
+                // Limpiar el ID oculto de edición para el siguiente paciente
+                const idEdOculto = document.getElementById('id_registro_edicion_oculto');
+                if (idEdOculto) idEdOculto.value = "";
+                
                 return;
             }
 
@@ -1136,21 +1244,31 @@
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' } 
             })
             .then(response => {
-                btnGuardar.innerHTML = textoOriginalBtn;
+                // CORRECCIÓN 3: Texto forzado al original azul
+                btnGuardar.innerHTML = "💾 GUARDAR REGISTRO";
                 btnGuardar.disabled = false;
                 btnGuardar.style.backgroundColor = "#4f46e5";
+                
                 alert("✅ REGISTRO GUARDADO Y ENVIADO CON ÉXITO A GOOGLE SHEETS.");
+                
+                // Desenganchamos la edición limpiando el ID
+                const idEdOculto = document.getElementById('id_registro_edicion_oculto');
+                if (idEdOculto) idEdOculto.value = "";
+
                 procesarLimpiezaYMemoria(tAct, respCierre, payload.general.domicilio_visitado, payload.general.situacion_domicilio, payload.general.caso_en_domicilio);
             })
             .catch(error => {
-                btnGuardar.innerHTML = textoOriginalBtn;
+                btnGuardar.innerHTML = "💾 GUARDAR REGISTRO";
                 btnGuardar.disabled = false;
                 btnGuardar.style.backgroundColor = "#4f46e5";
+                
                 guardarEnColaLocal(payload, tAct, respCierre, payload.general.domicilio_visitado, payload.general.situacion_domicilio, payload.general.caso_en_domicilio);
+                
+                const idEdOculto = document.getElementById('id_registro_edicion_oculto');
+                if (idEdOculto) idEdOculto.value = "";
             });
             
         } catch (errorFatal) {
-            // ALERTA VISIBLE DEL CRASH
             alert("❌ ERROR INTERNO AL PREPARAR LOS DATOS:\n\n" + errorFatal.message);
             console.error("Detalle del crash:", errorFatal);
             const btnGuardar = document.querySelector('.btn-guardar');
@@ -1226,18 +1344,39 @@
 
     function procesarLimpiezaYMemoria(tAct, respCierre, dom, sitDom, casoDom) {
         if(tAct === 'barrido' || tAct === 'bloqueo' || tAct === 'modulo_fijo') {
-            const hist = JSON.parse(localStorage.getItem('censia_radar_mapa') || '[]');
-            let sitGuardada = (casoDom === 'Sospechoso' || casoDom === 'Probable') ? 'Caso' : (sitDom || dom || (tAct === 'modulo_fijo' ? 'MF' : ''));
-            let tPers = 0; let tDos = 0;
-            if(!document.getElementById('bloque_censo').classList.contains('oculto')) {
-                document.querySelectorAll('.tarjeta-persona').forEach(t => {
-                    tPers++; const pId = t.id.split('_').pop();
-                    document.querySelectorAll(`.vacuna-de-p${pId}`).forEach(s => { if(s.value) tDos++; });
-                });
-            }
-            hist.push({ lat: document.getElementById('latitud').value, lon: document.getElementById('longitud').value, dom: (tAct === 'modulo_fijo' ? 'MF' : dom), sit: sitGuardada, total_personas: tPers, total_dosis: tDos });
-            localStorage.setItem('censia_radar_mapa', JSON.stringify(hist));
+        const hist = JSON.parse(localStorage.getItem('censia_radar_mapa') || '[]');
+        
+        // SOLUCIÓN: Extraemos la información exacta del paquete recién guardado
+        const bitacora = JSON.parse(localStorage.getItem('censia_bitacora_hoy') || '[]');
+        const genGuardado = bitacora.length > 0 ? bitacora[0].general : {};
+
+        let sitGuardada = (casoDom === 'Sospechoso' || casoDom === 'Probable') ? 'Caso' : (sitDom || dom || (tAct === 'modulo_fijo' ? 'MF' : ''));
+        let tPers = 0; let tDos = 0;
+        if(!document.getElementById('bloque_censo').classList.contains('oculto')) {
+            document.querySelectorAll('.tarjeta-persona').forEach(t => {
+                tPers++; const pId = t.id.split('_').pop();
+                document.querySelectorAll(`.vacuna-de-p${pId}`).forEach(s => { if(s.value) tDos++; });
+            });
         }
+
+        let dirGuardada = `${genGuardado.calle_numero || ''} ${genGuardado.colonia || ''}`.trim();
+        if (dirGuardada === '') dirGuardada = 'Sin dirección';
+
+        hist.push({ 
+            lat: document.getElementById('latitud').value, 
+            lon: document.getElementById('longitud').value, 
+            dom: (tAct === 'modulo_fijo' ? 'MF' : dom), 
+            sit: sitGuardada, 
+            total_personas: tPers, 
+            total_dosis: tDos,
+            // Tomamos los datos del paquete seguro
+            fecha: genGuardado.fecha_actividad || 'S/D',
+            dir: dirGuardada,
+            registrador: genGuardado.registrador_nombre || 'S/D',
+            lugar_fijo: genGuardado.lugar_fijo || 'Generado en servidor'
+        });
+        localStorage.setItem('censia_radar_mapa', JSON.stringify(hist));
+    }
 
         if (tAct === 'bloqueo') {
             let listaPendientes = JSON.parse(localStorage.getItem('censia_bloqueos_pendientes') || '[]');
@@ -1255,9 +1394,17 @@
         }
 
         document.getElementById('contenedor_personas').innerHTML = ''; personaId = 0;
-        ['domicilio_visitado', 'situacion_domicilio', 'situacion_negocio', 'ultimo_registro_bloqueo', 'manzanas_recorridas'].forEach(id => {
+        
+        // CORRECCIÓN: Se agregó la limpieza de Calle y Colonia si es Módulo Fijo
+        let camposALimpiar = ['domicilio_visitado', 'situacion_domicilio', 'situacion_negocio', 'ultimo_registro_bloqueo', 'manzanas_recorridas'];
+        if (tAct === 'modulo_fijo') {
+            camposALimpiar.push('calle_numero', 'colonia'); 
+        }
+
+        camposALimpiar.forEach(id => {
             const el = document.getElementById(id); if(el) el.value = '';
         });
+
         const casoDomEl = document.getElementById('caso_en_domicilio'); if(casoDomEl) casoDomEl.value = 'ninguno'; 
         const lf = document.getElementById('registro_lugar_fijo'); if(lf) lf.value = 'no';
 
@@ -1453,17 +1600,31 @@
                         }
                     }
 
-                    // CORRECCIÓN DEL BUG: Usamos iconoHistoricoDinamico y quitamos el duplicado de popups
+                    // --- NUEVO RECUADRO UNIFICADO ---
+                    let htmlPopup = `
+                        <div style="font-family: sans-serif; min-width: 230px;">
+                            <h4 style="margin: 0 0 8px 0; color: ${esCasoIndice ? '#dc2626' : '#0f172a'}; border-bottom: 2px solid ${esCasoIndice ? '#dc2626' : '#3b82f6'}; padding-bottom: 4px; font-size: 1.1em;">
+                                ${esCasoIndice ? '🚨 CASO ÍNDICE' : 'Acciones realizadas'}
+                            </h4>
+                            <div style="font-size: 0.9em; line-height: 1.6; color: #334155;">
+                                <b>ID:</b> ${p.lugar_fijo || 'S/D'}<br>
+                                📅 <b>Fecha:</b> ${fechaCorta}<br>
+                                📍 <b>Dirección:</b> ${p.calle || 'S/D'} ${p.colonia ? ', Col. ' + p.colonia : ''}<br>
+                                🏠 <b>Tipo:</b> ${p.domicilio || 'N/D'}<br>
+                                👤 <b>Registró:</b> ${p.registrador_nombre || 'N/D'} (${p.registrador_institucion || '-'})<br>
+                                📋 <b>Estatus:</b> <span style="font-weight: bold; background-color: ${esCasoIndice ? '#fee2e2' : '#f1f5f9'}; padding: 2px 4px; border-radius: 3px; display:inline-block; margin-top:4px;">${etiquetaEstatus}</span>
+                            </div>
+                            <div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed #cbd5e1; font-size: 0.95em; color: #0f172a;">
+                                👥 Personas: <b>${p.total_personas !== undefined ? p.total_personas : 'N/D'}</b> &nbsp;|&nbsp; 💉 Dosis: <b>${p.total_dosis !== undefined ? p.total_dosis : 'N/D'}</b>
+                            </div>
+                        </div>
+                    `;
+
                     L.marker([p.lat, p.lon], { 
                         icon: iconoHistoricoDinamico,
-                        esHistoricoRemoto: true // Etiqueta para evitar que el radar local lo borre
+                        esHistoricoRemoto: true
                     })
-                    .bindPopup(`<b style="color: ${esCasoIndice ? '#dc2626' : '#0f172a'}; font-size: 1.1em; border-bottom: 1px solid #cbd5e1; display:block; padding-bottom:3px; margin-bottom:5px;">${esCasoIndice ? '🚨 CASO ÍNDICE' : 'Acciones realizadas'}</b>
-                                <span style="color: #2563eb; font-weight: bold; font-size: 0.9em; display:block; margin-bottom:4px;">📅 Fecha: ${fechaCorta}</span>
-                                <span style="color: #475569; font-size: 0.9em;"><b>Dirección:</b> ${p.calle || 'S/D'}, Col. ${p.colonia || 'S/D'}</span><br>
-                                <span style="color: #334155; font-size: 0.9em; display:block; margin-top:4px;"><b>Tipo:</b> ${p.domicilio || 'N/D'}</span>
-                                <span style="color: #475569; font-size: 0.85em; display:block; margin-top:4px;">👤 Registró: ${p.registrador_nombre || 'N/D'} (${p.registrador_institucion || '-'})</span>
-                                <span style="color: #0f172a; font-size: 0.95em; font-weight: bold; background-color: ${esCasoIndice ? '#fee2e2' : '#f1f5f9'}; padding: 2px 4px; border-radius: 3px; display:inline-block; margin-top:4px;">Estatus: ${etiquetaEstatus}</span>`)
+                    .bindPopup(htmlPopup)
                     .addTo(mapaInteractivo);
                 }
             });
@@ -1626,6 +1787,281 @@
         }
     });
 
+    /* =======================================================
+    CASO ÍNDICE ÚNICO POR BLOQUEO (PUNTO 4)
+    ======================================================= */
+    document.addEventListener('change', function(e) {
+        // Escuchamos si el elemento que cambió es una casilla de "Caso Índice"
+        if (e.target && e.target.id && e.target.id.startsWith('caso_indice_')) {
+            // Buscamos todas las casillas de caso índice en la pantalla
+            const casillasCasoIndice = document.querySelectorAll('input[id^="caso_indice_"]');
+            
+            if (e.target.checked) {
+                // Si el usuario marcó la casilla, deshabilitamos (bloqueamos) todas las demás
+                casillasCasoIndice.forEach(chk => {
+                    if (chk.id !== e.target.id) {
+                        chk.disabled = true;
+                        // Efecto visual para que el brigadista sepa que está bloqueado
+                        chk.parentElement.style.opacity = "0.5"; 
+                        chk.title = "Solo puede haber un Caso Índice por bloqueo";
+                    }
+                });
+            } else {
+                // Si el usuario se arrepiente y la desmarca, volvemos a habilitar todas
+                casillasCasoIndice.forEach(chk => {
+                    chk.disabled = false;
+                    chk.parentElement.style.opacity = "1";
+                    chk.title = "";
+                });
+            }
+        }
+    });
+
+    /* =======================================================
+       CLONADOR DE PARIENTE / TUTOR (PUNTO 5)
+    ======================================================= */
+    function clonarDatosTutor(pIdOrigen) {
+        // 1. Extraemos los datos capturados en los campos extendidos del tutor
+        const pat = document.getElementById(`tutor_paterno_ext_${pIdOrigen}`).value;
+        const mat = document.getElementById(`tutor_materno_ext_${pIdOrigen}`).value;
+        const nom = document.getElementById(`tutor_nombres_ext_${pIdOrigen}`).value;
+        const fec = document.getElementById(`tutor_fecha_nac_${pIdOrigen}`).value;
+
+        // Validar que al menos haya capturado el nombre
+        if (!nom) {
+            alert("⚠️ Por favor, capture al menos el Nombre(s) del pariente antes de generar su tarjeta.");
+            return;
+        }
+
+        // Unificamos el nombre y lo guardamos en el campo oculto original 
+        // para que la base de datos guarde quién es el tutor del menor.
+        document.getElementById(`tutor_nombre_${pIdOrigen}`).value = `${pat} ${mat} ${nom}`.trim();
+
+        // 2. Ejecutamos tu función nativa para agregar una tarjeta nueva
+        agregarPersona(); 
+        
+        // 3. El id de la nueva tarjeta es la variable global 'personaId'
+        const nuevoId = personaId; 
+
+        // 4. Pegamos los datos en la tarjeta del pariente que acaba de nacer
+        const inpPaterno = document.getElementById(`paterno_${nuevoId}`);
+        const inpMaterno = document.getElementById(`materno_${nuevoId}`);
+        const inpNombre = document.getElementById(`nombre_${nuevoId}`);
+        const inpFechaNac = document.getElementById(`fecha_nacimiento_${nuevoId}`);
+
+        if (inpPaterno) inpPaterno.value = pat || "";
+        if (inpMaterno) inpMaterno.value = mat || "";
+        if (inpNombre) inpNombre.value = nom || "";
+        
+        if (inpFechaNac) {
+            inpFechaNac.value = fec || "";
+            // Disparamos los eventos para que tu app recalcule automáticamente la edad
+            inpFechaNac.dispatchEvent(new Event('input'));
+            inpFechaNac.dispatchEvent(new Event('change'));
+        }
+
+        // 5. Ocultamos el botón original para que no lo clonen dos veces por error
+        document.getElementById(`btn_clonar_tutor_${pIdOrigen}`).classList.add('oculto');
+        
+        // Alerta de éxito
+        alert("✅ Datos copiados.\n\nBusque la nueva tarjeta al final de la pantalla para registrar la vacuna del pariente.");
+    }
+
+    /* =======================================================
+    MODO EDICIÓN: BITÁCORA LOCAL (PUNTO 8)
+    ======================================================= */
+    function abrirModalBitacora() {
+        const modal = document.getElementById('modal_bitacora');
+        const lista = document.getElementById('lista_bitacora');
+        const bitacora = JSON.parse(localStorage.getItem('censia_bitacora_hoy') || '[]');
+        
+        // Mostramos la ventana
+        modal.classList.remove('oculto');
+        lista.innerHTML = '';
+        
+        if (bitacora.length === 0) {
+            lista.innerHTML = '<div style="text-align:center; padding: 40px 10px;"><h2 style="font-size:3rem; margin:0;">📭</h2><p style="color:#64748b; font-size:1.1em; margin-top:10px;">Aún no hay registros guardados hoy.</p></div>';
+            return;
+    }
+    
+    // Dibujamos cada registro como una tarjeta interactiva
+    bitacora.forEach(reg => {
+        const gen = reg.general;
+        const totalPacientes = reg.pacientes ? reg.pacientes.length : 0;
+        let titulo = gen.tipo_actividad || 'Actividad';
+        let subtitulo = `${gen.calle_numero || 'S/D'} ${gen.colonia || ''}`;
+        
+        if (titulo.toUpperCase() === 'MODULO_FIJO') subtitulo = `Módulo - ${totalPacientes} Persona(s)`;
+        if (titulo.toUpperCase() === 'BLOQUEO') subtitulo = `Caso: ${gen.bloqueo_nombre_caso || 'S/D'}`;
+        
+        const item = `
+            <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 15px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div style="width: 75%;">
+                        <strong style="color: #0f172a; display: block; font-size: 1.1em;">${titulo.toUpperCase()}</strong>
+                        <span style="color: #334155; font-size: 0.9em; display: block; margin-top: 4px; font-weight: 500;">📍 ${subtitulo}</span>
+                        <span style="color: #10b981; font-size: 0.85em; display: block; margin-top: 4px;">👥 Personas vacunadas: <b>${totalPacientes}</b></span>
+                        <span style="color: #64748b; font-size: 0.8em; display: block; margin-top: 6px;">🕒 Guardado a las: ${reg.hora_guardado_local || 'N/D'}</span>
+                    </div>
+                    <button onclick="cargarRegistroParaEdicion('${gen.id_registro_edicion}')" style="background-color: #f59e0b; color: white; border: none; padding: 10px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 4px rgba(245,158,11,0.3);">
+                        ✏️ Editar
+                    </button>
+                </div>
+            </div>
+        `;
+        lista.insertAdjacentHTML('beforeend', item);
+    });
+}
+
+function cerrarModalBitacora() {
+    document.getElementById('modal_bitacora').classList.add('oculto');
+}
+
+function cargarRegistroParaEdicion(idEdicion) {
+    try {
+        const bitacora = JSON.parse(localStorage.getItem('censia_bitacora_hoy') || '[]');
+        const reg = bitacora.find(b => b.general.id_registro_edicion === idEdicion);
+        
+        if (!reg) {
+            alert("⚠️ No se encontró el registro en la memoria."); return;
+        }
+        
+        const gen = reg.general;
+        
+        // Función maestra que simula la escritura humana en el formulario (Blindada)
+        const setV = (id, val) => { 
+            const el = document.getElementById(id); 
+            if(el) { 
+                el.value = val || ''; 
+                el.dispatchEvent(new Event('change')); 
+                el.dispatchEvent(new Event('input')); 
+            } 
+        };
+
+        // 1. INYECTAR DATOS GENERALES
+        setV('id_registro_edicion_oculto', gen.id_registro_edicion);
+        setV('tipo_actividad', gen.tipo_actividad);
+        setV('bloqueo_tipo', gen.bloqueo_tipo);
+        if (gen.bloqueo_tipo === 'OTRO') setV('bloqueo_tipo_otro', gen.bloqueo_tipo_otro);
+        setV('fecha_actividad', gen.fecha_actividad);
+        setV('bloqueo_nombre_caso', gen.bloqueo_nombre_caso);
+        setV('bloqueo_fecha_notificacion', gen.bloqueo_fecha_notificacion);
+        setV('bloqueo_fecha_inicio', gen.bloqueo_fecha_inicio);
+        setV('fecha_envio_bloqueo', gen.fecha_envio_bloqueo);
+        setV('domicilio_visitado', gen.domicilio_visitado);
+        
+        if(gen.domicilio_visitado === 'casa') setV('situacion_domicilio', gen.situacion_domicilio);
+        if(gen.domicilio_visitado === 'negocio') setV('situacion_negocio', gen.situacion_domicilio);
+        
+        setV('caso_en_domicilio', gen.caso_en_domicilio);
+        setV('nombre_vacunador', gen.nombre_vacunador);
+        setV('nombre_vacunador_2', gen.nombre_vacunador_2);
+        setV('entidad', gen.entidad);
+        setV('jurisdiccion', gen.jurisdiccion);
+        setV('municipio', gen.municipio);
+        setV('ageb', gen.ageb);
+        if(gen.ageb === 'OTRO') setV('otro_ageb_texto', gen.otro_ageb_texto);
+        setV('localidad', gen.localidad);
+        setV('calle_numero', gen.calle_numero);
+        setV('colonia', gen.colonia);
+        setV('observaciones_domicilio', gen.observaciones);
+        setV('ultimo_registro_bloqueo', gen.ultimo_registro_bloqueo);
+        setV('manzanas_recorridas', gen.manzanas_recorridas);
+        setV('registro_lugar_fijo', gen.registro_lugar_fijo);
+        setV('id_bloqueo', gen.id_bloqueo);
+        setV('registrador_nombre', gen.registrador_nombre);
+        setV('registrador_institucion', gen.registrador_institucion);
+
+        if(typeof autoGenerarIdentificadorLugarFijo === 'function') autoGenerarIdentificadorLugarFijo();
+
+        // 2. INYECTAR PACIENTES Y VACUNAS
+        const contenedorCenso = document.getElementById('contenedor_personas');
+        if (contenedorCenso) contenedorCenso.innerHTML = ''; 
+        
+        const bloqueCenso = document.getElementById('bloque_censo');
+        if (bloqueCenso) bloqueCenso.classList.remove('oculto');
+        
+        if (reg.pacientes && reg.pacientes.length > 0) {
+            reg.pacientes.forEach(p => {
+                agregarPersona(); 
+                const pId = personaId; 
+                
+                // CORRECCIÓN 1: Inyectar ID oculto
+                if (contenedorCenso) {
+                    contenedorCenso.insertAdjacentHTML('beforeend', `<input type="hidden" id="id_paciente_oculto_${pId}" value="${p.id_paciente || ''}">`);
+                }
+                
+                // CORRECCIÓN 2: Borramos la vacuna en blanco que viene por defecto
+                const contVacunas = document.getElementById(`contenedor_vacunas_p${pId}`);
+                if(contVacunas) contVacunas.innerHTML = ''; 
+                
+                setV(`paterno_${pId}`, p.paterno);
+                setV(`materno_${pId}`, p.materno);
+                setV(`nombre_${pId}`, p.nombres);
+                setV(`curp_${pId}`, p.curp);
+                setV(`tutor_nombre_${pId}`, p.nombre_pariente);
+                setV(`tutor_tipo_${pId}`, p.tipo_parentesco);
+                if(p.tipo_parentesco === 'Otro parentesco') setV(`tutor_tipo_otro_${pId}`, p.otro_parentesco);
+                setV(`tutor_fecha_nac_${pId}`, p.fecha_nac_pariente);
+                setV(`tipo_vacunacion_${pId}`, p.tipo_vacunacion);
+                setV(`fecha_nacimiento_${pId}`, p.fecha_nacimiento);
+                setV(`sexo_${pId}`, p.sexo);
+                setV(`derecho_${pId}`, p.derechohabiencia);
+                if(p.derechohabiencia === 'OTRA') setV(`derecho_otra_${pId}`, p.otra_derechohabiencia);
+                setV(`migra_${pId}`, p.estatus_migratorio);
+                setV(`estado_nac_${pId}`, p.entidad_nacimiento);
+                
+                if(p.caso_indice === "SI") {
+                    const chk = document.getElementById(`caso_indice_${pId}`);
+                    if(chk) { chk.checked = true; chk.dispatchEvent(new Event('change')); }
+                }
+                
+                setV(`nss_afiliacion_${pId}`, p.nss_afiliacion);
+                setV(`peso_kg_${pId}`, p.peso_kg);
+                setV(`talla_cm_${pId}`, p.talla_cm);
+
+                // Ahora sí, inyectamos las vacunas reales
+                if (p.vacunas && p.vacunas.length > 0) {
+                    p.vacunas.forEach(v => {
+                        agregarVacunaAPersona(pId);
+                        const vId = vacunaId; 
+                        setV(`select_vacuna_${vId}`, v.vacuna_aplicada);
+                        if(v.vacuna_aplicada === 'Otra vacuna') setV(`otra_vacuna_txt_${vId}`, v.vacuna_especificar);
+                        setV(`fecha_vacuna_${vId}`, v.fecha_ingresada);
+                    });
+                }
+            });
+        }
+
+        cerrarModalBitacora();
+        
+        const btnGuardar = document.querySelector('.btn-guardar');
+        if (btnGuardar) {
+            btnGuardar.innerHTML = "💾 GUARDAR EDICIÓN (REESCRIBIR)";
+            btnGuardar.style.backgroundColor = "#d97706"; 
+        }
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        alert("✏️ MODO EDICIÓN ACTIVADO\n\nEl formulario se ha rellenado con los datos guardados.");
+        
+    } catch (error) {
+        alert("Hubo un error al intentar cargar el registro. Por favor, abre las herramientas de desarrollador (F12) para ver el detalle.");
+        console.error("Error en cargarRegistroParaEdicion:", error);
+    }
+}
+
 </script>
+    <!-- MODAL DE LA BITÁCORA LOCAL -->
+    <div id="modal_bitacora" class="oculto" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); z-index: 9999; display: flex; justify-content: center; align-items: center;">
+        <div style="background: white; width: 90%; max-width: 500px; height: 80vh; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 15px;">
+                <h3 style="margin: 0; color: #0f172a; font-size: 1.3em;">📋 Mis Registros</h3>
+                <button onclick="cerrarModalBitacora()" style="background: none; border: none; font-size: 1.8rem; color: #ef4444; cursor: pointer; padding: 0;">✖</button>
+            </div>
+            <div id="lista_bitacora" style="overflow-y: auto; flex-grow: 1; padding-right: 5px;">
+                <!-- Aquí se inyectarán los registros guardados automáticamente por JavaScript -->
+            </div>
+        </div>
+    </div>
 </body>
 </html>
